@@ -59,6 +59,12 @@ export default function ConnectionStatusCard() {
         
         // Start a VPN session on the backend
         if (vpnState.selectedServer) {
+          console.log("Starting VPN session with:", {
+            serverId: vpnState.selectedServer.id,
+            protocol: vpnState.protocol,
+            encryption: vpnState.encryption
+          });
+          
           const res = await apiRequest('POST', '/api/sessions/start', {
             serverId: vpnState.selectedServer.id,
             protocol: vpnState.protocol,
@@ -66,12 +72,23 @@ export default function ConnectionStatusCard() {
           });
           
           if (res.ok) {
+            const sessionData = await res.json();
+            console.log("Session started:", sessionData);
+            
+            // Update VPN state with virtual IP from response
             vpnState.connect({
               serverId: vpnState.selectedServer.id,
               protocol: vpnState.protocol,
               encryption: vpnState.encryption,
               server: vpnState.selectedServer
             });
+            
+            // Set virtual IP if available
+            if (sessionData.virtualIp) {
+              vpnState.updateSettings({
+                virtualIp: sessionData.virtualIp
+              });
+            }
             
             toast({
               title: 'Connected',
@@ -80,7 +97,17 @@ export default function ConnectionStatusCard() {
             
             // Refresh current session data
             queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
+          } else {
+            console.error("Failed to start session:", await res.text());
+            throw new Error("Failed to start VPN session");
           }
+        } else {
+          toast({
+            title: 'Connection Error',
+            description: 'Please select a server first',
+            variant: 'destructive'
+          });
+          return;
         }
       } else {
         // End the current VPN session
@@ -95,12 +122,16 @@ export default function ConnectionStatusCard() {
           
           // Refresh current session data
           queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
+        } else {
+          console.error("Failed to end session:", await res.text());
+          throw new Error("Failed to end VPN session");
         }
       }
     } catch (error) {
+      console.error("Connection error:", error);
       toast({
         title: 'Connection Error',
-        description: 'Failed to manage VPN connection',
+        description: error instanceof Error ? error.message : 'Failed to manage VPN connection',
         variant: 'destructive'
       });
     }

@@ -26,12 +26,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
       
-      const settings = await storage.getUserSettings(req.user.id);
+      let settings = await storage.getUserSettings(req.user.id);
+      
+      // If settings don't exist, create default ones
       if (!settings) {
-        return res.status(404).json({ message: "Settings not found" });
+        const defaultSettings = {
+          userId: req.user.id,
+          killSwitch: true,
+          dnsLeakProtection: true,
+          doubleVpn: false,
+          obfuscation: false,
+          preferredProtocol: "openvpn_tcp",
+          preferredEncryption: "aes_256_gcm"
+        };
+        
+        settings = await storage.createUserSettings(defaultSettings);
+        console.log("Created default settings for user:", req.user.id);
       }
+      
       res.json(settings);
     } catch (error) {
+      console.error("Error fetching settings:", error);
       next(error);
     }
   });
@@ -70,7 +85,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const session = await storage.getCurrentSession(req.user.id);
       if (!session) {
-        return res.status(404).json({ message: "No active session" });
+        // Instead of 404, return null with 200 status for easier client handling
+        return res.status(200).json(null);
       }
       
       // Generate a virtual IP for the session (consistent for the same session ID)
@@ -85,6 +101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         virtualIp
       });
     } catch (error) {
+      console.error("Error fetching current session:", error);
       next(error);
     }
   });
@@ -127,10 +144,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const session = await storage.endCurrentSession(req.user.id);
       if (!session) {
-        return res.status(404).json({ message: "No active session to end" });
+        // Return success even if there was no session to end
+        return res.status(200).json({ success: true, message: "No active session to end" });
       }
-      res.json(session);
+      
+      // Add the virtual IP to the response for consistency
+      const octet1 = 10;
+      const octet2 = Math.floor((session.id * 13) % 255);
+      const octet3 = Math.floor((session.id * 17) % 255);
+      const octet4 = Math.floor((session.id * 23) % 255);
+      const virtualIp = `${octet1}.${octet2}.${octet3}.${octet4}`;
+      
+      res.json({
+        ...session,
+        virtualIp,
+        success: true
+      });
     } catch (error) {
+      console.error("Error ending session:", error);
       next(error);
     }
   });
