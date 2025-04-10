@@ -7,7 +7,8 @@ import {
   User, 
   HeadphonesIcon,
   Shield,
-  CreditCard
+  CreditCard,
+  Lock
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -90,6 +91,20 @@ export default function Sidebar() {
             <span>Support</span>
           </a>
         </Link>
+        
+        {/* Admin link - only visible to admin user */}
+        {user?.id === 1 && (
+          <Link href="/admin">
+            <a className={`flex items-center px-4 py-3 rounded-lg ${
+              isActive('/admin') 
+                ? 'bg-primary-900 text-white' 
+                : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+            } transition-colors`}>
+              <Lock className="mr-3 h-5 w-5" />
+              <span>Admin Panel</span>
+            </a>
+          </Link>
+        )}
       </nav>
       
       <div className="p-5 border-t border-gray-800">
