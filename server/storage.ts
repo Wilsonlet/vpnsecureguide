@@ -1,9 +1,13 @@
 import { 
   User, InsertUser, VpnServer, VpnSession, VpnUserSettings, 
-  InsertVpnSession, InsertVpnUserSettings 
+  InsertVpnSession, InsertVpnUserSettings,
+  users, vpnServers, vpnSessions, vpnUserSettings
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { eq, and, isNull, gte, desc, count } from "drizzle-orm";
+import { db, pool } from "./db";
 
 // Define the storage interface with all needed CRUD operations
 export interface IStorage {
@@ -23,120 +27,132 @@ export interface IStorage {
   getUserUsageStats(userId: number, period: string): Promise<any>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private servers: Map<number, VpnServer>;
-  private sessions: Map<number, VpnSession>;
-  private userSettings: Map<number, VpnUserSettings>;
-  private currentId: Record<string, number>;
+export class DatabaseStorage implements IStorage {
   public sessionStore: session.Store;
 
   constructor() {
-    this.users = new Map();
-    this.servers = new Map();
-    this.sessions = new Map();
-    this.userSettings = new Map();
-    this.currentId = {
-      users: 1,
-      servers: 1,
-      sessions: 1,
-      userSettings: 1
-    };
-
-    // Initialize session store
-    const MemoryStore = createMemoryStore(session);
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000 // prune expired entries every 24h
+    // Initialize session store with PostgreSQL
+    const PostgresSessionStore = connectPg(session);
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true
     });
 
-    // Initialize with some server data
-    this.initializeServers();
+    // Check if servers exist and seed initial data if needed
+    this.initializeServersIfNeeded().catch(console.error);
   }
 
   // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId.users++;
-    const createdAt = new Date();
-    const user: User = { 
-      ...insertUser, 
-      id, 
-      subscription: "free",
-      createdAt
-    };
-    this.users.set(id, user);
+    const currentDate = new Date();
+    const [user] = await db.insert(users)
+      .values({
+        ...insertUser,
+        subscription: "free",
+        createdAt: currentDate
+      })
+      .returning();
     return user;
   }
 
   // Server methods
   async getAllServers(): Promise<VpnServer[]> {
-    return Array.from(this.servers.values());
+    return await db.select().from(vpnServers);
   }
 
   async getServerById(id: number): Promise<VpnServer | undefined> {
-    return this.servers.get(id);
+    const [server] = await db.select().from(vpnServers).where(eq(vpnServers.id, id));
+    return server;
   }
 
   // User settings methods
   async getUserSettings(userId: number): Promise<VpnUserSettings | undefined> {
-    return Array.from(this.userSettings.values()).find(
-      (settings) => settings.userId === userId
-    );
+    const [settings] = await db.select().from(vpnUserSettings).where(eq(vpnUserSettings.userId, userId));
+    return settings;
   }
 
   async createUserSettings(settings: InsertVpnUserSettings): Promise<VpnUserSettings> {
-    const id = this.currentId.userSettings++;
-    const userSettings: VpnUserSettings = { ...settings, id };
-    this.userSettings.set(id, userSettings);
+    const [userSettings] = await db.insert(vpnUserSettings)
+      .values(settings)
+      .returning();
     return userSettings;
   }
 
   async updateUserSettings(settings: InsertVpnUserSettings): Promise<VpnUserSettings> {
-    const existing = await this.getUserSettings(settings.userId);
+    const { userId } = settings;
+    const existing = await this.getUserSettings(userId);
     
     if (existing) {
-      const updated: VpnUserSettings = { ...existing, ...settings };
-      this.userSettings.set(existing.id, updated);
+      // Ensure all nullable fields have explicit null values instead of undefined
+      const updatedSettings = {
+        ...settings,
+        killSwitch: settings.killSwitch ?? existing.killSwitch,
+        dnsLeakProtection: settings.dnsLeakProtection ?? existing.dnsLeakProtection,
+        doubleVpn: settings.doubleVpn ?? existing.doubleVpn,
+        obfuscation: settings.obfuscation ?? existing.obfuscation,
+        preferredProtocol: settings.preferredProtocol ?? existing.preferredProtocol,
+        preferredEncryption: settings.preferredEncryption ?? existing.preferredEncryption
+      };
+      
+      const [updated] = await db.update(vpnUserSettings)
+        .set(updatedSettings)
+        .where(eq(vpnUserSettings.id, existing.id))
+        .returning();
       return updated;
     } else {
-      return this.createUserSettings(settings);
+      // For new settings, ensure that null values are provided for all nullable fields
+      const newSettings = {
+        ...settings,
+        killSwitch: settings.killSwitch ?? false,
+        dnsLeakProtection: settings.dnsLeakProtection ?? false,
+        doubleVpn: settings.doubleVpn ?? false,
+        obfuscation: settings.obfuscation ?? false,
+        preferredProtocol: settings.preferredProtocol ?? "openvpn",
+        preferredEncryption: settings.preferredEncryption ?? "aes-256-gcm"
+      };
+      return this.createUserSettings(newSettings);
     }
   }
 
   // Session methods
   async getUserSessions(userId: number): Promise<VpnSession[]> {
-    return Array.from(this.sessions.values())
-      .filter(session => session.userId === userId)
-      .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+    return await db.select()
+      .from(vpnSessions)
+      .where(eq(vpnSessions.userId, userId))
+      .orderBy(desc(vpnSessions.startTime));
   }
 
   async getCurrentSession(userId: number): Promise<VpnSession | undefined> {
-    return Array.from(this.sessions.values()).find(
-      session => session.userId === userId && !session.endTime
-    );
+    const [session] = await db.select()
+      .from(vpnSessions)
+      .where(and(
+        eq(vpnSessions.userId, userId),
+        isNull(vpnSessions.endTime)
+      ));
+    return session;
   }
 
   async createSession(session: InsertVpnSession): Promise<VpnSession> {
-    const id = this.currentId.sessions++;
     const startTime = new Date();
-    const newSession: VpnSession = { 
-      ...session, 
-      id, 
-      startTime,
-      endTime: null,
-      dataUploaded: 0,
-      dataDownloaded: 0
-    };
-    this.sessions.set(id, newSession);
+    const [newSession] = await db.insert(vpnSessions)
+      .values({
+        ...session,
+        startTime,
+        endTime: null,
+        dataUploaded: 0,
+        dataDownloaded: 0
+      })
+      .returning();
     return newSession;
   }
 
@@ -145,19 +161,20 @@ export class MemStorage implements IStorage {
     
     if (currentSession) {
       const endTime = new Date();
-      // Generate random upload/download data for the session
+      // Generate random upload/download data for the session (for demo purposes)
       const duration = endTime.getTime() - new Date(currentSession.startTime).getTime();
       const dataUploaded = Math.floor(Math.random() * 500) * 1024 * 1024; // Random MB in bytes
       const dataDownloaded = Math.floor(Math.random() * 750) * 1024 * 1024; // Random MB in bytes
       
-      const updatedSession: VpnSession = {
-        ...currentSession,
-        endTime,
-        dataUploaded,
-        dataDownloaded
-      };
+      const [updatedSession] = await db.update(vpnSessions)
+        .set({
+          endTime,
+          dataUploaded,
+          dataDownloaded
+        })
+        .where(eq(vpnSessions.id, currentSession.id))
+        .returning();
       
-      this.sessions.set(currentSession.id, updatedSession);
       return updatedSession;
     }
     
@@ -166,8 +183,6 @@ export class MemStorage implements IStorage {
 
   // Usage statistics
   async getUserUsageStats(userId: number, period: string): Promise<any> {
-    const sessions = await this.getUserSessions(userId);
-    
     // Calculate date range based on period
     const now = new Date();
     let startDate: Date;
@@ -185,11 +200,14 @@ export class MemStorage implements IStorage {
         break;
     }
     
-    // Filter and process session data
-    const filteredSessions = sessions.filter(session => {
-      const sessionDate = new Date(session.startTime);
-      return sessionDate >= startDate;
-    });
+    // Get sessions within the date range
+    const sessions = await db.select()
+      .from(vpnSessions)
+      .where(and(
+        eq(vpnSessions.userId, userId),
+        gte(vpnSessions.startTime, startDate)
+      ))
+      .orderBy(vpnSessions.startTime);
     
     let totalUploaded = 0;
     let totalDownloaded = 0;
@@ -201,7 +219,7 @@ export class MemStorage implements IStorage {
       downloaded: number;
     }[] = [];
     
-    // Create a map for the last 7 days
+    // Create a map for the date range
     const dates = new Map<string, { uploaded: number; downloaded: number }>();
     
     for (let i = 0; i < (period === "7days" ? 7 : 30); i++) {
@@ -212,7 +230,7 @@ export class MemStorage implements IStorage {
     }
     
     // Calculate totals and daily data
-    filteredSessions.forEach(session => {
+    sessions.forEach(session => {
       if (session.dataUploaded && session.dataDownloaded) {
         totalUploaded += session.dataUploaded;
         totalDownloaded += session.dataDownloaded;
@@ -249,9 +267,17 @@ export class MemStorage implements IStorage {
     };
   }
 
-  // Initialize servers with realistic data
-  private initializeServers() {
-    const initialServers: Omit<VpnServer, "id">[] = [
+  // Initialize server data if not already present
+  private async initializeServersIfNeeded() {
+    // Check if servers exist
+    const serverCount = await db.select({ count: count() }).from(vpnServers);
+    
+    if (serverCount.length > 0 && serverCount[0].count > 0) {
+      return; // Servers already exist
+    }
+    
+    // Initialize with default server data
+    const initialServers = [
       {
         name: "Amsterdam #1",
         country: "Netherlands",
@@ -334,11 +360,9 @@ export class MemStorage implements IStorage {
       }
     ];
 
-    initialServers.forEach(server => {
-      const id = this.currentId.servers++;
-      this.servers.set(id, { ...server, id });
-    });
+    // Insert all servers
+    await db.insert(vpnServers).values(initialServers);
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

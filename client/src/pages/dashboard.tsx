@@ -41,12 +41,12 @@ export default function Dashboard() {
   useEffect(() => {
     if (settings && !isSessionLoading) {
       vpnState.updateSettings({
-        killSwitch: settings.killSwitch,
-        dnsLeakProtection: settings.dnsLeakProtection,
-        doubleVpn: settings.doubleVpn,
-        obfuscation: settings.obfuscation,
-        protocol: settings.preferredProtocol,
-        encryption: settings.preferredEncryption
+        killSwitch: settings.killSwitch ?? false,
+        dnsLeakProtection: settings.dnsLeakProtection ?? false,
+        doubleVpn: settings.doubleVpn ?? false,
+        obfuscation: settings.obfuscation ?? false,
+        protocol: settings.preferredProtocol ?? "openvpn",
+        encryption: settings.preferredEncryption ?? "aes-256-gcm"
       });
     }
 
@@ -55,8 +55,8 @@ export default function Dashboard() {
       if (server) {
         vpnState.connect({
           serverId: server.id,
-          protocol: currentSession.protocol,
-          encryption: currentSession.encryption,
+          protocol: currentSession.protocol ?? "openvpn",
+          encryption: currentSession.encryption ?? "aes-256-gcm",
           server
         });
       }
