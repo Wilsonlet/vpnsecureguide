@@ -6,15 +6,32 @@ import { Separator } from "@/components/ui/separator";
 import { CalendarClock, Zap } from "lucide-react";
 import { formatBytes } from "@/lib/utils";
 
+// Define types for API responses
+interface SubscriptionResponse {
+  subscription: string;
+  expiryDate: string | null;
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
+}
+
+interface LimitsResponse {
+  dataUsed: number;
+  dataLimit: number;
+  timeUsedToday: number;
+  timeLimit: number;
+  isDataLimitReached: boolean;
+  isTimeLimitReached: boolean;
+}
+
 export default function SubscriptionPage() {
   const { user } = useAuth();
 
-  const { data: subscription } = useQuery({
+  const { data: subscription } = useQuery<SubscriptionResponse>({
     queryKey: ["/api/subscription"],
     enabled: !!user,
   });
 
-  const { data: limits } = useQuery({
+  const { data: limits } = useQuery<LimitsResponse>({
     queryKey: ["/api/limits"],
     enabled: !!user,
   });

@@ -19,7 +19,15 @@ export default function PlansGrid() {
     queryKey: ["/api/subscription-plans"],
   });
 
-  const { data: currentSubscription } = useQuery({
+  // Define interface for subscription response
+  interface SubscriptionResponse {
+    subscription: string;
+    expiryDate: string | null;
+    stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+  }
+
+  const { data: currentSubscription } = useQuery<SubscriptionResponse>({
     queryKey: ["/api/subscription"],
     enabled: !!user,
   });
@@ -142,11 +150,11 @@ export default function PlansGrid() {
           <CardFooter>
             <Button 
               className="w-full" 
-              variant={plan.name === currentSubscription?.subscription ? "outline" : "default"}
-              disabled={plan.name === currentSubscription?.subscription}
+              variant={currentSubscription && plan.name === currentSubscription.subscription ? "outline" : "default"}
+              disabled={currentSubscription && plan.name === currentSubscription.subscription}
               onClick={() => handleSelectPlan(plan)}
             >
-              {plan.name === currentSubscription?.subscription
+              {currentSubscription && plan.name === currentSubscription.subscription
                 ? "Current Plan"
                 : plan.price === 0
                 ? "Select Free Plan"

@@ -6,7 +6,8 @@ import {
   Settings, 
   User, 
   HeadphonesIcon,
-  Shield
+  Shield,
+  CreditCard
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -67,6 +68,16 @@ export default function Sidebar() {
           } transition-colors`}>
             <User className="mr-3 h-5 w-5" />
             <span>Account</span>
+          </a>
+        </Link>
+        <Link href="/subscription">
+          <a className={`flex items-center px-4 py-3 rounded-lg ${
+            isActive('/subscription') 
+              ? 'bg-primary-900 text-white' 
+              : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+          } transition-colors`}>
+            <CreditCard className="mr-3 h-5 w-5" />
+            <span>Subscription</span>
           </a>
         </Link>
         <Link href="/support">
