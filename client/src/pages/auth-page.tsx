@@ -26,17 +26,6 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [location, setLocation] = useLocation();
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user) {
-      setLocation("/");
-    }
-  }, [user, setLocation]);
-  
-  if (user) {
-    return null;
-  }
-
   // Login form
   const loginForm = useForm<AuthFormData>({
     resolver: zodResolver(authSchema),
@@ -54,6 +43,17 @@ export default function AuthPage() {
       password: "",
     },
   });
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      setLocation("/");
+    }
+  }, [user, setLocation]);
+  
+  if (user) {
+    return null;
+  }
 
   const onLoginSubmit = (data: AuthFormData) => {
     loginMutation.mutate(data);
