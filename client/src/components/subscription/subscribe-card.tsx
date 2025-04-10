@@ -98,6 +98,11 @@ export default function SubscribeCard({ plan, onSuccess, onCancel }: Props) {
     setError(null);
 
     try {
+      // Check if the plan has a Stripe price ID
+      if (!plan.stripePriceId) {
+        throw new Error("This subscription plan is not available for purchase at this time");
+      }
+      
       const response = await apiRequest("POST", "/api/create-subscription", { planName: plan.name });
       const data = await response.json();
 

@@ -417,6 +417,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error canceling subscription", error: error.message });
     }
   });
+  
+  // Update to free subscription endpoint (no payment required)
+  app.post("/api/update-free-subscription", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      const { planName } = req.body;
+      if (!planName || planName !== 'free') {
+        return res.status(400).json({ message: "Invalid plan name for free subscription" });
+      }
+      
+      const user = req.user;
+      
+      // If user has a Stripe subscription, cancel it
+      if (user.stripeSubscriptionId && stripe) {
+        try {
+          await stripe.subscriptions.cancel(user.stripeSubscriptionId);
+        } catch (stripeError) {
+          console.error("Error canceling Stripe subscription:", stripeError);
+          // Continue even if Stripe cancellation fails
+        }
+      }
+      
+      // Update user's subscription in the database (without expiry date for free tier)
+      await storage.updateUserSubscription(user.id, planName);
+      
+      // Clear Stripe subscription ID if it exists
+      if (user.stripeSubscriptionId) {
+        await storage.updateStripeSubscriptionId(user.id, "");
+      }
+      
+      res.json({
+        success: true,
+        message: "Subscription updated to Free plan",
+        subscription: planName
+      });
+    } catch (error: any) {
+      console.error("Update free subscription error:", error);
+      res.status(500).json({ message: "Error updating subscription", error: error.message });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

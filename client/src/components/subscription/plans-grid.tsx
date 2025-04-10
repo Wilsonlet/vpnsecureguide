@@ -8,6 +8,7 @@ import { formatBytes } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import SubscribeCard from "./subscribe-card";
 
 export default function PlansGrid() {
@@ -53,6 +54,50 @@ export default function PlansGrid() {
   const sortedPlans = [...plans].sort((a, b) => a.priority - b.priority);
 
   const handleSelectPlan = (plan: SubscriptionPlan) => {
+    // For free plan, just update the subscription directly
+    if (plan.price === 0) {
+      toast({
+        title: "Processing...",
+        description: "Updating your subscription plan"
+      });
+      
+      // Call the API to update the subscription
+      apiRequest("POST", "/api/update-free-subscription", { planName: plan.name })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error("Failed to update subscription");
+          }
+          return response.json();
+        })
+        .then(() => {
+          toast({
+            title: "Success!",
+            description: "Your subscription has been updated to the Free plan",
+          });
+          // Invalidate the subscription query to refresh the data
+          queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+        })
+        .catch(err => {
+          toast({
+            title: "Error",
+            description: err.message || "Failed to update subscription",
+            variant: "destructive",
+          });
+        });
+      return;
+    }
+    
+    // For paid plans, check if Stripe price ID exists
+    if (!plan.stripePriceId) {
+      toast({
+        title: "Subscription unavailable",
+        description: "This subscription plan is not available for purchase at this time",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check if user has email
     if (!user?.email) {
       toast({
         title: "Email required",
