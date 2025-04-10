@@ -17,9 +17,19 @@ const authSchema = insertUserSchema.extend({
   password: z.string().min(8, {
     message: "Password must be at least 8 characters.",
   }),
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+});
+
+// Login schema - doesn't require email
+const loginSchema = authSchema.pick({
+  username: true,
+  password: true,
 });
 
 type AuthFormData = z.infer<typeof authSchema>;
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>("login");
@@ -27,8 +37,8 @@ export default function AuthPage() {
   const [location, setLocation] = useLocation();
 
   // Login form
-  const loginForm = useForm<AuthFormData>({
-    resolver: zodResolver(authSchema),
+  const loginForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       username: "",
       password: "",
@@ -41,6 +51,7 @@ export default function AuthPage() {
     defaultValues: {
       username: "",
       password: "",
+      email: "",
     },
   });
 
@@ -55,7 +66,7 @@ export default function AuthPage() {
     return null;
   }
 
-  const onLoginSubmit = (data: AuthFormData) => {
+  const onLoginSubmit = (data: LoginFormData) => {
     loginMutation.mutate(data);
   };
 
@@ -150,6 +161,19 @@ export default function AuthPage() {
                             <FormLabel>Username</FormLabel>
                             <FormControl>
                               <Input placeholder="Create a username" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={registerForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="Enter your email address" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
