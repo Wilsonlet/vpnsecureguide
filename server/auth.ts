@@ -117,4 +117,29 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
   });
+  
+  // Update user profile
+  app.post("/api/user/update-profile", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      const { email } = req.body;
+      
+      // Validate email
+      if (email && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+      
+      // Update user in database
+      const updatedUser = await storage.updateUserEmail(req.user.id, email);
+      
+      // Update session
+      req.login(updatedUser, (err) => {
+        if (err) return next(err);
+        res.json(updatedUser);
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
 }

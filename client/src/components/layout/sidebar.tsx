@@ -107,15 +107,14 @@ export default function Sidebar() {
             </div>
             <Progress value={65} className="h-2" />
           </div>
-          <Button 
-            variant="default" 
-            className="w-full mt-2 py-2 px-4 bg-primary-700 hover:bg-primary-800 text-white text-sm rounded-lg"
-            onClick={() => {
-              // Upgrade plan functionality
-            }}
-          >
-            Upgrade Plan
-          </Button>
+          <Link href="/subscription">
+            <Button 
+              variant="default" 
+              className="w-full mt-2 py-2 px-4 bg-primary-700 hover:bg-primary-800 text-white text-sm rounded-lg"
+            >
+              Upgrade Plan
+            </Button>
+          </Link>
         </div>
       </div>
     </aside>
