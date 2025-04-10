@@ -2,6 +2,7 @@ import { Bell } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Link } from 'wouter';
 
 type HeaderProps = {
   username: string;
@@ -48,8 +49,16 @@ export default function Header({ username }: HeaderProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem className="cursor-pointer">Profile</DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">Settings</DropdownMenuItem>
+                <Link href="/account">
+                  <DropdownMenuItem className="cursor-pointer">
+                    Account Settings
+                  </DropdownMenuItem>
+                </Link>
+                <Link href="/subscription">
+                  <DropdownMenuItem className="cursor-pointer">
+                    Subscription
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
                   Logout
                 </DropdownMenuItem>

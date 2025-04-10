@@ -19,6 +19,7 @@ export interface IStorage {
   updateUserSubscription(userId: number, subscription: string, expiryDate?: Date): Promise<User>;
   updateStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User>;
   updateStripeSubscriptionId(userId: number, stripeSubscriptionId: string): Promise<User>;
+  updateUserEmail(userId: number, email: string): Promise<User>;
   
   // Server methods
   getAllServers(): Promise<VpnServer[]>;
@@ -115,6 +116,14 @@ export class DatabaseStorage implements IStorage {
   async updateStripeSubscriptionId(userId: number, stripeSubscriptionId: string): Promise<User> {
     const [user] = await db.update(users)
       .set({ stripeSubscriptionId })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+  
+  async updateUserEmail(userId: number, email: string): Promise<User> {
+    const [user] = await db.update(users)
+      .set({ email })
       .where(eq(users.id, userId))
       .returning();
     return user;
