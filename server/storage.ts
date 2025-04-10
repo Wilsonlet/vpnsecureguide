@@ -1,7 +1,7 @@
 import { 
-  User, InsertUser, VpnServer, VpnSession, VpnUserSettings, 
-  InsertVpnSession, InsertVpnUserSettings,
-  users, vpnServers, vpnSessions, vpnUserSettings
+  User, InsertUser, VpnServer, VpnSession, VpnUserSettings, SubscriptionPlan,
+  InsertVpnSession, InsertVpnUserSettings, subscriptionTiers,
+  users, vpnServers, vpnSessions, vpnUserSettings, subscriptionPlans
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -12,19 +12,45 @@ import { db, pool } from "./db";
 // Define the storage interface with all needed CRUD operations
 export interface IStorage {
   sessionStore: session.Store;
+  // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserSubscription(userId: number, subscription: string, expiryDate?: Date): Promise<User>;
+  updateStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User>;
+  updateStripeSubscriptionId(userId: number, stripeSubscriptionId: string): Promise<User>;
+  
+  // Server methods
   getAllServers(): Promise<VpnServer[]>;
   getServerById(id: number): Promise<VpnServer | undefined>;
+  getAccessibleServers(userId: number): Promise<VpnServer[]>;
+  
+  // Settings methods
   getUserSettings(userId: number): Promise<VpnUserSettings | undefined>;
   createUserSettings(settings: InsertVpnUserSettings): Promise<VpnUserSettings>;
   updateUserSettings(settings: InsertVpnUserSettings): Promise<VpnUserSettings>;
+  
+  // Session methods
   getUserSessions(userId: number): Promise<VpnSession[]>;
   getCurrentSession(userId: number): Promise<VpnSession | undefined>;
   createSession(session: InsertVpnSession): Promise<VpnSession>;
   endCurrentSession(userId: number): Promise<VpnSession | undefined>;
+  
+  // Stats methods
   getUserUsageStats(userId: number, period: string): Promise<any>;
+  checkUserLimits(userId: number): Promise<{
+    dataUsed: number;
+    dataLimit: number;
+    timeUsedToday: number;
+    timeLimit: number;
+    isDataLimitReached: boolean;
+    isTimeLimitReached: boolean;
+  }>;
+  
+  // Subscription methods
+  getAllSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined>;
+  getSubscriptionPlanByName(name: string): Promise<SubscriptionPlan | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -58,9 +84,38 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db.insert(users)
       .values({
         ...insertUser,
-        subscription: "free",
+        subscription: subscriptionTiers.FREE,
+        dataLimit: 1073741824, // 1GB
+        dailyTimeLimit: 60, // 60 minutes
         createdAt: currentDate
       })
+      .returning();
+    return user;
+  }
+  
+  async updateUserSubscription(userId: number, subscription: string, expiryDate?: Date): Promise<User> {
+    const [user] = await db.update(users)
+      .set({
+        subscription,
+        subscriptionExpiryDate: expiryDate
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+  
+  async updateStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User> {
+    const [user] = await db.update(users)
+      .set({ stripeCustomerId })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+  
+  async updateStripeSubscriptionId(userId: number, stripeSubscriptionId: string): Promise<User> {
+    const [user] = await db.update(users)
+      .set({ stripeSubscriptionId })
+      .where(eq(users.id, userId))
       .returning();
     return user;
   }
@@ -73,6 +128,27 @@ export class DatabaseStorage implements IStorage {
   async getServerById(id: number): Promise<VpnServer | undefined> {
     const [server] = await db.select().from(vpnServers).where(eq(vpnServers.id, id));
     return server;
+  }
+  
+  async getAccessibleServers(userId: number): Promise<VpnServer[]> {
+    // Get user's subscription tier
+    const user = await this.getUser(userId);
+    if (!user) return [];
+    
+    // Get all servers first
+    const allServers = await this.getAllServers();
+    
+    // Filter based on subscription tier
+    if (user.subscription === subscriptionTiers.FREE || user.subscription === subscriptionTiers.BASIC) {
+      // Free and basic users can only access standard servers (not premium)
+      return allServers.filter(server => !server.premium);
+    } else if (user.subscription === subscriptionTiers.PREMIUM) {
+      // Premium users can access all servers
+      return allServers;
+    }
+    
+    // Ultimate users get all servers
+    return allServers;
   }
 
   // User settings methods
@@ -265,6 +341,74 @@ export class DatabaseStorage implements IStorage {
       totalData: totalUploaded + totalDownloaded,
       dailyData
     };
+  }
+  
+  async checkUserLimits(userId: number): Promise<{
+    dataUsed: number;
+    dataLimit: number;
+    timeUsedToday: number;
+    timeLimit: number;
+    isDataLimitReached: boolean;
+    isTimeLimitReached: boolean;
+  }> {
+    // Get user's data limit from their user record
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    // Get today's sessions
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const sessions = await db.select()
+      .from(vpnSessions)
+      .where(and(
+        eq(vpnSessions.userId, userId),
+        gte(vpnSessions.startTime, today)
+      ));
+    
+    // Calculate data used
+    let dataUsed = 0;
+    let timeUsedToday = 0; // in minutes
+    
+    for (const session of sessions) {
+      // Add data usage
+      if (session.dataUploaded) dataUsed += session.dataUploaded;
+      if (session.dataDownloaded) dataUsed += session.dataDownloaded;
+      
+      // Calculate session duration
+      const startTime = new Date(session.startTime);
+      const endTime = session.endTime ? new Date(session.endTime) : new Date();
+      const durationMs = endTime.getTime() - startTime.getTime();
+      const durationMinutes = Math.floor(durationMs / (1000 * 60));
+      
+      timeUsedToday += durationMinutes;
+    }
+    
+    return {
+      dataUsed,
+      dataLimit: user.dataLimit || 1073741824, // 1GB default
+      timeUsedToday,
+      timeLimit: user.dailyTimeLimit || 60, // 60 minutes default
+      isDataLimitReached: dataUsed >= (user.dataLimit || 1073741824),
+      isTimeLimitReached: timeUsedToday >= (user.dailyTimeLimit || 60)
+    };
+  }
+  
+  // Subscription plan methods
+  async getAllSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return await db.select().from(subscriptionPlans).orderBy(subscriptionPlans.priority);
+  }
+  
+  async getSubscriptionPlan(id: number): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+    return plan;
+  }
+  
+  async getSubscriptionPlanByName(name: string): Promise<SubscriptionPlan | undefined> {
+    const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.name, name));
+    return plan;
   }
 
   // Initialize server data if not already present
