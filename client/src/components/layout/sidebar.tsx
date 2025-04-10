@@ -32,77 +32,77 @@ export default function Sidebar() {
       
       <nav className="flex-grow p-5 space-y-1">
         <Link href="/">
-          <a className={`flex items-center px-4 py-3 rounded-lg ${
+          <div className={`flex items-center px-4 py-3 rounded-lg ${
             isActive('/') 
               ? 'bg-primary-900 text-white' 
               : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-          } transition-colors`}>
+          } transition-colors cursor-pointer`}>
             <LayoutDashboard className="mr-3 h-5 w-5" />
             <span>Dashboard</span>
-          </a>
+          </div>
         </Link>
         <Link href="/servers">
-          <a className={`flex items-center px-4 py-3 rounded-lg ${
+          <div className={`flex items-center px-4 py-3 rounded-lg ${
             isActive('/servers') 
               ? 'bg-primary-900 text-white' 
               : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-          } transition-colors`}>
+          } transition-colors cursor-pointer`}>
             <Map className="mr-3 h-5 w-5" />
             <span>Servers</span>
-          </a>
+          </div>
         </Link>
         <Link href="/settings">
-          <a className={`flex items-center px-4 py-3 rounded-lg ${
+          <div className={`flex items-center px-4 py-3 rounded-lg ${
             isActive('/settings') 
               ? 'bg-primary-900 text-white' 
               : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-          } transition-colors`}>
+          } transition-colors cursor-pointer`}>
             <Settings className="mr-3 h-5 w-5" />
             <span>Settings</span>
-          </a>
+          </div>
         </Link>
         <Link href="/account">
-          <a className={`flex items-center px-4 py-3 rounded-lg ${
+          <div className={`flex items-center px-4 py-3 rounded-lg ${
             isActive('/account') 
               ? 'bg-primary-900 text-white' 
               : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-          } transition-colors`}>
+          } transition-colors cursor-pointer`}>
             <User className="mr-3 h-5 w-5" />
             <span>Account</span>
-          </a>
+          </div>
         </Link>
         <Link href="/subscription">
-          <a className={`flex items-center px-4 py-3 rounded-lg ${
+          <div className={`flex items-center px-4 py-3 rounded-lg ${
             isActive('/subscription') 
               ? 'bg-primary-900 text-white' 
               : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-          } transition-colors`}>
+          } transition-colors cursor-pointer`}>
             <CreditCard className="mr-3 h-5 w-5" />
             <span>Subscription</span>
-          </a>
+          </div>
         </Link>
         <Link href="/support">
-          <a className={`flex items-center px-4 py-3 rounded-lg ${
+          <div className={`flex items-center px-4 py-3 rounded-lg ${
             isActive('/support') 
               ? 'bg-primary-900 text-white' 
               : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-          } transition-colors`}>
+          } transition-colors cursor-pointer`}>
             <HeadphonesIcon className="mr-3 h-5 w-5" />
             <span>Support</span>
-          </a>
+          </div>
         </Link>
         
         {/* Admin link - only visible to admin user */}
         {user?.id === 1 && (
           <Link href="/admin">
-            <a className={`flex items-center px-4 py-3 rounded-lg ${
+            <div className={`flex items-center px-4 py-3 rounded-lg ${
               isActive('/admin') 
                 ? 'bg-primary-900 text-white' 
                 : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-            } transition-colors`}>
+            } transition-colors cursor-pointer`}>
               <Lock className="mr-3 h-5 w-5" />
               <span>Admin Panel</span>
-            </a>
+            </div>
           </Link>
         )}
       </nav>
