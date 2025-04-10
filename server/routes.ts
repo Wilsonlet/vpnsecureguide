@@ -72,7 +72,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!session) {
         return res.status(404).json({ message: "No active session" });
       }
-      res.json(session);
+      
+      // Generate a virtual IP for the session (consistent for the same session ID)
+      const octet1 = 10; // Use private IP range
+      const octet2 = Math.floor((session.id * 13) % 255);
+      const octet3 = Math.floor((session.id * 17) % 255);
+      const octet4 = Math.floor((session.id * 23) % 255);
+      const virtualIp = `${octet1}.${octet2}.${octet3}.${octet4}`;
+      
+      res.json({
+        ...session,
+        virtualIp
+      });
     } catch (error) {
       next(error);
     }
@@ -93,7 +104,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create a new session
       const session = await storage.createSession(parsedData);
-      res.status(201).json(session);
+      
+      // Generate a virtual IP for the session
+      const octet1 = 10; // Use private IP range
+      const octet2 = Math.floor((session.id * 13) % 255);
+      const octet3 = Math.floor((session.id * 17) % 255);
+      const octet4 = Math.floor((session.id * 23) % 255);
+      const virtualIp = `${octet1}.${octet2}.${octet3}.${octet4}`;
+      
+      res.status(201).json({
+        ...session,
+        virtualIp
+      });
     } catch (error) {
       next(error);
     }

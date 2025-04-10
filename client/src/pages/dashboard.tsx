@@ -26,14 +26,33 @@ export default function Dashboard() {
     queryKey: ['/api/settings'],
   });
 
+  // Define type for current session with virtual IP
+  type CurrentSessionWithVirtualIp = {
+    id: number;
+    userId: number;
+    serverId: number;
+    protocol: string;
+    encryption: string;
+    startTime: string;
+    endTime: string | null;
+    dataUploaded: number;
+    dataDownloaded: number;
+    virtualIp: string;
+  };
+
   // Fetch current VPN session
-  const { data: currentSession, isLoading: isSessionLoading } = useQuery({
+  const { data: currentSession, isLoading: isSessionLoading } = useQuery<CurrentSessionWithVirtualIp>({
     queryKey: ['/api/sessions/current'],
     retry: false,
   });
 
   // Fetch usage statistics
-  const { data: usageStats } = useQuery({
+  const { data: usageStats } = useQuery<{
+    totalUploaded: number;
+    totalDownloaded: number;
+    totalData: number;
+    dailyData: { date: string; uploaded: number; downloaded: number; }[];
+  }>({
     queryKey: ['/api/usage', { period: '7days' }],
   });
 
@@ -55,13 +74,20 @@ export default function Dashboard() {
       if (server) {
         vpnState.connect({
           serverId: server.id,
-          protocol: currentSession.protocol ?? "openvpn",
-          encryption: currentSession.encryption ?? "aes-256-gcm",
+          protocol: currentSession.protocol,
+          encryption: currentSession.encryption,
           server
         });
+        
+        // Set the virtual IP if available
+        if (currentSession.virtualIp) {
+          vpnState.updateSettings({
+            virtualIp: currentSession.virtualIp
+          });
+        }
       }
     }
-  }, [settings, currentSession, servers, isSessionLoading]);
+  }, [settings, currentSession, servers, isSessionLoading, vpnState]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
