@@ -102,8 +102,10 @@ export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
   email: true,
+  firebaseId: true,
 }).extend({
-  email: z.string().email().optional()
+  email: z.string().email().optional(),
+  firebaseId: z.string().optional()
 });
 
 export const insertVpnServerSchema = createInsertSchema(vpnServers);

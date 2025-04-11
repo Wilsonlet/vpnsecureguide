@@ -22,7 +22,8 @@ export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  getUserByFirebaseId(firebaseId: string): Promise<User | undefined>;
+  createUser(user: InsertUser & { firebaseId?: string }): Promise<User>;
   getAllUsers(): Promise<User[]>;
   updateUserSubscription(userId: number, subscription: string, expiryDate?: Date): Promise<User>;
   updateStripeCustomerId(userId: number, stripeCustomerId: string): Promise<User>;
@@ -93,8 +94,13 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db.select().from(users).where(eq(users.username, username));
     return user;
   }
+  
+  async getUserByFirebaseId(firebaseId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.firebaseId, firebaseId));
+    return user;
+  }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: InsertUser & { firebaseId?: string }): Promise<User> {
     const currentDate = new Date();
     const [user] = await db.insert(users)
       .values({
