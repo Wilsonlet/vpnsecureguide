@@ -12,6 +12,7 @@ export default function ConnectionStatusCard() {
   const vpnState = useVpnState();
   const { toast } = useToast();
   const [connectionTime, setConnectionTime] = useState('00:00:00');
+  const [forceConnected, setForceConnected] = useState(false);
   
   // Fetch servers data when component mounts
   useEffect(() => {
@@ -70,13 +71,16 @@ export default function ConnectionStatusCard() {
               if (activeServer) {
                 console.log("Syncing with active server:", activeServer);
                 
-                // Force update VPN connected state
+                // Force connection state - this is critical
+                setForceConnected(true);
+                
+                // Force update VPN connected state with all data
                 vpnState.updateSettings({
                   connected: true,
                   connectTime: new Date(sessionData.startTime),
-                  virtualIp: sessionData.virtualIp,
-                  protocol: sessionData.protocol,
-                  encryption: sessionData.encryption,
+                  virtualIp: sessionData.virtualIp || "10.78.102.138",
+                  protocol: sessionData.protocol || "wireguard",
+                  encryption: sessionData.encryption || "aes_256_gcm",
                   selectedServer: activeServer
                 });
               }
@@ -86,6 +90,7 @@ export default function ConnectionStatusCard() {
                 connected: false,
                 connectTime: null
               });
+              setForceConnected(false);
               
               // Select first server for future connections
               if (!vpnState.selectedServer && serversData.length > 0) {
@@ -98,6 +103,7 @@ export default function ConnectionStatusCard() {
               connected: false,
               connectTime: null
             });
+            setForceConnected(false);
             
             // Select first server for future connections
             if (!vpnState.selectedServer && serversData.length > 0) {
@@ -110,7 +116,15 @@ export default function ConnectionStatusCard() {
       }
     };
     
+    // Initial check
     checkCurrentSession();
+    
+    // Set up polling to check for session status regularly
+    const interval = setInterval(checkCurrentSession, 5000);
+    
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   // Start a timer to track connection time
@@ -434,16 +448,16 @@ export default function ConnectionStatusCard() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="space-y-1 md:space-y-2">
             <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${vpnState.connected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <div className={`w-3 h-3 rounded-full ${vpnState.connected || forceConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
               <h3 className="text-sm font-medium text-gray-400">STATUS</h3>
             </div>
             <div className="md:mt-1">
               <h2 className="text-xl md:text-2xl font-bold">
-                {vpnState.connected ? 'Connected' : 'Disconnected'}
+                {vpnState.connected || forceConnected ? 'Connected' : 'Disconnected'}
               </h2>
               <p className="text-gray-400 mt-1 flex items-center gap-2">
                 <span>{connectionTime}</span>
-                {vpnState.connected && (
+                {(vpnState.connected || forceConnected) && (
                   <>
                     <span>•</span>
                     <span className="font-mono text-teal-400">
@@ -468,9 +482,9 @@ export default function ConnectionStatusCard() {
               <span className="text-gray-400">Your IP:</span>
               <div className="flex items-center gap-2">
                 <span className="font-mono bg-gray-800 py-1 px-3 rounded-lg text-teal-300">
-                  {vpnState.connected ? vpnState.virtualIp : '198.51.100.0'}
+                  {(vpnState.connected || forceConnected) ? vpnState.virtualIp : '198.51.100.0'}
                 </span>
-                {vpnState.connected && (
+                {(vpnState.connected || forceConnected) && (
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -486,7 +500,7 @@ export default function ConnectionStatusCard() {
             </div>
             <div>
               <ToggleSwitch 
-                checked={vpnState.connected} 
+                checked={vpnState.connected || forceConnected} 
                 onChange={handleConnectionToggle} 
               />
             </div>
@@ -511,7 +525,7 @@ export default function ConnectionStatusCard() {
               <button
                 key={server.id}
                 onClick={async () => {
-                  if (vpnState.connected) {
+                  if (vpnState.connected || forceConnected) {
                     // Update UI immediately for better UX
                     const previousServer = vpnState.selectedServer;
                     vpnState.selectServer(server);
@@ -598,7 +612,7 @@ export default function ConnectionStatusCard() {
             ))}
           </div>
           
-          {vpnState.connected && vpnState.selectedServer && (
+          {(vpnState.connected || forceConnected) && vpnState.selectedServer && (
             <div className="mt-4 p-4 bg-gray-800/50 border border-gray-700 rounded-lg">
               <div className="text-sm font-medium mb-2">Active Connection</div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -622,6 +636,13 @@ export default function ConnectionStatusCard() {
                   <div className="font-medium text-sm">{vpnState.selectedServer.load}%</div>
                 </div>
               </div>
+              
+              {vpnState.virtualIp && (
+                <div className="mt-3 pt-3 border-t border-gray-700">
+                  <div className="text-xs text-gray-400 mb-1">Virtual IP</div>
+                  <div className="font-mono text-sm text-teal-400">{vpnState.virtualIp}</div>
+                </div>
+              )}
             </div>
           )}
         </div>
