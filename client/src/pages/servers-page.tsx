@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
-import { VpnServer, ServerRegion, serverRegions } from '@shared/schema';
+import { VpnServer, ServerRegion, serverRegions, User } from '@shared/schema';
 import { useVpnState } from '@/lib/vpn-service.tsx';
 import { 
   Search, Filter, Activity, BarChart3, Globe, Shield, 
@@ -77,9 +77,10 @@ type ServerItemProps = {
   isSelected: boolean;
   isPremiumUser: boolean;
   onSelect: (server: VpnServer) => void;
+  user?: User;
 };
 
-function ServerItem({ server, isSelected, isPremiumUser, onSelect }: ServerItemProps) {
+function ServerItem({ server, isSelected, isPremiumUser, onSelect, user }: ServerItemProps) {
   return (
     <div 
       className={cn(
@@ -394,6 +395,7 @@ export default function ServersPage() {
                                 isSelected={vpnState.selectedServer?.id === server.id}
                                 isPremiumUser={isPremiumUser}
                                 onSelect={handleServerSelect}
+                                user={user}
                               />
                             ))}
                           </div>
@@ -409,6 +411,7 @@ export default function ServersPage() {
                             isSelected={vpnState.selectedServer?.id === server.id}
                             isPremiumUser={isPremiumUser}
                             onSelect={handleServerSelect}
+                            user={user}
                           />
                         ))}
                       </div>
