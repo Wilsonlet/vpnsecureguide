@@ -1,7 +1,7 @@
 import { 
-  User, InsertUser, VpnServer, VpnSession, VpnUserSettings, SubscriptionPlan,
-  InsertVpnSession, InsertVpnUserSettings, subscriptionTiers,
-  users, vpnServers, vpnSessions, vpnUserSettings, subscriptionPlans
+  User, InsertUser, VpnServer, VpnSession, VpnUserSettings, SubscriptionPlan, AppSetting,
+  InsertVpnSession, InsertVpnUserSettings, InsertAppSetting, subscriptionTiers,
+  users, vpnServers, vpnSessions, vpnUserSettings, subscriptionPlans, appSettings
 } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -423,6 +423,42 @@ export class DatabaseStorage implements IStorage {
   async getSubscriptionPlanByName(name: string): Promise<SubscriptionPlan | undefined> {
     const [plan] = await db.select().from(subscriptionPlans).where(eq(subscriptionPlans.name, name));
     return plan;
+  }
+
+  // App settings methods
+  async getAppSetting(key: string): Promise<AppSetting | undefined> {
+    const [setting] = await db.select().from(appSettings).where(eq(appSettings.key, key));
+    return setting;
+  }
+
+  async getAllAppSettings(): Promise<AppSetting[]> {
+    return await db.select().from(appSettings);
+  }
+
+  async setAppSetting(key: string, value: string, description?: string): Promise<AppSetting> {
+    const existing = await this.getAppSetting(key);
+    
+    if (existing) {
+      const [updated] = await db.update(appSettings)
+        .set({ 
+          value, 
+          description: description || existing.description,
+          updatedAt: new Date()
+        })
+        .where(eq(appSettings.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [newSetting] = await db.insert(appSettings)
+        .values({
+          key,
+          value,
+          description,
+          updatedAt: new Date()
+        })
+        .returning();
+      return newSetting;
+    }
   }
 
   // Initialize server data if not already present

@@ -461,6 +461,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // App settings endpoints
+  app.get("/api/app-settings", async (req, res, next) => {
+    try {
+      const settings = await storage.getAllAppSettings();
+      res.json(settings);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/app-settings/:key", async (req, res, next) => {
+    try {
+      const key = req.params.key;
+      const setting = await storage.getAppSetting(key);
+      
+      if (!setting) {
+        return res.status(404).json({ message: "Setting not found" });
+      }
+      
+      res.json(setting);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Admin endpoints
+  // Admin endpoint to update app settings
+  app.post("/api/admin/app-settings", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // In a real app, check for admin role
+      // For demo purposes, consider user with ID 1 as admin
+      if (req.user.id !== 1) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const { key, value, description } = req.body;
+      if (!key || value === undefined) {
+        return res.status(400).json({ message: "Key and value are required" });
+      }
+      
+      const setting = await storage.setAppSetting(key, value, description);
+      res.json(setting);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Admin endpoint to update Stripe price IDs
   app.post("/api/admin/update-price-ids", async (req, res, next) => {
     try {
