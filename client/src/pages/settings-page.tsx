@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
 import Header from '@/components/layout/header';
@@ -7,23 +7,30 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/use-auth';
 import { useVpnState } from '@/lib/vpn-service.tsx';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { VpnUserSettings } from '@shared/schema';
+import { VpnUserSettings, VpnServer } from '@shared/schema';
 
 export default function SettingsPage() {
   const { user } = useAuth();
   const vpnState = useVpnState();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isLoadingServers, setIsLoadingServers] = useState(false);
   
   // Fetch user VPN settings
   const { data: settings } = useQuery<VpnUserSettings>({
     queryKey: ['/api/settings'],
+  });
+  
+  // Fetch available servers
+  const { data: servers = [] } = useQuery<VpnServer[]>({
+    queryKey: ['/api/servers'],
   });
   
   // Initialize VPN state from server data on first load
@@ -39,6 +46,22 @@ export default function SettingsPage() {
       });
     }
   }, [settings, vpnState]);
+  
+  // Load servers into VPN state
+  useEffect(() => {
+    if (servers.length > 0 && (!vpnState.availableServers || vpnState.availableServers.length === 0)) {
+      vpnState.setAvailableServers(servers);
+    }
+  }, [servers, vpnState]);
+  
+  // Function to handle server selection
+  const handleSelectServer = (server: VpnServer) => {
+    vpnState.selectServer(server);
+    toast({
+      title: 'Server Selected',
+      description: `${server.name} (${server.country}) will be used for your next connection`,
+    });
+  };
   
   // Save settings to the server
   const handleSaveSettings = async () => {
@@ -168,7 +191,7 @@ export default function SettingsPage() {
             </TabsContent>
             
             <TabsContent value="connection">
-              <Card className="border border-gray-800 shadow-lg bg-gray-950">
+              <Card className="border border-gray-800 shadow-lg bg-gray-950 mb-6">
                 <CardHeader className="border-b border-gray-800">
                   <h3 className="text-lg font-medium">Connection Settings</h3>
                 </CardHeader>
@@ -226,6 +249,115 @@ export default function SettingsPage() {
                         checked={vpnState.dnsLeakProtection} 
                         onCheckedChange={(checked) => handleToggle('dnsLeakProtection', checked)} 
                       />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Server Selection Card */}
+              <Card className="border border-gray-800 shadow-lg bg-gray-950">
+                <CardHeader className="border-b border-gray-800">
+                  <h3 className="text-lg font-medium">Server Selection</h3>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-400">
+                      Choose a preferred server for your VPN connection. This server will be used for your next connection.
+                    </p>
+                  </div>
+                  
+                  {/* Current Server */}
+                  {vpnState.selectedServer && (
+                    <div className="mb-6 p-4 border border-gray-800 rounded-lg bg-gray-900">
+                      <h4 className="text-sm font-medium text-gray-400 mb-2">CURRENT SERVER</h4>
+                      <div className="flex items-center">
+                        <div className="flex-1">
+                          <p className="font-medium">{vpnState.selectedServer.name}</p>
+                          <p className="text-sm text-gray-400">{vpnState.selectedServer.country}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="text-xs bg-gray-800 rounded px-2 py-1">
+                            {vpnState.selectedServer.latency} ms
+                          </div>
+                          <div className="text-xs bg-gray-800 rounded px-2 py-1">
+                            {vpnState.selectedServer.load}% load
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Server List */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="font-medium">Available Servers</h4>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="bg-gray-800 border-gray-700 hover:bg-gray-700"
+                        onClick={() => {
+                          setIsLoadingServers(true);
+                          queryClient.invalidateQueries({ queryKey: ['/api/servers'] })
+                            .then(() => {
+                              toast({
+                                title: 'Servers Refreshed',
+                                description: 'The server list has been updated with the latest data',
+                              });
+                            })
+                            .finally(() => {
+                              setIsLoadingServers(false);
+                            });
+                        }}
+                        disabled={isLoadingServers}
+                      >
+                        {isLoadingServers ? 'Refreshing...' : 'Refresh'}
+                      </Button>
+                    </div>
+                    
+                    <div className="max-h-[350px] overflow-y-auto pr-2 -mr-2 space-y-2">
+                      {servers.length > 0 ? servers.map(server => (
+                        <div 
+                          key={server.id}
+                          className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                            vpnState.selectedServer?.id === server.id
+                              ? 'bg-primary/10 border-primary/30'
+                              : 'bg-gray-800 border-gray-700 hover:bg-gray-700'
+                          }`}
+                          onClick={() => handleSelectServer(server)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">{server.name}</p>
+                              <p className="text-sm text-gray-400">{server.country}, {server.city}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              {server.premium && (
+                                <span className="px-2 py-1 text-xs rounded bg-amber-900/30 text-amber-400 border border-amber-900">
+                                  Premium
+                                </span>
+                              )}
+                              <div className="text-sm bg-gray-700 rounded px-2">
+                                {server.latency} ms
+                              </div>
+                              <div className={`text-sm rounded px-2 ${
+                                (server.load || 0) < 30 
+                                  ? 'bg-green-900/30 text-green-400' 
+                                  : (server.load || 0) < 70 
+                                    ? 'bg-amber-900/30 text-amber-400' 
+                                    : 'bg-red-900/30 text-red-400'
+                              }`}>
+                                {server.load}%
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )) : (
+                        <div className="text-center p-8 text-gray-400">
+                          {isLoadingServers 
+                            ? 'Loading servers...' 
+                            : 'No servers available. Try refreshing the list.'}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
