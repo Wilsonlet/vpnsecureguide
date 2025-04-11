@@ -222,19 +222,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // End any existing session first
       await storage.endCurrentSession(userId);
       
-      // Make sure we don't have other active sessions by using SQL
+      // Make sure we don't have other active sessions using Drizzle ORM
       try {
-        const query = `
-          UPDATE vpn_sessions 
-          SET end_time = NOW()
-          WHERE user_id = $1 
-          AND end_time IS NULL
-        `;
-        
-        await db.execute(query, [userId]);
+        await db.update(vpnSessions)
+          .set({ endTime: new Date() })
+          .where(
+            and(
+              eq(vpnSessions.userId, userId),
+              isNull(vpnSessions.endTime)
+            )
+          );
         console.log("Ended all active sessions before creating a new one");
       } catch (sqlErr) {
-        console.error("Error ending active sessions with SQL:", sqlErr);
+        console.error("Error ending active sessions with ORM:", sqlErr);
       }
       
       // Validate request body
@@ -285,22 +285,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // This is a more aggressive approach to ensure all sessions are properly ended
       try {
         // No need to import here, we already imported at the top
-        // Use direct SQL query for more reliable session termination
+        // Use ORM for reliable session termination
         const endTime = new Date();
         
         try {
-          const query = `
-            UPDATE vpn_sessions 
-            SET end_time = $1
-            WHERE user_id = $2 
-            AND end_time IS NULL
-          `;
+          await db.update(vpnSessions)
+            .set({ endTime })
+            .where(
+              and(
+                eq(vpnSessions.userId, req.user.id),
+                isNull(vpnSessions.endTime)
+              )
+            );
           
-          await db.execute(query, [endTime.toISOString(), req.user.id]);
-          
-          console.log("SQL query executed to end all active sessions");
+          console.log("ORM update executed to end all active sessions");
         } catch (sqlErr) {
-          console.error("Raw SQL error:", sqlErr);
+          console.error("ORM error:", sqlErr);
         }
           
         console.log(`Force ended all VPN sessions for user ${req.user.id}`);
