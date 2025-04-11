@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import ToggleSwitch from '@/components/common/toggle-switch';
 import { useVpnState } from '@/lib/vpn-service.tsx';
 import { apiRequest } from '@/lib/queryClient';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { RefreshCw } from 'lucide-react';
 
 export default function ConnectionStatusCard() {
   const vpnState = useVpnState();
