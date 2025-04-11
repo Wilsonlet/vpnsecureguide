@@ -51,6 +51,36 @@ export default function ConnectionStatusCard() {
   const handleConnectionToggle = async (checked: boolean) => {
     try {
       if (checked) {
+        // First, make sure we have servers data
+        if (!vpnState.availableServers || vpnState.availableServers.length === 0) {
+          // Try to fetch servers if they're not available
+          try {
+            const res = await apiRequest('GET', '/api/servers');
+            if (res.ok) {
+              const serversData = await res.json();
+              if (Array.isArray(serversData) && serversData.length > 0) {
+                vpnState.setAvailableServers(serversData);
+                // Auto-select the first server
+                vpnState.selectServer(serversData[0]);
+                // Wait for state update
+                await new Promise(resolve => setTimeout(resolve, 100));
+              } else {
+                throw new Error("No servers available from API");
+              }
+            } else {
+              throw new Error("Failed to fetch VPN servers");
+            }
+          } catch (error) {
+            console.error("Server fetch error:", error);
+            toast({
+              title: 'Server Error',
+              description: 'Unable to fetch available VPN servers. Please refresh and try again.',
+              variant: 'destructive'
+            });
+            return;
+          }
+        }
+        
         // If no server is selected, use the first available one
         if (!vpnState.selectedServer && vpnState.availableServers.length > 0) {
           const firstServer = vpnState.availableServers[0];
@@ -111,7 +141,7 @@ export default function ConnectionStatusCard() {
         } else {
           toast({
             title: 'Connection Error',
-            description: 'No VPN servers available. Please try again later.',
+            description: 'No VPN servers available. Please refresh and try again.',
             variant: 'destructive'
           });
           return;

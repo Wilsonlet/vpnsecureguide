@@ -21,7 +21,13 @@ export default function ServerMap({ servers, className = '' }: ServerMapProps) {
       
       // Auto-select the first server if none is selected
       if (!vpnState.selectedServer) {
-        const bestServer = servers.find(s => s.load < 50 && s.latency < 100) || servers[0];
+        // Find a server with good performance or default to the first one
+        const bestServer = servers.find(server => {
+          const serverLoad = server.load ?? 100; // Default to 100% if null
+          const serverLatency = server.latency ?? 500; // Default to 500ms if null
+          return serverLoad < 50 && serverLatency < 100;
+        }) || servers[0];
+        
         vpnState.selectServer(bestServer);
       }
     }
