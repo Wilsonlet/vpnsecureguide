@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import ToggleSwitch from '@/components/common/toggle-switch';
@@ -282,13 +282,28 @@ export default function ConnectionStatusCard() {
     }
   };
   
-  // Handle connection toggle
+  // Add cooldown for toggle to prevent rapid state changes
+  const [isToggling, setIsToggling] = useState(false);
+  const lastToggleTime = useRef(0);
+  
+  // Main function to handle VPN connection toggle
   const handleConnectionToggle = async (checked: boolean) => {
+    // Only allow toggle every 1500ms (1.5 seconds) to prevent rapid state changes
+    const now = Date.now();
+    if (now - lastToggleTime.current < 1500 || isToggling) {
+      console.log("Toggle ignored - cooldown in effect");
+      return;
+    }
+    
+    // Update the last toggle time and toggle state
+    lastToggleTime.current = now;
+    setIsToggling(true);
+    
     try {
-      // First detect if we're in a forced connected state
+      // Determine current connection state using both flags
       const reallyConnected = vpnState.connected || forceConnected;
       
-      // Determine actual action - we need this check to properly handle the system state
+      // Determine actual action needed
       const shouldConnect = checked && !reallyConnected;
       const shouldDisconnect = !checked && reallyConnected;
       
@@ -340,6 +355,7 @@ export default function ConnectionStatusCard() {
               description: 'Unable to fetch available VPN servers. Please refresh and try again.',
               variant: 'destructive'
             });
+            setIsToggling(false);
             return;
           }
         }
@@ -362,34 +378,46 @@ export default function ConnectionStatusCard() {
             encryption: vpnState.encryption
           });
           
-          const res = await apiRequest('POST', '/api/sessions/start', {
-            serverId: serverToUse.id,
-            protocol: vpnState.protocol || 'wireguard',
-            encryption: vpnState.encryption || 'aes_256_gcm'
-          });
-          
-          if (res.ok) {
-            const sessionData = await res.json();
-            console.log("Session started:", sessionData);
-            
-            // Update VPN state with all session data
-            vpnState.updateSettings({
-              connected: true,
-              connectTime: new Date(sessionData.startTime),
-              virtualIp: sessionData.virtualIp || '10.78.102.138',
-              protocol: sessionData.protocol || 'wireguard',
-              encryption: sessionData.encryption || 'aes_256_gcm',
-              selectedServer: serverToUse
+          try {
+            const res = await apiRequest('POST', '/api/sessions/start', {
+              serverId: serverToUse.id,
+              protocol: vpnState.protocol || 'wireguard',
+              encryption: vpnState.encryption || 'aes_256_gcm'
             });
             
-            toast({
-              title: 'Connected',
-              description: `Successfully connected to ${serverToUse.name} (${serverToUse.country})`,
-            });
-            
-            // Refresh current session data
-            queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
-          } else {
+            if (res.ok) {
+              const sessionData = await res.json();
+              console.log("Session started:", sessionData);
+              
+              // Update VPN state with all session data
+              vpnState.updateSettings({
+                connected: true,
+                connectTime: new Date(sessionData.startTime),
+                virtualIp: sessionData.virtualIp || '10.78.102.138',
+                protocol: sessionData.protocol || 'wireguard',
+                encryption: sessionData.encryption || 'aes_256_gcm',
+                selectedServer: serverToUse
+              });
+              
+              toast({
+                title: 'Connected',
+                description: `Successfully connected to ${serverToUse.name} (${serverToUse.country})`,
+              });
+              
+              // Refresh current session data
+              queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
+            } else {
+              // Revert state on error
+              setForceConnected(false);
+              vpnState.updateSettings({
+                connected: false,
+                connectTime: null
+              });
+              
+              console.error("Failed to start session:", await res.text());
+              throw new Error("Failed to start VPN session");
+            }
+          } catch (error) {
             // Revert state on error
             setForceConnected(false);
             vpnState.updateSettings({
@@ -397,8 +425,7 @@ export default function ConnectionStatusCard() {
               connectTime: null
             });
             
-            console.error("Failed to start session:", await res.text());
-            throw new Error("Failed to start VPN session");
+            throw error;
           }
         } else {
           // Revert state on error
@@ -413,6 +440,7 @@ export default function ConnectionStatusCard() {
             description: 'No VPN servers available. Please refresh and try again.',
             variant: 'destructive'
           });
+          setIsToggling(false);
           return;
         }
       } else if (shouldDisconnect) {
@@ -424,34 +452,38 @@ export default function ConnectionStatusCard() {
         });
         
         // End the current VPN session
-        const res = await apiRequest('POST', '/api/sessions/end');
-        
-        if (res.ok) {
-          toast({
-            title: 'Disconnected',
-            description: 'VPN connection terminated successfully',
-          });
+        try {
+          const res = await apiRequest('POST', '/api/sessions/end');
           
-          // Refresh current session data
-          queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
-        } else {
-          console.error("Failed to end session:", await res.text());
-          
-          // If the session didn't actually end, do a full check
-          const sessionCheck = await apiRequest('GET', '/api/sessions/current');
-          if (sessionCheck.ok) {
-            const activeSession = await sessionCheck.json();
+          if (res.ok) {
+            toast({
+              title: 'Disconnected',
+              description: 'VPN connection terminated successfully',
+            });
             
-            // If there's still an active session, revert UI state
-            if (activeSession && activeSession.id && !activeSession.endTime) {
-              setForceConnected(true);
-              vpnState.updateSettings({
-                connected: true,
-                connectTime: new Date(activeSession.startTime)
-              });
-              throw new Error("Failed to end VPN session");
+            // Refresh current session data
+            queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
+          } else {
+            console.error("Failed to end session:", await res.text());
+            
+            // If the session didn't actually end, do a full check
+            const sessionCheck = await apiRequest('GET', '/api/sessions/current');
+            if (sessionCheck.ok) {
+              const activeSession = await sessionCheck.json();
+              
+              // If there's still an active session, revert UI state
+              if (activeSession && activeSession.id && !activeSession.endTime) {
+                setForceConnected(true);
+                vpnState.updateSettings({
+                  connected: true,
+                  connectTime: new Date(activeSession.startTime)
+                });
+                throw new Error("Failed to end VPN session");
+              }
             }
           }
+        } catch (error) {
+          throw error;
         }
       } else {
         // State is already in desired position, no change needed
@@ -467,6 +499,9 @@ export default function ConnectionStatusCard() {
         description: error instanceof Error ? error.message : 'Failed to manage VPN connection',
         variant: 'destructive'
       });
+    } finally {
+      // Always reset toggling state when done
+      setIsToggling(false);
     }
   };
 
@@ -517,7 +552,7 @@ export default function ConnectionStatusCard() {
                     variant="outline" 
                     size="sm" 
                     onClick={handleChangeIp}
-                    disabled={isChangingIp}
+                    disabled={isChangingIp || isToggling}
                     className="h-8 bg-gray-800 border-gray-700 hover:bg-gray-700"
                   >
                     <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isChangingIp ? 'animate-spin' : ''}`} />
@@ -529,7 +564,8 @@ export default function ConnectionStatusCard() {
             <div>
               <ToggleSwitch 
                 checked={vpnState.connected || forceConnected} 
-                onChange={handleConnectionToggle} 
+                onChange={handleConnectionToggle}
+                disabled={isToggling} 
               />
             </div>
           </div>
@@ -655,22 +691,31 @@ export default function ConnectionStatusCard() {
                 </div>
                 
                 <div>
-                  <div className="text-xs text-gray-400">Latency</div>
-                  <div className="font-medium text-sm text-green-500">{vpnState.selectedServer.latency} ms</div>
+                  <div className="text-xs text-gray-400">Protocol</div>
+                  <div className="font-medium text-sm">{
+                    vpnState.protocol === 'openvpn_tcp' 
+                      ? 'OpenVPN (TCP)' 
+                      : vpnState.protocol === 'openvpn_udp' 
+                        ? 'OpenVPN (UDP)' 
+                        : vpnState.protocol === 'wireguard' 
+                          ? 'WireGuard' 
+                          : vpnState.protocol === 'shadowsocks'
+                            ? 'Shadowsocks'
+                            : 'IKEv2/IPSec'
+                  }</div>
                 </div>
                 
                 <div>
-                  <div className="text-xs text-gray-400">Load</div>
-                  <div className="font-medium text-sm">{vpnState.selectedServer.load}%</div>
+                  <div className="text-xs text-gray-400">Encryption</div>
+                  <div className="font-medium text-sm">{
+                    vpnState.encryption === 'aes_256_gcm' 
+                      ? 'AES-256-GCM'
+                      : vpnState.encryption === 'chacha20_poly1305' 
+                        ? 'ChaCha20-Poly1305'
+                        : vpnState.encryption
+                  }</div>
                 </div>
               </div>
-              
-              {vpnState.virtualIp && (
-                <div className="mt-3 pt-3 border-t border-gray-700">
-                  <div className="text-xs text-gray-400 mb-1">Virtual IP</div>
-                  <div className="font-mono text-sm text-teal-400">{vpnState.virtualIp}</div>
-                </div>
-              )}
             </div>
           )}
         </div>
