@@ -112,8 +112,8 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       console.log("VPN Connect called with options:", options);
       
-      // Check if we're already attempting to connect
-      if (isConnectingRef.current) {
+      // Check if we're already attempting to connect (bypassed in development)
+      if (!isDevelopment && isConnectingRef.current) {
         console.warn("Connection already in progress, ignoring request");
         toast({
           title: "Connection in progress",
@@ -125,6 +125,12 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
           error: "Connection already in progress",
           inProgress: true
         });
+      }
+      
+      // In development mode, force reset the connecting flag to prevent issues
+      if (isDevelopment && isConnectingRef.current) {
+        console.log("[DEV] Resetting isConnectingRef that was stuck");
+        isConnectingRef.current = false;
       }
       
       // Check if we need to respect the cooldown period (bypassed in development)
@@ -376,8 +382,8 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       console.log("VPN Change IP called");
       
-      // Check if we're already attempting to connect
-      if (isConnectingRef.current) {
+      // Check if we're already attempting to connect (bypassed in development)
+      if (!isDevelopment && isConnectingRef.current) {
         console.warn("Connection already in progress, ignoring request");
         toast({
           title: "Connection in progress",
@@ -389,6 +395,12 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
           error: "Connection already in progress",
           inProgress: true
         });
+      }
+      
+      // In development mode, force reset the connecting flag to prevent issues
+      if (isDevelopment && isConnectingRef.current) {
+        console.log("[DEV] Resetting isConnectingRef that was stuck");
+        isConnectingRef.current = false;
       }
       
       // Check if we need to respect the cooldown period (bypassed in development)

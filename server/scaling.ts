@@ -164,14 +164,17 @@ export class ConnectionRateLimiter {
     reason?: string;
     retryAfter?: number;
   } {
+    // COMPLETE bypass for development/testing
+    if (process.env.NODE_ENV === 'development' || process.env.DEBUG_BYPASS_RATELIMIT === 'true') {
+      console.log("[DEBUG] Bypassing rate limiting completely in development mode");
+      return { allowed: true };
+    }
+    
     const now = Date.now();
     
     // Check if user recently disconnected (prevents rapid reconnects)
-    // In development, set DEBUG_BYPASS_RATELIMIT=true to bypass this check
-    const bypassRateLimits = process.env.NODE_ENV === 'development' || process.env.DEBUG_BYPASS_RATELIMIT === 'true';
-    
     const disconnectTime = this.disconnectTimes.get(userId) || 0;
-    if (!bypassRateLimits && now - disconnectTime < 1000) { // Reduced from 3000ms to 1000ms
+    if (now - disconnectTime < 1000) { // Reduced from 3000ms to 1000ms
       this.recordError(userId, "RECENT_DISCONNECT");
       return {
         allowed: false,
