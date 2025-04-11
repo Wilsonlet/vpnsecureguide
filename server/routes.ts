@@ -7,6 +7,7 @@ import { insertVpnSessionSchema, insertVpnUserSettingsSchema, subscriptionTiers,
 import { z } from "zod";
 import { eq, and, isNull } from "drizzle-orm";
 import Stripe from "stripe";
+import { vpnLoadBalancer, connectionRateLimiter, connectionStatistics } from "./scaling";
 
 // Initialize Stripe if the secret key is available
 let stripe: Stripe | undefined;
@@ -162,62 +163,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create a connection request limiter with a sliding window
-  const connectionRequestLimiter = new Map<number, number[]>();
-  
-  // Function to cleanup old requests
-  const cleanupConnectionRequests = () => {
-    const now = Date.now();
-    // Cleanup requests older than 5 seconds
-    connectionRequestLimiter.forEach((timestamps, userId) => {
-      const newTimestamps = timestamps.filter(timestamp => now - timestamp < 5000);
-      if (newTimestamps.length === 0) {
-        connectionRequestLimiter.delete(userId);
-      } else {
-        connectionRequestLimiter.set(userId, newTimestamps);
-      }
-    });
-  };
-  
-  // Run cleanup every minute
-  setInterval(cleanupConnectionRequests, 60000);
+  // Use the new connection rate limiter for scalable rate limiting
+  // The cleanup is now handled internally by the ConnectionRateLimiter class
   
   app.post("/api/sessions/start", async (req, res, next) => {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
       
       const userId = req.user.id;
-      const now = Date.now();
+      const userSubscription = req.user.subscription || 'free';
       
-      // Check if there's a recent disconnect flag set in session to prevent auto-reconnections
-      if (req.session && (req.session as any).vpnDisconnected) {
-        const disconnectTime = (req.session as any).vpnDisconnectTime || 0;
-        
-        // If disconnect happened recently (within 5 seconds), block reconnection attempt
-        if (now - disconnectTime < 5000) {
-          console.log(`Blocking reconnection attempt due to recent disconnect`);
-          return res.status(429).json({ 
-            message: "You've just disconnected. Please wait before reconnecting.",
-            disconnected: true
-          });
-        }
-      }
+      // Use the enhanced rate limiter that handles different subscription tiers
+      const rateCheck = connectionRateLimiter.canConnect(userId, userSubscription);
       
-      // Rate limit connection requests to maximum 3 in 5 seconds
-      const userRequests = connectionRequestLimiter.get(userId) || [];
-      const recentRequests = userRequests.filter(timestamp => now - timestamp < 5000);
-      
-      if (recentRequests.length >= 3) {
-        console.log(`Rate limiting connection attempts for user ${userId}: ${recentRequests.length} requests in last 5 seconds`);
-        return res.status(429).json({
-          message: "Too many connection attempts. Please slow down and try again in a few seconds.",
-          rateLimited: true
+      if (!rateCheck.allowed) {
+        const message = rateCheck.reason === "RECENT_DISCONNECT"
+          ? "You've just disconnected. Please wait a moment before reconnecting."
+          : "Too many connection attempts. Please slow down and try again in a few seconds.";
+          
+        console.log(`Rate limiting connection for user ${userId}: ${rateCheck.reason}`);
+        return res.status(429).json({ 
+          message,
+          reason: rateCheck.reason,
+          rateLimited: true 
         });
       }
-      
-      // Track this request
-      recentRequests.push(now);
-      connectionRequestLimiter.set(userId, recentRequests);
       
       // End any existing session first
       await storage.endCurrentSession(userId);
@@ -243,8 +213,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId
       });
       
+      // Get server ID from request
+      const serverId = parsedData.serverId;
+      
       // Create a new session
       const session = await storage.createSession(parsedData);
+      
+      // Track this connection in the statistics
+      connectionStatistics.recordConnection(serverId);
       
       // Clear any disconnect flags
       if (req.session) {
@@ -271,39 +247,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
       
-      // Call the storage endCurrentSession to properly end any active session
-      const session = await storage.endCurrentSession(req.user.id);
+      const userId = req.user.id;
       
-      // Set a flag to indicate disconnection on the user's session
-      if (req.session) {
-        // Use type declaration for the custom property
-        (req.session as any).vpnDisconnected = true;
-        (req.session as any).vpnDisconnectTime = Date.now();
+      // Get current session before ending it to retrieve server ID
+      const currentSession = await storage.getCurrentSession(userId);
+      
+      // Call the storage endCurrentSession to properly end any active session
+      const session = await storage.endCurrentSession(userId);
+      
+      // Record disconnection in our scaling rate limiter
+      connectionRateLimiter.recordDisconnect(userId);
+      
+      // Record disconnection in statistics if we had an active session
+      if (currentSession?.serverId) {
+        connectionStatistics.recordDisconnection(currentSession.serverId);
       }
       
       // End all active VPN sessions for this user with a SQL query
-      // This is a more aggressive approach to ensure all sessions are properly ended
       try {
-        // No need to import here, we already imported at the top
-        // Use ORM for reliable session termination
         const endTime = new Date();
         
-        try {
-          await db.update(vpnSessions)
-            .set({ endTime })
-            .where(
-              and(
-                eq(vpnSessions.userId, req.user.id),
-                isNull(vpnSessions.endTime)
-              )
-            );
-          
-          console.log("ORM update executed to end all active sessions");
-        } catch (sqlErr) {
-          console.error("ORM error:", sqlErr);
-        }
-          
-        console.log(`Force ended all VPN sessions for user ${req.user.id}`);
+        await db.update(vpnSessions)
+          .set({ endTime })
+          .where(
+            and(
+              eq(vpnSessions.userId, userId),
+              isNull(vpnSessions.endTime)
+            )
+          );
+        
+        console.log(`Force ended all VPN sessions for user ${userId}`);
       } catch (sqlError) {
         console.error("SQL error ending sessions:", sqlError);
         // Continue anyway since we'll return success
