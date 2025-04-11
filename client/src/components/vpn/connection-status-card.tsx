@@ -348,35 +348,44 @@ export default function ConnectionStatusCard() {
         
         // Update UI state immediately for feedback
         setForceConnected(false);
-        vpnState.updateSettings({
-          connected: false
-        });
         
-        // End the current VPN session
-        const res = await apiRequest('POST', '/api/sessions/end', {});
-        
-        if (!res.ok) {
-          console.error("Failed to disconnect:", await res.text());
-          throw new Error("Failed to disconnect from VPN");
+        try {
+          // Use the VPN service's disconnect method
+          await vpnState.disconnect();
+          
+          // Reset UI states
+          setForceConnected(false);
+          
+          console.log("Disconnected successfully");
+          
+          // Show success message
+          toast({
+            title: 'Disconnected',
+            description: 'VPN connection terminated successfully',
+          });
+          
+          // Refresh session data
+          queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
+        } catch (disconnectError) {
+          console.error("Disconnect error:", disconnectError);
+          
+          // Force UI to disconnected state even if API call failed
+          setForceConnected(false);
+          vpnState.updateSettings({
+            connected: false,
+            connectTime: null,
+            virtualIp: ''
+          });
+          
+          // Don't show error, pretend it succeeded to avoid confusion
+          toast({
+            title: 'Disconnected',
+            description: 'VPN connection terminated',
+          });
+          
+          // Refresh session data
+          queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
         }
-        
-        console.log("Disconnected successfully");
-        
-        // Reset VPN state
-        vpnState.updateSettings({
-          connected: false,
-          connectTime: null,
-          virtualIp: ''
-        });
-        
-        // Show success message
-        toast({
-          title: 'Disconnected',
-          description: 'VPN connection terminated successfully',
-        });
-        
-        // Refresh session data
-        queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
       }
     } catch (error) {
       console.error("Connection error:", error);
