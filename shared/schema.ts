@@ -75,6 +75,14 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   stripePriceId: text("stripe_price_id"), // For Stripe integration
 });
 
+export const appSettings = pgTable("app_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  description: text("description"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -98,12 +106,19 @@ export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans
   id: true,
 });
 
+export const insertAppSettingSchema = createInsertSchema(appSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type VpnServer = typeof vpnServers.$inferSelect;
 export type VpnSession = typeof vpnSessions.$inferSelect;
 export type VpnUserSettings = typeof vpnUserSettings.$inferSelect;
 export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type AppSetting = typeof appSettings.$inferSelect;
 export type InsertVpnSession = z.infer<typeof insertVpnSessionSchema>;
 export type InsertVpnUserSettings = z.infer<typeof insertVpnUserSettingsSchema>;
 export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+export type InsertAppSetting = z.infer<typeof insertAppSettingSchema>;

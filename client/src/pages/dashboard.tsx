@@ -91,6 +91,12 @@ export default function Dashboard() {
     }
   }, [settings, currentSession, servers, isSessionLoading, vpnState]);
 
+  // Load AdSense script when component mounts (only needs to be loaded once)
+  useEffect(() => {
+    // Replace 'YOUR_ADSENSE_ID' with your actual AdSense publisher ID
+    loadAdSenseScript('YOUR_ADSENSE_ID');
+  }, []);
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar for desktop */}
@@ -123,6 +129,13 @@ export default function Dashboard() {
             {/* Smart Mode & Split Tunneling */}
             <SmartModeCard />
           </div>
+          
+          {/* AdSense Banner for Free Users */}
+          <AdBanner 
+            adSlot="1234567890" 
+            format="horizontal" 
+            className="mt-6" 
+          />
         </div>
       </main>
       
