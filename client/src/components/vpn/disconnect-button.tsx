@@ -9,6 +9,7 @@ interface DisconnectButtonProps {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   className?: string;
+  disabled?: boolean;
   onDisconnectStart?: () => void;
   onDisconnectComplete?: () => void;
 }
@@ -17,6 +18,7 @@ export default function DisconnectButton({
   variant = 'destructive',
   size = 'sm',
   className = '',
+  disabled = false,
   onDisconnectStart,
   onDisconnectComplete,
 }: DisconnectButtonProps) {
@@ -24,9 +26,8 @@ export default function DisconnectButton({
   const vpnState = useVpnState();
   const { toast } = useToast();
   
-  if (!vpnState.connected) {
-    return null;
-  }
+  // Always display the disconnect button when requested
+  // No condition here to ensure users can always disconnect
   
   const handleDisconnect = async () => {
     if (isDisconnecting) return;
@@ -98,7 +99,7 @@ export default function DisconnectButton({
       size={size}
       className={className}
       onClick={handleDisconnect}
-      disabled={isDisconnecting}
+      disabled={isDisconnecting || disabled}
     >
       <PowerOff className={`h-4 w-4 mr-2 ${isDisconnecting ? 'animate-pulse' : ''}`} />
       {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}

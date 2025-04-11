@@ -570,36 +570,42 @@ export default function ConnectionStatusCard() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {(vpnState.connected || forceConnected) ? (
-                <DisconnectButton
-                  onDisconnectStart={() => {
-                    setIsToggling(true);
-                    // Update UI immediately for better responsiveness
-                    setForceConnected(false);
-                    vpnState.updateSettings({
-                      connected: false,
-                      connectTime: null,
-                      virtualIp: ''
-                    });
-                  }}
-                  onDisconnectComplete={() => {
-                    // Ensure we are disconnected
-                    setIsToggling(false);
-                    setForceConnected(false);
-                    queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
-                  }}
-                />
-              ) : (
-                <Button 
-                  onClick={() => handleConnectionToggle(true)}
-                  disabled={isToggling}
-                  variant="outline" 
-                  size="sm"
-                  className="bg-gradient-to-r from-blue-600 to-cyan-400 text-white font-medium px-4 h-9"
-                >
-                  {isToggling ? 'Connecting...' : 'Connect'}
-                </Button>
-              )}
+              {/* Always show BOTH connect and disconnect buttons, but style them differently based on state */}
+              <Button 
+                onClick={() => handleConnectionToggle(true)}
+                disabled={isToggling || (vpnState.connected || forceConnected)}
+                variant="outline" 
+                size="sm"
+                className={`${(vpnState.connected || forceConnected) ? 
+                  'bg-gray-700/50 text-gray-400 cursor-not-allowed' : 
+                  'bg-gradient-to-r from-blue-600 to-cyan-400 text-white font-medium'} px-4 h-9`}
+              >
+                {isToggling ? 'Connecting...' : 'Connect'}
+              </Button>
+              
+              <DisconnectButton
+                onDisconnectStart={() => {
+                  setIsToggling(true);
+                  // Update UI immediately for better responsiveness
+                  setForceConnected(false);
+                  vpnState.updateSettings({
+                    connected: false,
+                    connectTime: null,
+                    virtualIp: ''
+                  });
+                }}
+                onDisconnectComplete={() => {
+                  // Ensure we are disconnected
+                  setIsToggling(false);
+                  setForceConnected(false);
+                  queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
+                }}
+                // Disable if we're already disconnected
+                disabled={!(vpnState.connected || forceConnected)}
+                // Visually dim the button if disconnected
+                variant={!(vpnState.connected || forceConnected) ? "ghost" : "destructive"}
+                className={!(vpnState.connected || forceConnected) ? "text-gray-400" : ""}
+              />
             </div>
           </div>
         </div>
