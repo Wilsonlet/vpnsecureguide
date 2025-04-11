@@ -167,13 +167,16 @@ export class ConnectionRateLimiter {
     const now = Date.now();
     
     // Check if user recently disconnected (prevents rapid reconnects)
+    // In development, set DEBUG_BYPASS_RATELIMIT=true to bypass this check
+    const bypassRateLimits = process.env.NODE_ENV === 'development' || process.env.DEBUG_BYPASS_RATELIMIT === 'true';
+    
     const disconnectTime = this.disconnectTimes.get(userId) || 0;
-    if (now - disconnectTime < 3000) {
+    if (!bypassRateLimits && now - disconnectTime < 1000) { // Reduced from 3000ms to 1000ms
       this.recordError(userId, "RECENT_DISCONNECT");
       return {
         allowed: false,
         reason: "RECENT_DISCONNECT",
-        retryAfter: 3000 - (now - disconnectTime)
+        retryAfter: 1000 - (now - disconnectTime)
       };
     }
     
