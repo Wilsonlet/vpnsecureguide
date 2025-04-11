@@ -7,6 +7,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw } from 'lucide-react';
+import DisconnectButton from './disconnect-button';
 
 export default function ConnectionStatusCard() {
   const vpnState = useVpnState();

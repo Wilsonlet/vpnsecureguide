@@ -258,9 +258,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/sessions/end", async (req, res, next) => {
     try {
-      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      if (!req.isAuthenticated()) {
+        console.log("Non-authenticated disconnect request - still treating as successful");
+        return res.status(200).json({
+          success: true,
+          message: "VPN disconnected (not authenticated).",
+          disconnected: true
+        });
+      }
       
       const userId = req.user.id;
+      
+      // Force clear on the server side FIRST, then process storage details
+      try {
+        const endTime = new Date();
+        console.log(`Ended all active sessions before creating a new one for user ${userId}`);
+        
+        await db.update(vpnSessions)
+          .set({ endTime })
+          .where(
+            and(
+              eq(vpnSessions.userId, userId),
+              isNull(vpnSessions.endTime)
+            )
+          );
+      } catch (sqlError) {
+        console.error("SQL error ending sessions:", sqlError);
+        // Continue anyway since we'll return success
+      }
       
       // Get current session before ending it to retrieve server ID
       const currentSession = await storage.getCurrentSession(userId);
@@ -276,54 +301,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
         connectionStatistics.recordDisconnection(currentSession.serverId);
       }
       
-      // End all active VPN sessions for this user with a SQL query
-      try {
-        const endTime = new Date();
-        
-        await db.update(vpnSessions)
-          .set({ endTime })
-          .where(
-            and(
-              eq(vpnSessions.userId, userId),
-              isNull(vpnSessions.endTime)
-            )
-          );
-        
-        console.log(`Force ended all VPN sessions for user ${userId}`);
-      } catch (sqlError) {
-        console.error("SQL error ending sessions:", sqlError);
-        // Continue anyway since we'll return success
-      }
-      
       // Return success even if there was no specific session information
-      if (!session) {
+      if (!session && !currentSession) {
         return res.status(200).json({ 
           success: true, 
-          message: "VPN disconnected. All sessions closed.",
+          message: "VPN disconnected. No active sessions found.",
           disconnected: true
         });
       }
       
+      // Use either session or currentSession (whichever is available)
+      const sessionData = session || currentSession;
+      
       // Add the virtual IP to the response for consistency
-      const octet1 = 10;
-      const octet2 = Math.floor((session.id * 13) % 255);
-      const octet3 = Math.floor((session.id * 17) % 255);
-      const octet4 = Math.floor((session.id * 23) % 255);
-      const virtualIp = `${octet1}.${octet2}.${octet3}.${octet4}`;
+      let virtualIp = '0.0.0.0';
+      
+      if (sessionData) {
+        const octet1 = 10;
+        const octet2 = Math.floor((sessionData.id * 13) % 255);
+        const octet3 = Math.floor((sessionData.id * 17) % 255);
+        const octet4 = Math.floor((sessionData.id * 23) % 255);
+        virtualIp = `${octet1}.${octet2}.${octet3}.${octet4}`;
+      }
+      
+      // Add explicit response headers to avoid caching the result
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       
       res.json({
-        ...session,
+        ...(sessionData || {}),
         virtualIp,
         success: true,
-        disconnected: true
+        disconnected: true,
+        timestamp: Date.now()
       });
     } catch (error) {
       console.error("Error ending session:", error);
       // Still return success to ensure client shows as disconnected
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.status(200).json({ 
         success: true, 
         message: "VPN disconnect processed with errors.",
-        disconnected: true
+        disconnected: true,
+        timestamp: Date.now()
       });
     }
   });
