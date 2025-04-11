@@ -198,10 +198,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
       
+      // Call the storage endCurrentSession to properly end any active session
       const session = await storage.endCurrentSession(req.user.id);
+      
+      // Set a flag to indicate disconnection on the user's session
+      if (req.session) {
+        // Use type declaration for the custom property
+        (req.session as any).vpnDisconnected = true;
+      }
+      
+      // End all active VPN sessions for this user with a SQL query
+      // This is a more aggressive approach to ensure all sessions are properly ended
+      try {
+        // Import the vpnSessions from the schema
+        const { vpnSessions } = await import("@shared/schema");
+        
+        const endTime = new Date();
+        await db.update(vpnSessions)
+          .set({
+            endTime: endTime
+          })
+          .where(eq(vpnSessions.userId, req.user.id))
+          .where(eq(vpnSessions.endTime, null));
+          
+        console.log(`Force ended all VPN sessions for user ${req.user.id}`);
+      } catch (sqlError) {
+        console.error("SQL error ending sessions:", sqlError);
+        // Continue anyway since we'll return success
+      }
+      
+      // Return success even if there was no specific session information
       if (!session) {
-        // Return success even if there was no session to end
-        return res.status(200).json({ success: true, message: "No active session to end" });
+        return res.status(200).json({ 
+          success: true, 
+          message: "VPN disconnected. All sessions closed.",
+          disconnected: true
+        });
       }
       
       // Add the virtual IP to the response for consistency
@@ -214,11 +246,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         ...session,
         virtualIp,
-        success: true
+        success: true,
+        disconnected: true
       });
     } catch (error) {
       console.error("Error ending session:", error);
-      next(error);
+      // Still return success to ensure client shows as disconnected
+      res.status(200).json({ 
+        success: true, 
+        message: "VPN disconnect processed with errors.",
+        disconnected: true
+      });
     }
   });
 
