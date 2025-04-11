@@ -49,6 +49,63 @@ export default function ConnectionStatusCard() {
     };
   }, [vpnState.connected, vpnState.connectTime]);
   
+  // Function to change IP address
+  const [isChangingIp, setIsChangingIp] = useState(false);
+  
+  const handleChangeIp = async () => {
+    if (!vpnState.connected || !vpnState.selectedServer) {
+      toast({
+        title: "Not Connected",
+        description: "You must be connected to a VPN server to change your IP.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsChangingIp(true);
+    
+    try {
+      // End current session and start a new one with the same server
+      await apiRequest('POST', '/api/sessions/end', {});
+      
+      const res = await apiRequest('POST', '/api/sessions/start', {
+        serverId: vpnState.selectedServer.id,
+        protocol: vpnState.protocol,
+        encryption: vpnState.encryption
+      });
+      
+      if (!res.ok) {
+        throw new Error('Failed to change IP address');
+      }
+      
+      const sessionData = await res.json();
+      console.log('Session restarted with new IP:', sessionData);
+      
+      // Update the IP in the state
+      vpnState.updateSettings({
+        virtualIp: sessionData.virtualIp || `10.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+        connectTime: new Date()
+      });
+      
+      toast({
+        title: "IP Changed",
+        description: "Your virtual IP address has been successfully updated.",
+      });
+      
+      // Refresh current session data
+      queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
+    } catch (error) {
+      console.error('IP change error:', error);
+      toast({
+        title: "IP Change Failed",
+        description: error instanceof Error ? error.message : 'Failed to change IP address',
+        variant: "destructive"
+      });
+    } finally {
+      setIsChangingIp(false);
+    }
+  };
+  
   // Handle connection toggle
   const handleConnectionToggle = async (checked: boolean) => {
     try {
@@ -214,9 +271,23 @@ export default function ConnectionStatusCard() {
           <div className="flex flex-col md:items-end gap-2 md:gap-3">
             <div className="flex items-center gap-3">
               <span className="text-gray-400">Your IP:</span>
-              <span className="font-mono bg-gray-800 py-1 px-3 rounded-lg text-teal-300">
-                {vpnState.connected ? vpnState.virtualIp : '198.51.100.0'}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono bg-gray-800 py-1 px-3 rounded-lg text-teal-300">
+                  {vpnState.connected ? vpnState.virtualIp : '198.51.100.0'}
+                </span>
+                {vpnState.connected && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleChangeIp}
+                    disabled={isChangingIp}
+                    className="h-8 bg-gray-800 border-gray-700 hover:bg-gray-700"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isChangingIp ? 'animate-spin' : ''}`} />
+                    Change IP
+                  </Button>
+                )}
+              </div>
             </div>
             <div>
               <ToggleSwitch 
