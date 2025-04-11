@@ -181,7 +181,7 @@ export default function ConnectionStatusCard() {
         toast({
           title: "Not Connected",
           description: "You must be connected to change your IP address",
-          variant: "destructive"
+          variant: "default"
         });
         return;
       }
@@ -199,7 +199,17 @@ export default function ConnectionStatusCard() {
       }
       
       // Use the VPN service's changeIp method
-      const newSessionData = await vpnState.changeIp();
+      const result = await vpnState.changeIp();
+      
+      // Check if this is a cooldown or in-progress response
+      if (result && typeof result === 'object' && 'success' in result && !result.success) {
+        // Already displayed toast messages in vpn-service.tsx
+        console.log("IP change delayed or blocked:", result.error);
+        return;
+      }
+      
+      // This is a normal session data response
+      const newSessionData = result;
       
       // Force UI update to show connected state
       setForceConnected(true);
@@ -556,9 +566,42 @@ export default function ConnectionStatusCard() {
               <button
                 key={server.id}
                 onClick={async () => {
+                  // Check if we're toggling - prevent multiple operations
+                  if (connectionInProgress.current || isToggling) {
+                    console.log("Connection operation already in progress, ignoring server change");
+                    toast({
+                      title: "Connection in progress",
+                      description: "Please wait while the current operation completes",
+                      variant: "default"
+                    });
+                    return;
+                  }
+                  
+                  // Implement a cooldown to prevent rapid server changes
+                  const now = Date.now();
+                  const timeSinceLastToggle = now - lastToggleTime.current;
+                  const cooldownPeriod = 5000; // 5 second cooldown
+                  
+                  if (timeSinceLastToggle < cooldownPeriod) {
+                    const remainingSeconds = Math.ceil((cooldownPeriod - timeSinceLastToggle) / 1000);
+                    console.log(`Server change cooldown in effect, please wait ${remainingSeconds} seconds`);
+                    
+                    toast({
+                      title: "Connection cooldown",
+                      description: `Please wait ${remainingSeconds} seconds before changing servers`,
+                      variant: "default"
+                    });
+                    return;
+                  }
+                  
                   if (vpnState.connected || forceConnected) {
                     // Update UI immediately for better UX
                     const previousServer = vpnState.selectedServer;
+                    
+                    // Set state for in-progress operation
+                    connectionInProgress.current = true;
+                    lastToggleTime.current = now;
+                    setIsToggling(true);
                     
                     // Save the server
                     vpnState.selectServer(server);
@@ -583,9 +626,30 @@ export default function ConnectionStatusCard() {
                       });
                       
                       if (!startRes.ok) {
-                        const errorText = await startRes.text();
-                        console.error("Failed to start new session:", errorText);
-                        throw new Error("Failed to connect to selected server");
+                        // Check if this is a rate limiting response
+                        if (startRes.status === 429) {
+                          try {
+                            const errorData = await startRes.json();
+                            toast({
+                              title: "Connection limit reached",
+                              description: errorData.message || "Please wait before connecting again",
+                              variant: "default"
+                            });
+                            
+                            // Restore previous server selection
+                            vpnState.selectServer(previousServer);
+                            return;
+                          } catch (parseError) {
+                            // If we can't parse the JSON, fallback to generic error handling
+                            const errorText = await startRes.text();
+                            console.error("Failed to start new session:", errorText);
+                            throw new Error("Failed to connect to selected server");
+                          }
+                        } else {
+                          const errorText = await startRes.text();
+                          console.error("Failed to start new session:", errorText);
+                          throw new Error("Failed to connect to selected server");
+                        }
                       }
                       
                       const sessionData = await startRes.json();
@@ -624,6 +688,12 @@ export default function ConnectionStatusCard() {
                         description: error instanceof Error ? error.message : 'Failed to change server',
                         variant: 'destructive'
                       });
+                    } finally {
+                      // Clean up connection state
+                      setIsToggling(false);
+                      setTimeout(() => {
+                        connectionInProgress.current = false;
+                      }, 500);
                     }
                   } else {
                     // Just select the server for when the user connects
