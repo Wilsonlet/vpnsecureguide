@@ -3,9 +3,9 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { db } from "./db";
-import { insertVpnSessionSchema, insertVpnUserSettingsSchema, subscriptionTiers, subscriptionPlans, VpnServer } from "@shared/schema";
+import { insertVpnSessionSchema, insertVpnUserSettingsSchema, subscriptionTiers, subscriptionPlans, vpnSessions, VpnServer } from "@shared/schema";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import Stripe from "stripe";
 
 // Initialize Stripe if the secret key is available
@@ -166,6 +166,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
       
+      // Check if there's a recent disconnect flag set in session to prevent auto-reconnections
+      if (req.session && (req.session as any).vpnDisconnected) {
+        const disconnectTime = (req.session as any).vpnDisconnectTime || 0;
+        const now = Date.now();
+        
+        // If disconnect happened recently (within 5 seconds), block reconnection attempt
+        if (now - disconnectTime < 5000) {
+          console.log(`Blocking reconnection attempt due to recent disconnect`);
+          return res.status(429).json({ 
+            message: "You've just disconnected. Please wait before reconnecting.",
+            disconnected: true
+          });
+        }
+      }
+      
       // End any existing session first
       await storage.endCurrentSession(req.user.id);
       
@@ -177,6 +192,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create a new session
       const session = await storage.createSession(parsedData);
+      
+      // Clear any disconnect flags
+      if (req.session) {
+        (req.session as any).vpnDisconnected = false;
+      }
       
       // Generate a virtual IP for the session
       const octet1 = 10; // Use private IP range
@@ -205,21 +225,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.session) {
         // Use type declaration for the custom property
         (req.session as any).vpnDisconnected = true;
+        (req.session as any).vpnDisconnectTime = Date.now();
       }
       
       // End all active VPN sessions for this user with a SQL query
       // This is a more aggressive approach to ensure all sessions are properly ended
       try {
-        // Import the vpnSessions from the schema
-        const { vpnSessions } = await import("@shared/schema");
-        
+        // No need to import here, we already imported at the top
+        // Use direct SQL query for more reliable session termination
         const endTime = new Date();
-        await db.update(vpnSessions)
-          .set({
-            endTime: endTime
-          })
-          .where(eq(vpnSessions.userId, req.user.id))
-          .where(eq(vpnSessions.endTime, null));
+        
+        try {
+          const query = `
+            UPDATE vpn_sessions 
+            SET end_time = $1
+            WHERE user_id = $2 
+            AND end_time IS NULL
+          `;
+          
+          await db.execute(query, [endTime.toISOString(), req.user.id]);
+          
+          console.log("SQL query executed to end all active sessions");
+        } catch (sqlErr) {
+          console.error("Raw SQL error:", sqlErr);
+        }
           
         console.log(`Force ended all VPN sessions for user ${req.user.id}`);
       } catch (sqlError) {

@@ -226,13 +226,13 @@ export default function ServersPage() {
             matchesType = !server.premium && !server.obfuscated && !server.double_hop;
             break;
           case 'premium':
-            matchesType = server.premium;
+            matchesType = Boolean(server.premium);
             break;
           case 'obfuscated':
-            matchesType = server.obfuscated;
+            matchesType = Boolean(server.obfuscated);
             break;
           case 'double_hop':
-            matchesType = server.double_hop;
+            matchesType = Boolean(server.double_hop);
             break;
         }
       }
