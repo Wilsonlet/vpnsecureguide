@@ -647,6 +647,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+  
+  // Admin endpoint to get all servers including disabled ones
+  app.get("/api/admin/servers", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // In a real app, check for admin role
+      // For demo purposes, consider user with ID 1 as admin
+      if (req.user.id !== 1) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // In real app, you'd have proper admin-only access to all servers
+      // including servers that might be disabled for regular users
+      const servers = await storage.getAllServers();
+      res.json(servers);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Admin endpoint to get global monitoring data
+  app.get("/api/admin/monitoring", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // In a real app, check for admin role
+      // For demo purposes, consider user with ID 1 as admin
+      if (req.user.id !== 1) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // Get comprehensive monitoring data
+      const globalStats = connectionStatistics.getGlobalStats();
+      const rateMetrics = connectionRateLimiter.getGlobalErrorMetrics();
+      
+      res.json({
+        timestamp: new Date().toISOString(),
+        connectionStats: globalStats,
+        rateMetrics,
+        // Include server health data
+        servers: await Promise.all(
+          (await storage.getAllServers()).map(async server => {
+            return {
+              ...server,
+              stats: connectionStatistics.getServerStats(server.id)
+            };
+          })
+        )
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Admin endpoint to get error logs
+  app.get("/api/admin/error-logs", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // In a real app, check for admin role
+      // For demo purposes, consider user with ID 1 as admin
+      if (req.user.id !== 1) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      // Get hours parameter with default of 24 hours
+      const hours = parseInt(req.query.hours as string) || 24;
+      
+      // Get error logs for specified time period
+      const logs = connectionStatistics.getRecentErrorLogs(hours);
+      
+      res.json({
+        timestamp: new Date().toISOString(),
+        period: `${hours} hours`,
+        totalErrors: logs.length,
+        logs
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Admin endpoint to configure monitoring alerts
+  app.post("/api/admin/configure-alerts", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // In a real app, check for admin role
+      // For demo purposes, consider user with ID 1 as admin
+      if (req.user.id !== 1) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const { webhookUrl, slackWebhook } = req.body;
+      
+      // Store webhook URLs for alerts
+      if (webhookUrl) {
+        connectionStatistics.addAlertWebhook(webhookUrl);
+      }
+      
+      // For Slack integration 
+      if (slackWebhook && process.env.SLACK_BOT_TOKEN && process.env.SLACK_CHANNEL_ID) {
+        // In a real implementation, this would store the Slack webhook configuration
+        // and use it to send alerts
+        await storage.setAppSetting('monitoring_slack_webhook', slackWebhook);
+        
+        connectionStatistics.addAlertWebhook('slack://internal'); // Special internal protocol
+        
+        res.json({
+          success: true,
+          message: "Alert configuration updated successfully",
+          slackIntegration: true,
+          webhooks: [webhookUrl, 'slack://internal'].filter(Boolean)
+        });
+      } else {
+        res.json({
+          success: true,
+          message: "Alert configuration updated successfully",
+          slackIntegration: false,
+          webhooks: [webhookUrl].filter(Boolean)
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
 
   // Admin endpoint to update Stripe price IDs
   app.post("/api/admin/update-price-ids", async (req, res, next) => {
