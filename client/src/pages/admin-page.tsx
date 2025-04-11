@@ -199,7 +199,7 @@ export default function AdminPage() {
       const response = await apiRequest('POST', '/api/admin/update-user-subscription', { 
         userId, 
         subscription,
-        expiryDate
+        expiryDate // Server will convert this to subscriptionExpiryDate
       });
       
       if (!response.ok) {
