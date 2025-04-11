@@ -40,6 +40,56 @@ export default function ConnectionStatusCard() {
     loadServersIfNeeded();
   }, []);
 
+  // Check current session status from API when component mounts
+  useEffect(() => {
+    const checkCurrentSession = async () => {
+      try {
+        const res = await apiRequest('GET', '/api/sessions/current');
+        if (res.ok) {
+          const sessionData = await res.json();
+          
+          if (sessionData && !sessionData.endTime) {
+            console.log("Found active session:", sessionData);
+            
+            // Fetch server details for the active session
+            if (sessionData.serverId && (!vpnState.selectedServer || vpnState.selectedServer.id !== sessionData.serverId)) {
+              try {
+                const serverRes = await apiRequest('GET', `/api/servers`);
+                if (serverRes.ok) {
+                  const serversData = await serverRes.json();
+                  const activeServer = serversData.find((s: any) => s.id === sessionData.serverId);
+                  
+                  if (activeServer) {
+                    // Update VPN state with active session
+                    vpnState.connect({
+                      serverId: sessionData.serverId,
+                      protocol: sessionData.protocol || vpnState.protocol,
+                      encryption: sessionData.encryption || vpnState.encryption,
+                      server: activeServer
+                    });
+                    
+                    if (sessionData.virtualIp) {
+                      vpnState.updateSettings({
+                        virtualIp: sessionData.virtualIp,
+                        connectTime: new Date(sessionData.startTime)
+                      });
+                    }
+                  }
+                }
+              } catch (error) {
+                console.error("Error fetching server data:", error);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error checking current session:", error);
+      }
+    };
+    
+    checkCurrentSession();
+  }, []);
+
   // Start a timer to track connection time
   useEffect(() => {
     let timer: NodeJS.Timeout;

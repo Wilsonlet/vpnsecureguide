@@ -98,44 +98,48 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     encryption: string;
     server: VpnServer;
   }) => {
-    setState({
-      ...state,
+    // Use the existing virtualIp if already set by updateSettings
+    // This prevents the UI from displaying a random IP that differs from the one
+    // assigned by the server
+    setState((currentState) => ({
+      ...currentState,
       connected: true,
-      connectTime: new Date(),
+      connectTime: currentState.connectTime || new Date(),
       protocol: options.protocol,
       encryption: options.encryption,
       selectedServer: options.server,
-      virtualIp: generateRandomIp(),
-    });
+      // Only generate a random IP if there isn't one already set
+      virtualIp: currentState.virtualIp || generateRandomIp(),
+    }));
   };
 
   const disconnect = () => {
-    setState({
-      ...state,
+    setState(currentState => ({
+      ...currentState,
       connected: false,
       connectTime: null,
-    });
+    }));
   };
 
   const updateSettings = (settings: Partial<VpnConnectionState>) => {
-    setState({
-      ...state,
+    setState(currentState => ({
+      ...currentState,
       ...settings,
-    });
+    }));
   };
 
   const selectServer = (server: VpnServer) => {
-    setState({
-      ...state,
+    setState(currentState => ({
+      ...currentState,
       selectedServer: server,
-    });
+    }));
   };
 
   const setAvailableServers = (servers: VpnServer[]) => {
-    setState({
-      ...state,
+    setState(currentState => ({
+      ...currentState,
       availableServers: servers,
-    });
+    }));
   };
 
   return (
