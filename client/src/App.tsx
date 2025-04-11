@@ -14,6 +14,7 @@ import SettingsPage from "@/pages/settings-page";
 import SupportPage from "@/pages/support-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
+import { FirebaseAuthProvider } from "./hooks/use-firebase-auth";
 import { VpnStateProvider } from "./lib/vpn-service";
 import { AdSenseScript } from "./components/ads/adsense-script";
 
@@ -38,13 +39,15 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <VpnStateProvider>
-          <Router />
-          <Toaster />
-          <AdSenseScript />
-        </VpnStateProvider>
-      </AuthProvider>
+      <FirebaseAuthProvider>
+        <AuthProvider>
+          <VpnStateProvider>
+            <Router />
+            <Toaster />
+            <AdSenseScript />
+          </VpnStateProvider>
+        </AuthProvider>
+      </FirebaseAuthProvider>
     </QueryClientProvider>
   );
 }

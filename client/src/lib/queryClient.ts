@@ -12,11 +12,26 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // Get Firebase token if available
+  const authToken = localStorage.getItem("authToken");
+  
+  // Prepare headers
+  const headers: Record<string, string> = {};
+  
+  if (data) {
+    headers["Content-Type"] = "application/json";
+  }
+  
+  // Add Firebase ID token if available
+  if (authToken) {
+    headers["Authorization"] = `Bearer ${authToken}`;
+  }
+  
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
+    credentials: "include", // Keep cookies for session fallback
   });
 
   await throwIfResNotOk(res);
@@ -29,8 +44,20 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Get Firebase token if available
+    const authToken = localStorage.getItem("authToken");
+    
+    // Prepare headers
+    const headers: Record<string, string> = {};
+    
+    // Add Firebase ID token if available
+    if (authToken) {
+      headers["Authorization"] = `Bearer ${authToken}`;
+    }
+    
     const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
+      headers,
+      credentials: "include", // Keep cookies for session fallback
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
