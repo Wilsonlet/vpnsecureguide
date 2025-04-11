@@ -31,7 +31,7 @@ export default function Sidebar() {
       </div>
       
       <nav className="flex-grow p-5 space-y-1">
-        <Link href="/">
+        <Link to="/">
           <div className={`flex items-center px-4 py-3 rounded-lg ${
             isActive('/') 
               ? 'bg-primary-900 text-white' 
@@ -41,7 +41,7 @@ export default function Sidebar() {
             <span>Dashboard</span>
           </div>
         </Link>
-        <Link href="/servers">
+        <Link to="/servers">
           <div className={`flex items-center px-4 py-3 rounded-lg ${
             isActive('/servers') 
               ? 'bg-primary-900 text-white' 
@@ -51,7 +51,7 @@ export default function Sidebar() {
             <span>Servers</span>
           </div>
         </Link>
-        <Link href="/settings">
+        <Link to="/settings">
           <div className={`flex items-center px-4 py-3 rounded-lg ${
             isActive('/settings') 
               ? 'bg-primary-900 text-white' 
@@ -61,7 +61,7 @@ export default function Sidebar() {
             <span>Settings</span>
           </div>
         </Link>
-        <Link href="/account">
+        <Link to="/account">
           <div className={`flex items-center px-4 py-3 rounded-lg ${
             isActive('/account') 
               ? 'bg-primary-900 text-white' 
@@ -71,7 +71,7 @@ export default function Sidebar() {
             <span>Account</span>
           </div>
         </Link>
-        <Link href="/subscription">
+        <Link to="/subscription">
           <div className={`flex items-center px-4 py-3 rounded-lg ${
             isActive('/subscription') 
               ? 'bg-primary-900 text-white' 
@@ -81,7 +81,7 @@ export default function Sidebar() {
             <span>Subscription</span>
           </div>
         </Link>
-        <Link href="/support">
+        <Link to="/support">
           <div className={`flex items-center px-4 py-3 rounded-lg ${
             isActive('/support') 
               ? 'bg-primary-900 text-white' 
@@ -94,7 +94,7 @@ export default function Sidebar() {
         
         {/* Admin link - only visible to admin user */}
         {user?.id === 1 && (
-          <Link href="/admin">
+          <Link to="/admin">
             <div className={`flex items-center px-4 py-3 rounded-lg ${
               isActive('/admin') 
                 ? 'bg-primary-900 text-white' 
@@ -122,7 +122,7 @@ export default function Sidebar() {
             </div>
             <Progress value={65} className="h-2" />
           </div>
-          <Link href="/subscription">
+          <Link to="/subscription">
             <Button 
               variant="default" 
               className="w-full mt-2 py-2 px-4 bg-primary-700 hover:bg-primary-800 text-white text-sm rounded-lg"

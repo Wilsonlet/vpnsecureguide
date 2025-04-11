@@ -19,8 +19,10 @@ export default function AdminPage() {
   const [location, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('stripe');
   const [stripePriceIds, setStripePriceIds] = useState<Record<number, string>>({});
+  const [paystackPlanCodes, setPaystackPlanCodes] = useState<Record<number, string>>({});
   const [adsenseId, setAdsenseId] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingPaystack, setIsEditingPaystack] = useState(false);
   const [isEditingAdsense, setIsEditingAdsense] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 

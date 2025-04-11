@@ -66,25 +66,25 @@ export default function Header({ username }: HeaderProps) {
                   <div className="text-xs text-muted-foreground">{user?.email || "No email set"}</div>
                 </div>
                 <DropdownMenuSeparator />
-                <Link href="/account">
+                <Link to="/account">
                   <DropdownMenuItem className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     <span>Account Settings</span>
                   </DropdownMenuItem>
                 </Link>
-                <Link href="/subscription">
+                <Link to="/subscription">
                   <DropdownMenuItem className="cursor-pointer">
                     <CreditCard className="mr-2 h-4 w-4" />
                     <span>Subscription</span>
                   </DropdownMenuItem>
                 </Link>
-                <Link href="/settings">
+                <Link to="/settings">
                   <DropdownMenuItem className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>VPN Settings</span>
                   </DropdownMenuItem>
                 </Link>
-                <Link href="/support">
+                <Link to="/support">
                   <DropdownMenuItem className="cursor-pointer">
                     <HelpCircle className="mr-2 h-4 w-4" />
                     <span>Help & Support</span>
@@ -94,7 +94,7 @@ export default function Header({ username }: HeaderProps) {
                 {user?.id === 1 && (
                   <>
                     <DropdownMenuSeparator />
-                    <Link href="/admin">
+                    <Link to="/admin">
                       <DropdownMenuItem className="cursor-pointer">
                         <Lock className="mr-2 h-4 w-4" />
                         <span>Admin Panel</span>
