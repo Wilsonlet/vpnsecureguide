@@ -25,16 +25,29 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const serverRegions = {
+  EUROPE: "Europe",
+  NORTH_AMERICA: "North America",
+  ASIA_PACIFIC: "Asia Pacific",
+  AFRICA: "Africa",
+  MIDDLE_EAST: "Middle East",
+} as const;
+
+export type ServerRegion = typeof serverRegions[keyof typeof serverRegions];
+
 export const vpnServers = pgTable("vpn_servers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   country: text("country").notNull(),
   city: text("city").notNull(),
   ip: text("ip").notNull(),
+  region: text("region").notNull().default(serverRegions.EUROPE),
   latency: integer("latency").default(0),
   load: integer("load").default(0),
   online: boolean("online").default(true),
   premium: boolean("premium").default(false),
+  obfuscated: boolean("obfuscated").default(false),
+  double_hop: boolean("double_hop").default(false),
 });
 
 export const vpnSessions = pgTable("vpn_sessions", {
