@@ -71,7 +71,23 @@ export default function Dashboard() {
       });
     }
 
-    if (currentSession) {
+    // First check if VPN is really disconnected (for UI consistency)
+    const disconnectFlag = sessionStorage.getItem('vpn_disconnected');
+    if (disconnectFlag === 'true') {
+      console.log("User previously disconnected VPN, not auto-connecting");
+      
+      // Update VPN state to be disconnected regardless of session
+      vpnState.updateSettings({
+        connected: false,
+        connectTime: null,
+        virtualIp: ''
+      });
+      
+      return;
+    }
+
+    // Only try to connect if there's a valid session and the user hasn't manually disconnected
+    if (currentSession && !vpnState.connected) {
       const server = servers.find(s => s.id === currentSession.serverId);
       if (server) {
         // Call connect and properly handle the response including cooldown errors
@@ -96,6 +112,12 @@ export default function Dashboard() {
           }
         }).catch(error => {
           console.error("Error restoring VPN session:", error);
+          // Force disconnected state to ensure UI is consistent
+          vpnState.updateSettings({
+            connected: false,
+            connectTime: null,
+            virtualIp: ''
+          });
         });
       }
     }
