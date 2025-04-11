@@ -387,6 +387,9 @@ export default function ConnectionStatusCard() {
       } else {
         console.log("Disconnecting from VPN...");
         
+        // Set UI flags first to prevent race conditions
+        setIsToggling(true);
+        
         // Update UI state immediately for feedback
         setForceConnected(false);
         vpnState.updateSettings({
@@ -395,44 +398,54 @@ export default function ConnectionStatusCard() {
           virtualIp: ''
         });
         
-        // Make direct API call - first attempt
+        // Disconnect using the VPN state service first, which has better error handling
         try {
-          // Try using apiRequest from queryClient
-          await apiRequest('POST', '/api/sessions/end');
-          console.log("Successfully ended session with apiRequest");
-        } catch (e) {
-          console.warn("Failed to end session with apiRequest, trying fetch directly", e);
+          console.log("Calling VPN disconnect service...");
+          await vpnState.disconnect();
+          console.log("VPN disconnect service completed");
+        } catch (vpnError) {
+          console.warn("Error using VPN service disconnect, falling back to direct API calls", vpnError);
           
-          // Try with direct fetch as fallback
+          // Fallback mechanisms - first try apiRequest
           try {
-            await fetch('/api/sessions/end', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            });
-            console.log("Successfully ended session with direct fetch");
-          } catch (fetchError) {
-            console.warn("Failed to end session with direct fetch", fetchError);
+            await apiRequest('POST', '/api/sessions/end');
+            console.log("Successfully ended session with apiRequest");
+          } catch (e) {
+            console.warn("Failed to end session with apiRequest, trying fetch directly", e);
+            
+            // Try with direct fetch as fallback
+            try {
+              await fetch('/api/sessions/end', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ abrupt: false }), // explicitly mark as controlled disconnect
+              });
+              console.log("Successfully ended session with direct fetch");
+            } catch (fetchError) {
+              console.warn("Failed to end session with direct fetch", fetchError);
+            }
           }
+          
+          // Add redundant call after a short delay
+          setTimeout(async () => {
+            try {
+              await fetch('/api/sessions/end', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ abrupt: false }),
+              });
+              console.log("Successfully ended session in delayed call");
+            } catch (e) {
+              console.warn("Failed to end session in delayed call", e);
+            }
+          }, 1000);
         }
         
-        // Add redundant call after a short delay
-        setTimeout(async () => {
-          try {
-            await fetch('/api/sessions/end', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            });
-            console.log("Successfully ended session in delayed call");
-          } catch (e) {
-            console.warn("Failed to end session in delayed call", e);
-          }
-        }, 500);
-        
-        // Force UI updates
+        // Force UI updates with redundant calls to ensure state is consistent
         vpnState.updateSettings({
           connected: false,
           connectTime: null,
