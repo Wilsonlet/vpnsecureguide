@@ -50,14 +50,17 @@ export default function AdminPage() {
     queryKey: ['/api/app-settings/google_adsense_id'],
   });
 
-  // Initialize stripePriceIds state when plans are loaded
+  // Initialize stripePriceIds and paystackPlanCodes state when plans are loaded
   useEffect(() => {
     if (plans) {
-      const initialValues: Record<number, string> = {};
+      const initialStripeValues: Record<number, string> = {};
+      const initialPaystackValues: Record<number, string> = {};
       plans.forEach(plan => {
-        initialValues[plan.id] = plan.stripePriceId || '';
+        initialStripeValues[plan.id] = plan.stripePriceId || '';
+        initialPaystackValues[plan.id] = plan.paystackPlanCode || '';
       });
-      setStripePriceIds(initialValues);
+      setStripePriceIds(initialStripeValues);
+      setPaystackPlanCodes(initialPaystackValues);
     }
   }, [plans]);
   
@@ -70,6 +73,13 @@ export default function AdminPage() {
 
   const handlePriceIdChange = (planId: number, value: string) => {
     setStripePriceIds(prev => ({
+      ...prev,
+      [planId]: value,
+    }));
+  };
+  
+  const handlePaystackPlanCodeChange = (planId: number, value: string) => {
+    setPaystackPlanCodes(prev => ({
       ...prev,
       [planId]: value,
     }));
@@ -172,6 +182,7 @@ export default function AdminPage() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
             <TabsList>
               <TabsTrigger value="stripe">Stripe Payment</TabsTrigger>
+              <TabsTrigger value="paystack">Paystack Payment</TabsTrigger>
               <TabsTrigger value="adsense">Google AdSense</TabsTrigger>
             </TabsList>
             
