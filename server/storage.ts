@@ -10,6 +10,13 @@ import { eq, and, isNull, gte, desc, count } from "drizzle-orm";
 import { db, pool } from "./db";
 
 // Define the storage interface with all needed CRUD operations
+// Server filter type
+type ServerFilters = {
+  region?: string;
+  obfuscated?: boolean;
+  doubleHop?: boolean;
+};
+
 export interface IStorage {
   sessionStore: session.Store;
   // User methods
@@ -23,6 +30,7 @@ export interface IStorage {
   
   // Server methods
   getAllServers(): Promise<VpnServer[]>;
+  getFilteredServers(filters: ServerFilters): Promise<VpnServer[]>;
   getServerById(id: number): Promise<VpnServer | undefined>;
   getAccessibleServers(userId: number): Promise<VpnServer[]>;
   
@@ -136,6 +144,33 @@ export class DatabaseStorage implements IStorage {
 
   // Server methods
   async getAllServers(): Promise<VpnServer[]> {
+    return await db.select().from(vpnServers);
+  }
+  
+  async getFilteredServers(filters: ServerFilters): Promise<VpnServer[]> {
+    const { region, obfuscated, doubleHop } = filters;
+    
+    // Build conditions array
+    const conditions: any[] = [];
+    
+    if (region) {
+      conditions.push(eq(vpnServers.region, region));
+    }
+    
+    if (obfuscated) {
+      conditions.push(eq(vpnServers.obfuscated, true));
+    }
+    
+    if (doubleHop) {
+      conditions.push(eq(vpnServers.double_hop, true));
+    }
+    
+    // If we have conditions, apply them
+    if (conditions.length > 0) {
+      return await db.select().from(vpnServers).where(and(...conditions));
+    }
+    
+    // Otherwise return all servers
     return await db.select().from(vpnServers);
   }
 

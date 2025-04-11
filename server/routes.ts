@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { db } from "./db";
-import { insertVpnSessionSchema, insertVpnUserSettingsSchema, subscriptionTiers, subscriptionPlans } from "@shared/schema";
+import { insertVpnSessionSchema, insertVpnUserSettingsSchema, subscriptionTiers, subscriptionPlans, VpnServer } from "@shared/schema";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
@@ -25,8 +25,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
       
-      const servers = await storage.getAllServers();
+      const { region, obfuscated, doubleHop } = req.query;
+      
+      let servers;
+      if (region || obfuscated || doubleHop) {
+        // Use the new filtered server query
+        const filters = {
+          region: region as string | undefined,
+          obfuscated: obfuscated === 'true',
+          doubleHop: doubleHop === 'true'
+        };
+        servers = await storage.getFilteredServers(filters);
+      } else {
+        // Use the existing method if no filters are specified
+        servers = await storage.getAllServers();
+      }
+      
       res.json(servers);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Get servers by region endpoint
+  app.get("/api/servers/regions", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // Get all servers
+      const servers = await storage.getAllServers();
+      
+      // Group servers by region
+      const serversByRegion = servers.reduce((acc, server) => {
+        if (!acc[server.region]) {
+          acc[server.region] = [];
+        }
+        acc[server.region].push(server);
+        return acc;
+      }, {} as Record<string, VpnServer[]>);
+      
+      // Format the response in a more structured way
+      const result = Object.entries(serversByRegion).map(([region, servers]) => ({
+        region,
+        count: servers.length,
+        servers
+      }));
+      
+      res.json(result);
     } catch (error) {
       next(error);
     }
