@@ -8,6 +8,7 @@ import { z } from "zod";
 import { eq, and, isNull } from "drizzle-orm";
 import Stripe from "stripe";
 import { vpnLoadBalancer, connectionRateLimiter, connectionStatistics } from "./scaling";
+import { verifyFirebaseToken } from "./firebase-auth";
 
 // Initialize Stripe if the secret key is available
 let stripe: Stripe | undefined;
@@ -20,6 +21,12 @@ if (process.env.STRIPE_SECRET_KEY) {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes
   setupAuth(app);
+  
+  // Add Firebase token verification middleware
+  // This will run before each request and check for Firebase tokens
+  // If valid, it will set req.user based on Firebase auth
+  // If not, it will proceed to the next middleware (passport session auth)
+  app.use(verifyFirebaseToken);
 
   // VPN Server endpoints
   app.get("/api/servers", async (req, res, next) => {
