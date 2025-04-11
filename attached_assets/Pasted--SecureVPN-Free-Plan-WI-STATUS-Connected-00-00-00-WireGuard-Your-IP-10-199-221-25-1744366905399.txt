@@ -1,0 +1,322 @@
+
+SecureVPN
+Free Plan
+
+
+WI
+STATUS
+Connected
+00:00:00
+•
+WireGuard
+
+Your IP:
+10.199.221.254
+
+Change IP
+
+NETWORK NODES
+View All
+
+Netherlands
+Amsterdam #1
+42 ms
+18%
+
+UK
+London #1
+58 ms
+25%
+
+Germany
+Frankfurt #1
+48 ms
+12%
+
+US
+New York #1
+120 ms
+35%
+
+Singapore
+Singapore #1
+160 ms
+22%
+
+Nigeria
+Lagos #1
+145 ms
+10%
+
+South Africa
+Cape Town #1
+180 ms
+5%
+
+UAE
+Dubai #1
+130 ms
+15%
+ACTIVE CONNECTION
+Location
+Netherlands
+Server
+Amsterdam #1
+Protocol
+WireGuard
+Encryption
+AES-256-GCM
+Global Server Network
+Server Region:
+
+All Regions
+Netherlands
+42 ms
+•
+18% load
+
+UK
+58 ms
+•
+25% load
+
+Germany
+48 ms
+•
+12% load
+
+US
+120 ms
+•
+35% load
+
+Singapore
+160 ms
+•
+22% load
+
+Nigeria
+145 ms
+•
+10% load
+
+South Africa
+180 ms
+•
+5% load
+
+UAE
+130 ms
+•
+15% load
+
+France
+50 ms
+•
+20% load
+
+Spain
+55 ms
+•
+15% load
+
+Sweden
+60 ms
+•
+18% load
+
+Switzerland
+45 ms
+•
+10% load
+
+US
+110 ms
+•
+40% load
+
+US
+100 ms
+•
+30% load
+
+Canada
+90 ms
+•
+25% load
+
+Mexico
+130 ms
+•
+20% load
+
+Japan
+150 ms
+•
+30% load
+
+Australia
+200 ms
+•
+15% load
+
+South Korea
+140 ms
+•
+25% load
+
+India
+170 ms
+•
+35% load
+
+Kenya
+190 ms
+•
+12% load
+
+Egypt
+160 ms
+•
+18% load
+
+Turkey
+140 ms
+•
+22% load
+
+Israel
+150 ms
+•
+15% load
+
+Saudi Arabia
+155 ms
+•
+10% load
+
+Netherlands
+45 ms
+•
+10% load
+
+UK
+62 ms
+•
+15% load
+
+US
+125 ms
+•
+20% load
+
+Singapore
+165 ms
+•
+12% load
+
+UK
+180 ms
+•
+15% load
+
+US
+150 ms
+•
+18% load
+
+Protocol & Security
+VPN Protocol
+
+WireGuard
+Encryption Level
+
+AES-256-GCM
+Kill Switch
+Block internet if VPN disconnects
+
+
+DNS Leak Protection
+Use secure DNS servers only
+
+
+Double VPN
+Route through two servers
+
+
+Obfuscation
+Hide VPN traffic pattern
+
+
+Usage Statistics
+
+Last 7 Days
+6.81 TB
+Total data transferred
+
+↑ 2.73 TB Upload
+
+↓ 4.09 TB Download
+
+Fri
+Sat
+Sun
+Mon
+Tue
+Wed
+Thu
+Upload
+Download
+Premium Plan Quota
+
+6.81 TB of 250 GB used (2791%)
+
+View Details
+Smart Mode & Apps
+
+Choose which apps and websites use the VPN connection.
+
+Split Tunneling
+
+Include Mode
+Only selected applications will use the VPN connection.
+
+Google Chrome
+Web Browser
+
+
+Firefox
+Web Browser
+
+
+Terminal
+System
+
+
+Mail
+Email Client
+
+
+Spotify
+Music Streaming
+
+
+
+Add Application
+Dashboard
+Servers
+Plans
+Settings
+Account
+[plugin:runtime-error-plugin] Please wait 1 seconds before connecting again
+/home/runner/workspace/client/src/lib/vpn-service.tsx:138:31
+136|          });
+137|          
+138|          return Promise.reject(new Error(`Please wait ${remainingCooldown} seconds before connecting again`));
+   |                                ^
+139|        }
+140|
+    at Object.connect /home/runner/workspace/client/src/lib/vpn-service.tsx:138:31
+    at /home/runner/workspace/client/src/pages/dashboard.tsx:76:18
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.js.

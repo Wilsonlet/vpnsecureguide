@@ -264,16 +264,26 @@ export default function ConnectionStatusCard() {
     // Prevent multiple concurrent connection attempts
     if (connectionInProgress.current) {
       console.log("Connection operation already in progress, ignoring");
+      toast({
+        title: "Connection in progress",
+        description: "Please wait while the current operation completes",
+        variant: "default"
+      });
       return;
     }
     
     // Implement a cooldown to prevent rapid toggling
     const now = Date.now();
-    if (now - lastToggleTime.current < 3000) { // 3 second cooldown
-      console.log("Toggle cooldown in effect, please wait");
+    const timeSinceLastToggle = now - lastToggleTime.current;
+    const cooldownPeriod = 5000; // 5 second cooldown
+    
+    if (timeSinceLastToggle < cooldownPeriod) {
+      const remainingSeconds = Math.ceil((cooldownPeriod - timeSinceLastToggle) / 1000);
+      console.log(`Toggle cooldown in effect, please wait ${remainingSeconds} seconds`);
+      
       toast({
-        title: "Please wait",
-        description: "Please wait a moment before toggling again",
+        title: "Connection cooldown",
+        description: `Please wait ${remainingSeconds} seconds before toggling again`,
         variant: "default"
       });
       return;

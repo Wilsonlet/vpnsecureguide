@@ -132,10 +132,17 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         toast({
           title: "Connection cooldown",
           description: `Please wait ${remainingCooldown} seconds before connecting again`,
-          variant: "destructive",
+          variant: "default",
         });
         
-        return Promise.reject(new Error(`Please wait ${remainingCooldown} seconds before connecting again`));
+        // Instead of rejecting, return a resolved promise with an error object
+        // This prevents the unhandled promise rejection error
+        return Promise.resolve({ 
+          success: false, 
+          error: `Please wait ${remainingCooldown} seconds before connecting again`,
+          cooldown: true,
+          remainingSeconds: remainingCooldown
+        });
       }
       
       // Set connection flags
@@ -385,10 +392,17 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         toast({
           title: "IP change cooldown",
           description: `Please wait ${remainingCooldown} seconds before changing IP again`,
-          variant: "destructive",
+          variant: "default",
         });
         
-        return Promise.reject(new Error(`Please wait ${remainingCooldown} seconds before changing IP again`));
+        // Instead of rejecting, return a resolved promise with an error object
+        // This prevents the unhandled promise rejection error
+        return Promise.resolve({ 
+          success: false, 
+          error: `Please wait ${remainingCooldown} seconds before changing IP again`,
+          cooldown: true,
+          remainingSeconds: remainingCooldown
+        });
       }
       
       // Set connection flags
