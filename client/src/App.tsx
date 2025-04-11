@@ -17,6 +17,7 @@ import { AuthProvider } from "./hooks/use-auth";
 import { FirebaseAuthProvider } from "./hooks/use-firebase-auth";
 import { VpnStateProvider } from "./lib/vpn-service";
 import { AdSenseScript } from "./components/ads/adsense-script";
+import { ThirdPartyErrorHandler, UrlErrorHandler } from "./components/analytics/error-handlers";
 
 function Router() {
   return (
@@ -39,6 +40,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Error handlers - must be at the top level */}
+      <ThirdPartyErrorHandler />
+      <UrlErrorHandler />
+      
       <FirebaseAuthProvider>
         <AuthProvider>
           <VpnStateProvider>

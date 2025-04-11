@@ -1,0 +1,76 @@
+TikTok Pixel] - Invalid pixel ID
+Issue: The pixel ID is invalid. This could prevent your pixel from receiving data.
+Suggestion: Please go to Events Manager and find the correct pixel ID.
+(anonymous) @ _app-b2642d13cc1d9189.js:13Understand this warningAI
+6Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.Understand this errorAI
+framework-7fcbcb949b7275ce.js:1 Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+framework-7fcbcb949b7275ce.js:1 Unrecognized feature: 'battery'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+framework-7fcbcb949b7275ce.js:1 Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+framework-7fcbcb949b7275ce.js:1 Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+framework-7fcbcb949b7275ce.js:1 Unrecognized feature: 'layout-animations'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+framework-7fcbcb949b7275ce.js:1 Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+framework-7fcbcb949b7275ce.js:1 Unrecognized feature: 'navigation-override'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+framework-7fcbcb949b7275ce.js:1 Unrecognized feature: 'oversized-images'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+framework-7fcbcb949b7275ce.js:1 Unrecognized feature: 'publickey-credentials'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+framework-7fcbcb949b7275ce.js:1 Unrecognized feature: 'speaker-selection'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+framework-7fcbcb949b7275ce.js:1 Unrecognized feature: 'unoptimized-images'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+framework-7fcbcb949b7275ce.js:1 Unrecognized feature: 'unsized-media'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+framework-7fcbcb949b7275ce.js:1 Unrecognized feature: 'pointer-lock'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+framework-7fcbcb949b7275ce.js:1 Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+framework-7fcbcb949b7275ce.js:1 Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-7fcbcb949b7275ce.js:1Understand this warningAI
+_app-b2642d13cc1d9189.js:13 Invalid href 'https://146d1c82-cc8f-4773-b17f-4fd794bacf7f-00-39qtpcnc8m5ns.spock.replit.dev//' passed to next/router in page: '/replEnvironmentDesktop'. Repeated forward-slashes (//) or backslashes \ are not valid in the href.
+(anonymous) @ _app-b2642d13cc1d9189.js:13Understand this errorAI
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+stallwart.build.js:1 stallwart: failed ping 3
+SecureShield:1 [Intervention] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://cdn.replit.com/_next/static/media/text-security-disc.a4db7db4.woff2
+stallwart.build.js:1 stallwart: failed ping 4
+logs.browser-intake-us5-datadoghq.com/api/v2/logs?ddsource=browser&ddtags=sdk_version%3A4.46.0%2Capi%3Afetch%2Cenv%3Aproduction%2Cservice%3Awebsite%2Cversion%3Adf422a74&dd-api-key=pub31a5047a3a4692afb84a423db984dc57&dd-evp-origin-version=4.46.0&dd-evp-origin=browser&dd-request-id=670f8147-7152-4587-a254-0b61439c9e1f:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_CLOSEDUnderstand this errorAI
+m.stripe.network/inn…ams__[version]=v3:1 Uncaught (in promise) undefinedUnderstand this errorAI
+752-7d0d37bfcad56757.js:1 [Intervention] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://replit.com/public/fonts/replit-icons.woff
+SecureShield:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+_app-b2642d13cc1d9189.js:13 Invalid href 'https://146d1c82-cc8f-4773-b17f-4fd794bacf7f-00-39qtpcnc8m5ns.spock.replit.dev//' passed to next/router in page: '/replEnvironmentDesktop'. Repeated forward-slashes (//) or backslashes \ are not valid in the href.
+(anonymous) @ _app-b2642d13cc1d9189.js:13Understand this errorAI
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+3stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+stallwart.build.js:1 stallwart: failed ping 3
+stallwart.build.js:1 stallwart: failed ping 4
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2
+stallwart.build.js:1 stallwart: failed ping 3
+stallwart.build.js:1 stallwart: failed ping 4
+stallwart.build.js:1 stallwart: failed ping 5
+stallwart.build.js:1 stallwart: session stalled
+anchor:1 Uncaught (in promise) Timeout (o)Understand this errorAI
+logs.browser-intake-us5-datadoghq.com/api/v2/logs?ddsource=browser&ddtags=sdk_version%3A4.46.0%2Capi%3Afetch%2Cenv%3Aproduction%2Cservice%3Awebsite%2Cversion%3Adf422a74&dd-api-key=pub31a5047a3a4692afb84a423db984dc57&dd-evp-origin-version=4.46.0&dd-evp-origin=browser&dd-request-id=7767f870-a35f-4ae8-9439-39fbbd1ce04f:1 
+            
+            
+           Failed to load resource: net::ERR_CONNECTION_CLOSEDUnderstand this errorAI
+4_app-b2642d13cc1d9189.js:13 Invalid href 'https://146d1c82-cc8f-4773-b17f-4fd794bacf7f-00-39qtpcnc8m5ns.spock.replit.dev//' passed to next/router in page: '/replEnvironmentDesktop'. Repeated forward-slashes (//) or backslashes \ are not valid in the href.
+(anonymous) @ _app-b2642d13cc1d9189.js:13Understand this errorAI
+
+                
+          
+          
+          
+         Chrome is moving towards a new experience that allows users to choose to browse without third-party cookies.Understand this warningAI
