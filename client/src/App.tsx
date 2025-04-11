@@ -14,6 +14,7 @@ import SupportPage from "@/pages/support-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { VpnStateProvider } from "./lib/vpn-service";
+import { AdSenseScript } from "./components/ads/adsense-script";
 
 function Router() {
   return (
@@ -39,6 +40,7 @@ function App() {
         <VpnStateProvider>
           <Router />
           <Toaster />
+          <AdSenseScript />
         </VpnStateProvider>
       </AuthProvider>
     </QueryClientProvider>

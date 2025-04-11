@@ -8,7 +8,6 @@ import SecuritySettingsCard from '@/components/vpn/security-settings-card';
 import UsageStatsCard from '@/components/vpn/usage-stats-card';
 import SmartModeCard from '@/components/vpn/smart-mode-card';
 import AdBanner from '@/components/ads/AdBanner';
-import { loadAdSenseScript } from '@/components/ads/adsense-script';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import { VpnServer, VpnUserSettings, subscriptionTiers } from '@shared/schema';
@@ -91,11 +90,7 @@ export default function Dashboard() {
     }
   }, [settings, currentSession, servers, isSessionLoading, vpnState]);
 
-  // Load AdSense script when component mounts (only needs to be loaded once)
-  useEffect(() => {
-    // Replace 'YOUR_ADSENSE_ID' with your actual AdSense publisher ID
-    loadAdSenseScript('YOUR_ADSENSE_ID');
-  }, []);
+
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
