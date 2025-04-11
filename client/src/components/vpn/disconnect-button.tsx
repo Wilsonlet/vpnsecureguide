@@ -65,6 +65,9 @@ export default function DisconnectButton({
       // Clear any cached data related to VPN sessions
       queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
       
+      // Set disconnect flag on successful disconnect
+      sessionStorage.setItem('vpn_disconnected', 'true');
+      
       // Notify success
       toast({
         title: 'VPN Disconnected',
@@ -88,6 +91,9 @@ export default function DisconnectButton({
         connectTime: null,
         virtualIp: ''
       });
+      
+      // Set disconnect flag even on error
+      sessionStorage.setItem('vpn_disconnected', 'true');
     } finally {
       setIsDisconnecting(false);
     }

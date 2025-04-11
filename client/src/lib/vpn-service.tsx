@@ -237,6 +237,9 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       const sessionData = await res.json();
       console.log("VPN session started:", sessionData);
       
+      // Clear the disconnection flag when successfully connected
+      sessionStorage.removeItem('vpn_disconnected');
+      
       // Update with server-provided values
       setState((currentState) => ({
         ...currentState,

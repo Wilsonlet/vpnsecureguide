@@ -572,7 +572,11 @@ export default function ConnectionStatusCard() {
             <div className="flex items-center gap-3">
               {/* Always show BOTH connect and disconnect buttons, but style them differently based on state */}
               <Button 
-                onClick={() => handleConnectionToggle(true)}
+                onClick={() => {
+                  // Clear disconnected flag when connecting
+                  sessionStorage.removeItem('vpn_disconnected');
+                  handleConnectionToggle(true);
+                }}
                 disabled={isToggling || (vpnState.connected || forceConnected)}
                 variant="outline" 
                 size="sm"
