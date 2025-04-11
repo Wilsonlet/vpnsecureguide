@@ -167,14 +167,42 @@ export default function ConnectionStatusCard() {
   const [isChangingIp, setIsChangingIp] = useState(false);
   
   const handleChangeIp = async () => {
+    // Prevent multiple clicks
+    if (isChangingIp) return;
+    
     // Set changing IP state immediately for UI feedback
     setIsChangingIp(true);
     
     try {
       console.log("Change IP button clicked");
       
+      // First check if we're actually connected
+      if (!vpnState.connected && !forceConnected) {
+        toast({
+          title: "Not Connected",
+          description: "You must be connected to change your IP address",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Load latest servers if not loaded yet
+      if (!vpnState.selectedServer) {
+        const serversRes = await apiRequest('GET', '/api/servers');
+        if (serversRes.ok) {
+          const servers = await serversRes.json();
+          if (Array.isArray(servers) && servers.length > 0) {
+            vpnState.setAvailableServers(servers);
+            vpnState.selectServer(servers[0]);
+          }
+        }
+      }
+      
       // Use the VPN service's changeIp method
       const newSessionData = await vpnState.changeIp();
+      
+      // Force UI update to show connected state
+      setForceConnected(true);
       
       // Show success message
       toast({

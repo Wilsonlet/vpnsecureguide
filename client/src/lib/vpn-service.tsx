@@ -214,7 +214,7 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     }));
   };
 
-  // Add change IP functionality
+  // Change IP functionality - more robust implementation
   const changeIp = async () => {
     try {
       console.log("VPN Change IP called");
@@ -231,28 +231,89 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       }
       
       // Store current server and session data
-      const currentServer = state.selectedServer;
-      const currentProtocol = state.protocol;
-      const currentEncryption = state.encryption;
+      const currentServer = state.selectedServer || sessionData.server;
+      const currentProtocol = state.protocol || sessionData.protocol || 'wireguard';
+      const currentEncryption = state.encryption || sessionData.encryption || 'aes_256_gcm';
       
       if (!currentServer) {
-        throw new Error("No server selected");
+        // Fallback: Get servers list and use the first one
+        const serversRes = await fetch('/api/servers');
+        if (!serversRes.ok) {
+          throw new Error("Failed to fetch server data");
+        }
+        
+        const servers = await serversRes.json();
+        if (!Array.isArray(servers) || servers.length === 0) {
+          throw new Error("No VPN servers available");
+        }
+        
+        // Use the first server
+        const fallbackServer = servers[0];
+        setState(currentState => ({
+          ...currentState,
+          availableServers: servers,
+          selectedServer: fallbackServer
+        }));
+        
+        // Try again with the first server
+        const targetServer = fallbackServer;
+        
+        // End current session first
+        await fetch('/api/sessions/end', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        // Wait briefly
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Start a new session with the target server
+        const startRes = await fetch('/api/sessions/start', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            serverId: targetServer.id,
+            protocol: currentProtocol,
+            encryption: currentEncryption
+          }),
+        });
+        
+        if (!startRes.ok) {
+          throw new Error("Failed to start new VPN session");
+        }
+        
+        const newSessionData = await startRes.json();
+        console.log("VPN session created with new IP:", newSessionData);
+        
+        // Update state with new session data
+        setState((currentState) => ({
+          ...currentState,
+          connected: true,
+          connectTime: new Date(newSessionData.startTime),
+          virtualIp: newSessionData.virtualIp,
+          selectedServer: targetServer
+        }));
+        
+        return newSessionData;
       }
       
+      // We have a valid server to use, proceed with changing IP
+      console.log("Changing IP using server:", currentServer.name);
+      
       // End current session
-      const endRes = await fetch('/api/sessions/end', {
+      await fetch('/api/sessions/end', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         }
       });
       
-      if (!endRes.ok) {
-        throw new Error("Failed to end current session");
-      }
-      
-      // Wait a bit to ensure session is properly ended
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait briefly
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // Start a new session with same server
       const startRes = await fetch('/api/sessions/start', {
@@ -262,12 +323,14 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         },
         body: JSON.stringify({
           serverId: currentServer.id,
-          protocol: currentProtocol || 'wireguard',
-          encryption: currentEncryption || 'aes_256_gcm'
+          protocol: currentProtocol,
+          encryption: currentEncryption
         }),
       });
       
       if (!startRes.ok) {
+        const errorText = await startRes.text();
+        console.error("Failed to start new session:", errorText);
         throw new Error("Failed to start new VPN session");
       }
       
