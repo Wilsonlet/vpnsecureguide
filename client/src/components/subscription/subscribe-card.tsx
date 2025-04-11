@@ -1,18 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle, ExternalLink } from "lucide-react";
 import { SubscriptionPlan } from "@shared/schema";
 
 // Make sure to call loadStripe outside of a component's render to avoid
 // recreating the Stripe object on every render.
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || "");
+// We'll check if the key is available to provide better error messages
+const stripePublicKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+const stripePromise = stripePublicKey ? loadStripe(stripePublicKey) : null;
 
 interface Props {
   plan: SubscriptionPlan;
@@ -91,7 +93,17 @@ export default function SubscribeCard({ plan, onSuccess, onCancel }: Props) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [configIssue, setConfigIssue] = useState<'price_id' | 'stripe_keys' | null>(null);
   const { toast } = useToast();
+
+  // Check for configuration issues on mount
+  useEffect(() => {
+    if (!plan.stripePriceId) {
+      setConfigIssue('price_id');
+    } else if (!stripePublicKey) {
+      setConfigIssue('stripe_keys');
+    }
+  }, [plan]);
 
   const handleSubscribe = async () => {
     setIsLoading(true);
@@ -100,10 +112,25 @@ export default function SubscribeCard({ plan, onSuccess, onCancel }: Props) {
     try {
       // Check if the plan has a Stripe price ID
       if (!plan.stripePriceId) {
-        throw new Error("This subscription plan is not available for purchase at this time");
+        throw new Error("This subscription plan is not available for purchase at this time. The plan does not have a valid Stripe price ID configured.");
+      }
+
+      // Check if Stripe is properly configured
+      if (!stripePublicKey) {
+        throw new Error("Stripe payment is not properly configured. Please contact the administrator.");
       }
       
       const response = await apiRequest("POST", "/api/create-subscription", { planName: plan.name });
+      
+      // Handle common HTTP errors
+      if (response.status === 401) {
+        throw new Error("You need to log in to subscribe to this plan.");
+      } else if (response.status === 403) {
+        throw new Error("You don't have permission to subscribe to this plan.");
+      } else if (response.status === 500) {
+        throw new Error("The server encountered an error. The payment gateway may not be properly configured.");
+      }
+      
       const data = await response.json();
 
       if (!response.ok) {
@@ -132,8 +159,33 @@ export default function SubscribeCard({ plan, onSuccess, onCancel }: Props) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {error && (
+        {/* Show configuration issues with helpful explanations */}
+        {configIssue === 'price_id' && (
           <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            <AlertTitle>Plan Not Available</AlertTitle>
+            <AlertDescription className="mt-2">
+              <p>This subscription plan is not available for purchase at this time.</p>
+              <p className="mt-2 text-sm">The administrator needs to configure the Stripe price ID for this plan in the admin panel.</p>
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {configIssue === 'stripe_keys' && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            <AlertTitle>Payment Not Configured</AlertTitle>
+            <AlertDescription className="mt-2">
+              <p>The Stripe payment system is not properly configured.</p>
+              <p className="mt-2 text-sm">The administrator needs to set up Stripe API keys for the application.</p>
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {error && !configIssue && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            <AlertTitle>Subscription Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -175,10 +227,10 @@ export default function SubscribeCard({ plan, onSuccess, onCancel }: Props) {
           <Button 
             onClick={handleSubscribe} 
             className="w-full" 
-            disabled={isLoading}
+            disabled={isLoading || configIssue !== null}
           >
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Subscribe Now
+            {configIssue ? "Currently Unavailable" : "Subscribe Now"}
           </Button>
         </CardFooter>
       )}
