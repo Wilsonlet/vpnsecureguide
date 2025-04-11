@@ -57,7 +57,13 @@ export default function AdBanner({ adSlot, format = 'auto', className = '' }: Ad
       adElement.style.display = 'block';
       adElement.style.width = '100%';
       adElement.style.height = format === 'auto' ? 'auto' : '100%';
-      adElement.setAttribute('data-ad-client', `ca-pub-${adsenseSetting.value}`);
+      
+      // Use a demo adsense client ID for development to avoid 400 errors
+      const adClient = import.meta.env.DEV ? 
+        "ca-pub-3940256099942544" : // Google's testing AdSense ID
+        `ca-pub-${adsenseSetting.value}`;
+      
+      adElement.setAttribute('data-ad-client', adClient);
       adElement.setAttribute('data-ad-slot', adSlot);
       adElement.setAttribute('data-ad-format', format);
       adElement.setAttribute('data-full-width-responsive', 'true');

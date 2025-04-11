@@ -10,6 +10,43 @@ export function ThirdPartyErrorHandler() {
   useEffect(() => {
     // Create a global error handler for third-party script errors
     const originalOnError = window.onerror;
+    const originalConsoleError = console.error;
+    const originalConsoleWarn = console.warn;
+    
+    // List of patterns to filter out from console
+    const errorPatternsToFilter = [
+      'Error while parsing the \'sandbox\' attribute',
+      'Unrecognized feature:',
+      'Allow attribute will take precedence',
+      'Invalid href',
+      'stallwart:',
+      'Failed to load resource: the server responded with a status of 400',
+      'adsbygoogle'
+    ];
+    
+    // Replace console.error
+    console.error = function(...args) {
+      // Check if the error message matches any of our patterns
+      const shouldFilter = errorPatternsToFilter.some(pattern => 
+        args.some(arg => typeof arg === 'string' && arg.includes(pattern))
+      );
+      
+      if (!shouldFilter) {
+        originalConsoleError.apply(console, args);
+      }
+    };
+    
+    // Replace console.warn
+    console.warn = function(...args) {
+      // Check if the warning message matches any of our patterns
+      const shouldFilter = errorPatternsToFilter.some(pattern => 
+        args.some(arg => typeof arg === 'string' && arg.includes(pattern))
+      );
+      
+      if (!shouldFilter) {
+        originalConsoleWarn.apply(console, args);
+      }
+    };
     
     window.onerror = function(message, source, lineno, colno, error) {
       // TikTok Pixel error handling
@@ -21,6 +58,14 @@ export function ThirdPartyErrorHandler() {
       // Stripe error handling
       if (source?.includes('stripe') || (typeof message === 'string' && message.includes('stripe'))) {
         console.warn('Stripe error suppressed:', message);
+        return true;
+      }
+      
+      // Filter out sandbox and feature policy errors
+      if (typeof message === 'string' && 
+          (message.includes('sandbox') || 
+           message.includes('feature') || 
+           message.includes('Invalid href'))) {
         return true;
       }
       
@@ -48,6 +93,8 @@ export function ThirdPartyErrorHandler() {
     // Clean up
     return () => {
       window.onerror = originalOnError;
+      console.error = originalConsoleError;
+      console.warn = originalConsoleWarn;
     };
   }, []);
   
