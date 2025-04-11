@@ -7,9 +7,11 @@ import ServerMap from '@/components/vpn/server-map';
 import SecuritySettingsCard from '@/components/vpn/security-settings-card';
 import UsageStatsCard from '@/components/vpn/usage-stats-card';
 import SmartModeCard from '@/components/vpn/smart-mode-card';
+import AdBanner from '@/components/ads/AdBanner';
+import { loadAdSenseScript } from '@/components/ads/adsense-script';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
-import { VpnServer, VpnUserSettings } from '@shared/schema';
+import { VpnServer, VpnUserSettings, subscriptionTiers } from '@shared/schema';
 import { useVpnState } from '@/lib/vpn-service.tsx';
 
 export default function Dashboard() {
