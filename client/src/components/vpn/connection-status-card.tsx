@@ -167,8 +167,8 @@ export default function ConnectionStatusCard() {
   const [isChangingIp, setIsChangingIp] = useState(false);
   
   const handleChangeIp = async () => {
-    // Check if we're connected
-    if (!vpnState.connected) {
+    // Check if we're connected using both standard and force connected states
+    if (!vpnState.connected && !forceConnected) {
       toast({
         title: "Not Connected",
         description: "You must be connected to a VPN server to change your IP.",
@@ -285,8 +285,25 @@ export default function ConnectionStatusCard() {
   // Handle connection toggle
   const handleConnectionToggle = async (checked: boolean) => {
     try {
-      if (checked) {
+      // First detect if we're in a forced connected state
+      const reallyConnected = vpnState.connected || forceConnected;
+      
+      // Determine actual action - we need this check to properly handle the system state
+      const shouldConnect = checked && !reallyConnected;
+      const shouldDisconnect = !checked && reallyConnected;
+      
+      console.log("Toggle state:", { 
+        checked, 
+        reallyConnected, 
+        forceConnected, 
+        vpnConnected: vpnState.connected,
+        shouldConnect, 
+        shouldDisconnect 
+      });
+      
+      if (shouldConnect) {
         // First update local state to give immediate feedback
+        setForceConnected(true);
         vpnState.updateSettings({
           connected: true,
           connectTime: new Date()
@@ -311,6 +328,7 @@ export default function ConnectionStatusCard() {
             }
           } catch (error) {
             // Revert state on error
+            setForceConnected(false);
             vpnState.updateSettings({
               connected: false,
               connectTime: null
@@ -346,8 +364,8 @@ export default function ConnectionStatusCard() {
           
           const res = await apiRequest('POST', '/api/sessions/start', {
             serverId: serverToUse.id,
-            protocol: vpnState.protocol,
-            encryption: vpnState.encryption
+            protocol: vpnState.protocol || 'wireguard',
+            encryption: vpnState.encryption || 'aes_256_gcm'
           });
           
           if (res.ok) {
@@ -358,9 +376,9 @@ export default function ConnectionStatusCard() {
             vpnState.updateSettings({
               connected: true,
               connectTime: new Date(sessionData.startTime),
-              virtualIp: sessionData.virtualIp,
-              protocol: sessionData.protocol,
-              encryption: sessionData.encryption,
+              virtualIp: sessionData.virtualIp || '10.78.102.138',
+              protocol: sessionData.protocol || 'wireguard',
+              encryption: sessionData.encryption || 'aes_256_gcm',
               selectedServer: serverToUse
             });
             
@@ -373,6 +391,7 @@ export default function ConnectionStatusCard() {
             queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
           } else {
             // Revert state on error
+            setForceConnected(false);
             vpnState.updateSettings({
               connected: false,
               connectTime: null
@@ -383,6 +402,7 @@ export default function ConnectionStatusCard() {
           }
         } else {
           // Revert state on error
+          setForceConnected(false);
           vpnState.updateSettings({
             connected: false,
             connectTime: null
@@ -395,8 +415,9 @@ export default function ConnectionStatusCard() {
           });
           return;
         }
-      } else {
+      } else if (shouldDisconnect) {
         // Update local state immediately for better UX
+        setForceConnected(false);
         vpnState.updateSettings({
           connected: false,
           connectTime: null
@@ -423,6 +444,7 @@ export default function ConnectionStatusCard() {
             
             // If there's still an active session, revert UI state
             if (activeSession && activeSession.id && !activeSession.endTime) {
+              setForceConnected(true);
               vpnState.updateSettings({
                 connected: true,
                 connectTime: new Date(activeSession.startTime)
@@ -431,6 +453,12 @@ export default function ConnectionStatusCard() {
             }
           }
         }
+      } else {
+        // State is already in desired position, no change needed
+        console.log("Toggle aligned with current state, no change needed");
+        
+        // But let's refresh data just to be safe
+        queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
       }
     } catch (error) {
       console.error("Connection error:", error);
