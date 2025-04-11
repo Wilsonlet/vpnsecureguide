@@ -1,5 +1,6 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useRef } from 'react';
 import { VpnServer } from '@shared/schema';
+import { useToast } from '@/hooks/use-toast';
 
 export type VpnConnectionState = {
   connected: boolean;
@@ -73,6 +74,7 @@ export const VpnStateContext = createContext<VpnStateContextType>({
 
 // Create a provider component to manage VPN state
 export const VpnStateProvider = ({ children }: { children: React.ReactNode }) => {
+  const { toast } = useToast();
   const [state, setState] = useState<VpnConnectionState>({
     connected: false,
     connectTime: null,
@@ -94,6 +96,11 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     customDnsServer: '1.1.1.1',
   });
 
+  // Connection state management
+  const isConnectingRef = useRef(false);
+  const lastConnectionAttemptRef = useRef(0);
+  const CONNECTION_COOLDOWN = 5000; // 5 seconds cooldown
+
   const connect = async (options: {
     serverId: number;
     protocol: string;
@@ -102,6 +109,38 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
   }) => {
     try {
       console.log("VPN Connect called with options:", options);
+      
+      // Check if we're already attempting to connect
+      if (isConnectingRef.current) {
+        console.warn("Connection already in progress, ignoring request");
+        toast({
+          title: "Connection in progress",
+          description: "Please wait while connecting to VPN",
+          variant: "default",
+        });
+        return Promise.reject(new Error("Connection already in progress"));
+      }
+      
+      // Check if we need to respect the cooldown period
+      const now = Date.now();
+      const timeSinceLastAttempt = now - lastConnectionAttemptRef.current;
+      
+      if (timeSinceLastAttempt < CONNECTION_COOLDOWN) {
+        const remainingCooldown = Math.ceil((CONNECTION_COOLDOWN - timeSinceLastAttempt) / 1000);
+        console.warn(`Connection on cooldown. Please wait ${remainingCooldown} seconds.`);
+        
+        toast({
+          title: "Connection cooldown",
+          description: `Please wait ${remainingCooldown} seconds before connecting again`,
+          variant: "destructive",
+        });
+        
+        return Promise.reject(new Error(`Please wait ${remainingCooldown} seconds before connecting again`));
+      }
+      
+      // Set connection flags
+      isConnectingRef.current = true;
+      lastConnectionAttemptRef.current = now;
       
       // Update state immediately to reflect connection attempt
       setState((currentState) => ({
@@ -127,9 +166,31 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       });
       
       if (!res.ok) {
-        const errorText = await res.text();
-        console.error("Error starting VPN session:", errorText);
-        throw new Error("Failed to connect to VPN");
+        const errorResponse = await res.text();
+        let errorMessage = "Failed to connect to VPN";
+        let errorData = null;
+        
+        // Try to parse the error response as JSON
+        try {
+          errorData = JSON.parse(errorResponse);
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+          
+          if (errorData.rateLimited) {
+            toast({
+              title: "Too many connection attempts",
+              description: "Please wait a moment before trying again",
+              variant: "destructive",
+            });
+          }
+        } catch (e) {
+          // If it's not valid JSON, use the raw text
+          console.error("Error response not in JSON format:", errorResponse);
+        }
+        
+        console.error("Error starting VPN session:", errorResponse);
+        throw new Error(errorMessage);
       }
       
       const sessionData = await res.json();
@@ -157,6 +218,11 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       }));
       
       throw error;
+    } finally {
+      // Reset the connecting flag after a delay
+      setTimeout(() => {
+        isConnectingRef.current = false;
+      }, 500);
     }
   };
 
@@ -297,6 +363,38 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       console.log("VPN Change IP called");
       
+      // Check if we're already attempting to connect
+      if (isConnectingRef.current) {
+        console.warn("Connection already in progress, ignoring request");
+        toast({
+          title: "Connection in progress",
+          description: "Please wait while connecting to VPN",
+          variant: "default",
+        });
+        return Promise.reject(new Error("Connection already in progress"));
+      }
+      
+      // Check if we need to respect the cooldown period
+      const now = Date.now();
+      const timeSinceLastAttempt = now - lastConnectionAttemptRef.current;
+      
+      if (timeSinceLastAttempt < CONNECTION_COOLDOWN) {
+        const remainingCooldown = Math.ceil((CONNECTION_COOLDOWN - timeSinceLastAttempt) / 1000);
+        console.warn(`Connection on cooldown. Please wait ${remainingCooldown} seconds.`);
+        
+        toast({
+          title: "IP change cooldown",
+          description: `Please wait ${remainingCooldown} seconds before changing IP again`,
+          variant: "destructive",
+        });
+        
+        return Promise.reject(new Error(`Please wait ${remainingCooldown} seconds before changing IP again`));
+      }
+      
+      // Set connection flags
+      isConnectingRef.current = true;
+      lastConnectionAttemptRef.current = now;
+      
       // Get the current session status
       const sessionRes = await fetch('/api/sessions/current');
       if (!sessionRes.ok) {
@@ -427,6 +525,11 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     } catch (error) {
       console.error("VPN change IP error:", error);
       throw error;
+    } finally {
+      // Reset the connecting flag after a delay to prevent immediate reconnection
+      setTimeout(() => {
+        isConnectingRef.current = false;
+      }, 500);
     }
   };
 
