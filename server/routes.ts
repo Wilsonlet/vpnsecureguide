@@ -922,58 +922,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // App Settings endpoints
-  app.get("/api/app-settings/:key", async (req, res, next) => {
-    try {
-      const { key } = req.params;
-      if (!key) {
-        return res.status(400).json({ message: "Setting key is required" });
-      }
-      
-      const setting = await storage.getAppSetting(key);
-      if (!setting) {
-        return res.status(404).json({ message: "Setting not found" });
-      }
-      
-      res.json(setting);
-    } catch (error) {
-      next(error);
-    }
-  });
-  
-  app.get("/api/app-settings", async (req, res, next) => {
-    try {
-      const settings = await storage.getAllAppSettings();
-      res.json(settings);
-    } catch (error) {
-      next(error);
-    }
-  });
-  
-  app.post("/api/app-settings", async (req, res, next) => {
-    try {
-      // Only admin users can update app settings
-      if (!req.isAuthenticated() || req.user.subscription !== subscriptionTiers.ULTIMATE) {
-        return res.status(403).json({ message: "Not authorized to update app settings" });
-      }
-      
-      const parsedData = insertAppSettingSchema.parse(req.body);
-      
-      // Ensure value and description are strings or undefined (not null)
-      const settingValue = typeof parsedData.value === 'string' ? parsedData.value : '';
-      const settingDescription = typeof parsedData.description === 'string' ? parsedData.description : undefined;
-      
-      const setting = await storage.setAppSetting(
-        parsedData.key,
-        settingValue,
-        settingDescription
-      );
-      
-      res.status(201).json(setting);
-    } catch (error) {
-      next(error);
-    }
-  });
+  // App Settings endpoints - these are already defined above
+  // The duplicate routes have been removed to fix the app startup issue
 
   const httpServer = createServer(app);
   return httpServer;
