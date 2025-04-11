@@ -311,7 +311,7 @@ export default function AdminPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {user.expiryDate ? new Date(user.expiryDate).toLocaleDateString() : '-'}
+                          {user.subscriptionExpiryDate ? new Date(user.subscriptionExpiryDate).toLocaleDateString() : '-'}
                         </TableCell>
                         <TableCell>
                           <Button 
@@ -371,8 +371,8 @@ export default function AdminPage() {
                               
                               <div className="font-medium">Expiry Date:</div>
                               <div>
-                                {selectedUser.expiryDate 
-                                  ? new Date(selectedUser.expiryDate).toLocaleDateString() 
+                                {selectedUser.subscriptionExpiryDate 
+                                  ? new Date(selectedUser.subscriptionExpiryDate).toLocaleDateString() 
                                   : '-'}
                               </div>
                             </div>
