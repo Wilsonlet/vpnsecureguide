@@ -228,10 +228,10 @@ PLACEHOLDER_CLIENT_PRIVATE_KEY
           
           <div>
             <h4 className="text-sm font-medium mb-3">Select Protocol</h4>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <Button 
                 variant={protocol === 'wireguard' ? 'default' : 'outline'} 
-                className="flex items-center justify-center" 
+                className="flex items-center justify-center text-sm py-2" 
                 onClick={() => setProtocol('wireguard')}
               >
                 <Shield className="h-4 w-4 mr-2" />
@@ -239,7 +239,7 @@ PLACEHOLDER_CLIENT_PRIVATE_KEY
               </Button>
               <Button 
                 variant={protocol === 'openvpn' ? 'default' : 'outline'} 
-                className="flex items-center justify-center" 
+                className="flex items-center justify-center text-sm py-2" 
                 onClick={() => setProtocol('openvpn')}
               >
                 <Globe className="h-4 w-4 mr-2" />
@@ -247,11 +247,12 @@ PLACEHOLDER_CLIENT_PRIVATE_KEY
               </Button>
               <Button 
                 variant={protocol === 'ikev2' ? 'default' : 'outline'} 
-                className="flex items-center justify-center" 
+                className="flex items-center justify-center text-sm py-2" 
                 onClick={() => setProtocol('ikev2')}
               >
                 <Key className="h-4 w-4 mr-2" />
-                IKEv2/IPSec
+                <span className="hidden sm:inline">IKEv2/IPSec</span>
+                <span className="sm:hidden">IKEv2</span>
               </Button>
             </div>
           </div>
@@ -558,17 +559,20 @@ export default function ClientsPage() {
           
           <Tabs defaultValue="downloads" className="w-full space-y-6">
             <TabsList className="grid grid-cols-3 w-full md:w-auto">
-              <TabsTrigger value="downloads" className="flex items-center">
-                <Download className="h-4 w-4 mr-2" />
-                Downloads
+              <TabsTrigger value="downloads" className="flex items-center text-xs md:text-sm">
+                <Download className="h-4 w-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Downloads</span>
+                <span className="sm:hidden">DL</span>
               </TabsTrigger>
-              <TabsTrigger value="config" className="flex items-center">
-                <Code className="h-4 w-4 mr-2" />
-                Configuration
+              <TabsTrigger value="config" className="flex items-center text-xs md:text-sm">
+                <Code className="h-4 w-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Configuration</span>
+                <span className="sm:hidden">Config</span>
               </TabsTrigger>
-              <TabsTrigger value="setup" className="flex items-center">
-                <Settings className="h-4 w-4 mr-2" />
-                Setup Guide
+              <TabsTrigger value="setup" className="flex items-center text-xs md:text-sm">
+                <Settings className="h-4 w-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">Setup Guide</span>
+                <span className="sm:hidden">Setup</span>
               </TabsTrigger>
             </TabsList>
             
@@ -605,46 +609,46 @@ export default function ClientsPage() {
             <TabsContent value="setup" className="space-y-6">
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-4">Choose Your Platform</h3>
-                <div className="grid grid-cols-5 gap-4">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
                   <Button 
                     variant={platform === 'windows' ? 'default' : 'outline'} 
-                    className="flex flex-col items-center py-4" 
+                    className="flex flex-col items-center py-3 sm:py-4" 
                     onClick={() => setPlatform('windows')}
                   >
-                    <FaWindows className="h-8 w-8 mb-2" />
-                    <span>Windows</span>
+                    <FaWindows className="h-6 w-6 sm:h-8 sm:w-8 mb-1 sm:mb-2" />
+                    <span className="text-xs sm:text-sm">Windows</span>
                   </Button>
                   <Button 
                     variant={platform === 'macos' ? 'default' : 'outline'} 
-                    className="flex flex-col items-center py-4" 
+                    className="flex flex-col items-center py-3 sm:py-4" 
                     onClick={() => setPlatform('macos')}
                   >
-                    <FaApple className="h-8 w-8 mb-2" />
-                    <span>macOS</span>
+                    <FaApple className="h-6 w-6 sm:h-8 sm:w-8 mb-1 sm:mb-2" />
+                    <span className="text-xs sm:text-sm">macOS</span>
                   </Button>
                   <Button 
                     variant={platform === 'linux' ? 'default' : 'outline'} 
-                    className="flex flex-col items-center py-4" 
+                    className="flex flex-col items-center py-3 sm:py-4" 
                     onClick={() => setPlatform('linux')}
                   >
-                    <FaLinux className="h-8 w-8 mb-2" />
-                    <span>Linux</span>
+                    <FaLinux className="h-6 w-6 sm:h-8 sm:w-8 mb-1 sm:mb-2" />
+                    <span className="text-xs sm:text-sm">Linux</span>
                   </Button>
                   <Button 
                     variant={platform === 'android' ? 'default' : 'outline'} 
-                    className="flex flex-col items-center py-4" 
+                    className="flex flex-col items-center py-3 sm:py-4" 
                     onClick={() => setPlatform('android')}
                   >
-                    <FaAndroid className="h-8 w-8 mb-2" />
-                    <span>Android</span>
+                    <FaAndroid className="h-6 w-6 sm:h-8 sm:w-8 mb-1 sm:mb-2" />
+                    <span className="text-xs sm:text-sm">Android</span>
                   </Button>
                   <Button 
                     variant={platform === 'ios' ? 'default' : 'outline'} 
-                    className="flex flex-col items-center py-4" 
+                    className="flex flex-col items-center py-3 sm:py-4" 
                     onClick={() => setPlatform('ios')}
                   >
-                    <FaAppStore className="h-8 w-8 mb-2" />
-                    <span>iOS</span>
+                    <FaAppStore className="h-6 w-6 sm:h-8 sm:w-8 mb-1 sm:mb-2" />
+                    <span className="text-xs sm:text-sm">iOS</span>
                   </Button>
                 </div>
               </div>
