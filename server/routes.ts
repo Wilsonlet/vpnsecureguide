@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { db } from "./db";
-import { insertVpnSessionSchema, insertVpnUserSettingsSchema, subscriptionTiers, subscriptionPlans, vpnSessions, VpnServer } from "@shared/schema";
+import { insertVpnSessionSchema, insertVpnUserSettingsSchema, insertAppSettingSchema, subscriptionTiers, subscriptionPlans, vpnSessions, VpnServer } from "@shared/schema";
 import { z } from "zod";
 import { eq, and, isNull } from "drizzle-orm";
 import Stripe from "stripe";
@@ -917,6 +917,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error("Admin update user subscription error:", error);
       res.status(500).json({ message: "Error updating user subscription", error: error.message });
+    }
+  });
+
+  // App Settings endpoints
+  app.get("/api/app-settings/:key", async (req, res, next) => {
+    try {
+      const { key } = req.params;
+      if (!key) {
+        return res.status(400).json({ message: "Setting key is required" });
+      }
+      
+      const setting = await storage.getAppSetting(key);
+      if (!setting) {
+        return res.status(404).json({ message: "Setting not found" });
+      }
+      
+      res.json(setting);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.get("/api/app-settings", async (req, res, next) => {
+    try {
+      const settings = await storage.getAllAppSettings();
+      res.json(settings);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post("/api/app-settings", async (req, res, next) => {
+    try {
+      // Only admin users can update app settings
+      if (!req.isAuthenticated() || req.user.subscription !== subscriptionTiers.ULTIMATE) {
+        return res.status(403).json({ message: "Not authorized to update app settings" });
+      }
+      
+      const parsedData = insertAppSettingSchema.parse(req.body);
+      
+      const setting = await storage.setAppSetting(
+        parsedData.key,
+        parsedData.value,
+        parsedData.description
+      );
+      
+      res.status(201).json(setting);
+    } catch (error) {
+      next(error);
     }
   });
 
