@@ -328,219 +328,143 @@ export default function ConnectionStatusCard() {
   
   // Main function to handle VPN connection toggle
   const handleConnectionToggle = async (checked: boolean) => {
-    // Only allow toggle every 1500ms (1.5 seconds) to prevent rapid state changes
-    const now = Date.now();
-    if (now - lastToggleTime.current < 1500 || isToggling) {
-      console.log("Toggle ignored - cooldown in effect");
-      return;
-    }
+    console.log("Toggle clicked with value:", checked);
     
-    // Update the last toggle time and toggle state
-    lastToggleTime.current = now;
+    // Set loading state immediately
     setIsToggling(true);
     
     try {
-      // Determine current connection state using both flags
-      const reallyConnected = vpnState.connected || forceConnected;
-      
-      // Determine actual action needed
-      const shouldConnect = checked && !reallyConnected;
-      const shouldDisconnect = !checked && reallyConnected;
-      
-      console.log("Toggle state:", { 
-        checked, 
-        reallyConnected, 
-        forceConnected, 
-        vpnConnected: vpnState.connected,
-        shouldConnect, 
-        shouldDisconnect 
-      });
-      
-      if (shouldConnect) {
-        // First update local state to give immediate feedback
-        setForceConnected(true);
-        vpnState.updateSettings({
-          connected: true,
-          connectTime: new Date()
-        });
+      if (checked) {
+        console.log("Attempting to connect to VPN...");
         
         // Make sure we have servers data
-        if (!vpnState.availableServers || vpnState.availableServers.length === 0) {
-          // Try to fetch servers if they're not available
-          try {
-            const res = await apiRequest('GET', '/api/servers');
-            if (res.ok) {
-              const serversData = await res.json();
-              if (Array.isArray(serversData) && serversData.length > 0) {
-                vpnState.setAvailableServers(serversData);
-                // Auto-select the first server
-                vpnState.selectServer(serversData[0]);
-              } else {
-                throw new Error("No servers available from API");
-              }
-            } else {
-              throw new Error("Failed to fetch VPN servers");
-            }
-          } catch (error) {
-            // Revert state on error
-            setForceConnected(false);
-            vpnState.updateSettings({
-              connected: false,
-              connectTime: null
-            });
-            
-            console.error("Server fetch error:", error);
-            toast({
-              title: 'Server Error',
-              description: 'Unable to fetch available VPN servers. Please refresh and try again.',
-              variant: 'destructive'
-            });
-            setIsToggling(false);
-            return;
+        const serversRes = await apiRequest('GET', '/api/servers');
+        if (!serversRes.ok) {
+          throw new Error("Failed to load servers. Please refresh and try again.");
+        }
+        
+        const servers = await serversRes.json();
+        if (!Array.isArray(servers) || servers.length === 0) {
+          throw new Error("No VPN servers available. Please try again later.");
+        }
+        
+        // Update available servers
+        vpnState.setAvailableServers(servers);
+        
+        // Make sure we have a server selected
+        let serverToUse = vpnState.selectedServer;
+        if (!serverToUse && servers.length > 0) {
+          serverToUse = servers[0];
+          if (serverToUse) {
+            vpnState.selectServer(serverToUse);
           }
         }
         
-        // If no server is selected, use the first available one
-        if (!vpnState.selectedServer && vpnState.availableServers.length > 0) {
-          const firstServer = vpnState.availableServers[0];
-          vpnState.selectServer(firstServer);
+        if (!serverToUse) {
+          throw new Error("Could not select a server. Please refresh and try again.");
         }
         
-        // Double-check we have a server or pick one from available servers
-        const serverToUse = vpnState.selectedServer || 
-                          (vpnState.availableServers.length > 0 ? vpnState.availableServers[0] : null);
+        // Start the connection process
+        console.log("Connecting to server:", serverToUse.name);
         
-        // Start a VPN session on the backend
-        if (serverToUse) {
-          console.log("Starting VPN session with:", {
-            serverId: serverToUse.id,
-            protocol: vpnState.protocol,
-            encryption: vpnState.encryption
-          });
-          
-          try {
-            const res = await apiRequest('POST', '/api/sessions/start', {
-              serverId: serverToUse.id,
-              protocol: vpnState.protocol || 'wireguard',
-              encryption: vpnState.encryption || 'aes_256_gcm'
-            });
-            
-            if (res.ok) {
-              const sessionData = await res.json();
-              console.log("Session started:", sessionData);
-              
-              // Update VPN state with all session data
-              vpnState.updateSettings({
-                connected: true,
-                connectTime: new Date(sessionData.startTime),
-                virtualIp: sessionData.virtualIp || '10.78.102.138',
-                protocol: sessionData.protocol || 'wireguard',
-                encryption: sessionData.encryption || 'aes_256_gcm',
-                selectedServer: serverToUse
-              });
-              
-              toast({
-                title: 'Connected',
-                description: `Successfully connected to ${serverToUse.name} (${serverToUse.country})`,
-              });
-              
-              // Refresh current session data
-              queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
-            } else {
-              // Revert state on error
-              setForceConnected(false);
-              vpnState.updateSettings({
-                connected: false,
-                connectTime: null
-              });
-              
-              console.error("Failed to start session:", await res.text());
-              throw new Error("Failed to start VPN session");
-            }
-          } catch (error) {
-            // Revert state on error
-            setForceConnected(false);
-            vpnState.updateSettings({
-              connected: false,
-              connectTime: null
-            });
-            
-            throw error;
-          }
-        } else {
-          // Revert state on error
-          setForceConnected(false);
-          vpnState.updateSettings({
-            connected: false,
-            connectTime: null
-          });
-          
-          toast({
-            title: 'Connection Error',
-            description: 'No VPN servers available. Please refresh and try again.',
-            variant: 'destructive'
-          });
-          setIsToggling(false);
-          return;
+        // End any existing sessions first (just in case)
+        try {
+          await apiRequest('POST', '/api/sessions/end', {});
+          console.log("Cleared any existing sessions");
+        } catch (endError) {
+          console.warn("Couldn't end existing sessions (might not exist):", endError);
         }
-      } else if (shouldDisconnect) {
-        // Update local state immediately for better UX
+        
+        // Update UI state immediately for feedback
+        setForceConnected(true);
+        
+        // Start a new session
+        const startRes = await apiRequest('POST', '/api/sessions/start', {
+          serverId: serverToUse.id,
+          protocol: vpnState.protocol || 'wireguard',
+          encryption: vpnState.encryption || 'aes_256_gcm'
+        });
+        
+        if (!startRes.ok) {
+          const errorText = await startRes.text();
+          console.error("Connection failed:", errorText);
+          throw new Error("Failed to connect to VPN server");
+        }
+        
+        // Get the session data
+        const sessionData = await startRes.json();
+        console.log("Connected successfully:", sessionData);
+        
+        // Update the VPN state
+        vpnState.updateSettings({
+          connected: true,
+          connectTime: new Date(sessionData.startTime),
+          virtualIp: sessionData.virtualIp,
+          protocol: sessionData.protocol || vpnState.protocol || 'wireguard',
+          encryption: sessionData.encryption || vpnState.encryption || 'aes_256_gcm',
+          selectedServer: serverToUse
+        });
+        
+        // Show success message
+        toast({
+          title: 'Connected',
+          description: `Successfully connected to ${serverToUse.name} (${serverToUse.country})`,
+        });
+        
+        // Refresh session data
+        queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
+      } else {
+        console.log("Disconnecting from VPN...");
+        
+        // Update UI state immediately for feedback
         setForceConnected(false);
         vpnState.updateSettings({
-          connected: false,
-          connectTime: null
+          connected: false
         });
         
         // End the current VPN session
-        try {
-          const res = await apiRequest('POST', '/api/sessions/end');
-          
-          if (res.ok) {
-            toast({
-              title: 'Disconnected',
-              description: 'VPN connection terminated successfully',
-            });
-            
-            // Refresh current session data
-            queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
-          } else {
-            console.error("Failed to end session:", await res.text());
-            
-            // If the session didn't actually end, do a full check
-            const sessionCheck = await apiRequest('GET', '/api/sessions/current');
-            if (sessionCheck.ok) {
-              const activeSession = await sessionCheck.json();
-              
-              // If there's still an active session, revert UI state
-              if (activeSession && activeSession.id && !activeSession.endTime) {
-                setForceConnected(true);
-                vpnState.updateSettings({
-                  connected: true,
-                  connectTime: new Date(activeSession.startTime)
-                });
-                throw new Error("Failed to end VPN session");
-              }
-            }
-          }
-        } catch (error) {
-          throw error;
-        }
-      } else {
-        // State is already in desired position, no change needed
-        console.log("Toggle aligned with current state, no change needed");
+        const res = await apiRequest('POST', '/api/sessions/end', {});
         
-        // But let's refresh data just to be safe
+        if (!res.ok) {
+          console.error("Failed to disconnect:", await res.text());
+          throw new Error("Failed to disconnect from VPN");
+        }
+        
+        console.log("Disconnected successfully");
+        
+        // Reset VPN state
+        vpnState.updateSettings({
+          connected: false,
+          connectTime: null,
+          virtualIp: ''
+        });
+        
+        // Show success message
+        toast({
+          title: 'Disconnected',
+          description: 'VPN connection terminated successfully',
+        });
+        
+        // Refresh session data
         queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
       }
     } catch (error) {
       console.error("Connection error:", error);
+      
+      // Revert UI state
+      setForceConnected(false);
+      vpnState.updateSettings({ 
+        connected: false,
+        connectTime: null 
+      });
+      
+      // Show error message
       toast({
         title: 'Connection Error',
         description: error instanceof Error ? error.message : 'Failed to manage VPN connection',
         variant: 'destructive'
       });
     } finally {
-      // Always reset toggling state when done
       setIsToggling(false);
     }
   };
@@ -637,49 +561,66 @@ export default function ConnectionStatusCard() {
                   if (vpnState.connected || forceConnected) {
                     // Update UI immediately for better UX
                     const previousServer = vpnState.selectedServer;
+                    
+                    // Save the server
                     vpnState.selectServer(server);
                     
                     try {
+                      console.log("Changing server to:", server.name);
+                      
                       // End current session
-                      await apiRequest('POST', '/api/sessions/end');
+                      const endRes = await apiRequest('POST', '/api/sessions/end');
+                      if (!endRes.ok) {
+                        console.warn("Warning: Failed to end previous session. Will attempt to continue anyway.");
+                      }
+                      
+                      // Wait a bit before starting new session
+                      await new Promise(resolve => setTimeout(resolve, 300));
                       
                       // Start new session with selected server
-                      const res = await apiRequest('POST', '/api/sessions/start', {
+                      const startRes = await apiRequest('POST', '/api/sessions/start', {
                         serverId: server.id,
-                        protocol: vpnState.protocol,
-                        encryption: vpnState.encryption
+                        protocol: vpnState.protocol || 'wireguard',
+                        encryption: vpnState.encryption || 'aes_256_gcm'
                       });
                       
-                      if (res.ok) {
-                        const sessionData = await res.json();
-                        
-                        // Update VPN state with all session details
-                        vpnState.updateSettings({
-                          connected: true,
-                          connectTime: new Date(sessionData.startTime),
-                          virtualIp: sessionData.virtualIp,
-                          protocol: sessionData.protocol,
-                          encryption: sessionData.encryption,
-                          selectedServer: server
-                        });
-                        
-                        toast({
-                          title: 'Server Changed',
-                          description: `Connected to ${server.name} (${server.country})`,
-                        });
-                        
-                        // Refresh current session data
-                        queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
-                      } else {
-                        // Revert to previous server on error
-                        if (previousServer) {
-                          vpnState.selectServer(previousServer);
-                        }
-                        
-                        throw new Error("Failed to change server");
+                      if (!startRes.ok) {
+                        const errorText = await startRes.text();
+                        console.error("Failed to start new session:", errorText);
+                        throw new Error("Failed to connect to selected server");
                       }
+                      
+                      const sessionData = await startRes.json();
+                      console.log("New session started:", sessionData);
+                      
+                      // Update VPN state with all session details
+                      vpnState.updateSettings({
+                        connected: true,
+                        connectTime: new Date(sessionData.startTime),
+                        virtualIp: sessionData.virtualIp,
+                        protocol: sessionData.protocol || vpnState.protocol,
+                        encryption: sessionData.encryption || vpnState.encryption,
+                        selectedServer: server
+                      });
+                      
+                      // Update UI state
+                      setForceConnected(true);
+                      
+                      toast({
+                        title: 'Server Changed',
+                        description: `Connected to ${server.name} (${server.country})`,
+                      });
+                      
+                      // Refresh current session data
+                      queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
                     } catch (error) {
                       console.error("Server change error:", error);
+                      
+                      // Revert to previous server on error
+                      if (previousServer) {
+                        vpnState.selectServer(previousServer);
+                      }
+                      
                       toast({
                         title: 'Server Change Failed',
                         description: error instanceof Error ? error.message : 'Failed to change server',

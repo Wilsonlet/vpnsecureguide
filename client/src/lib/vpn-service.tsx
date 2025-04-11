@@ -29,8 +29,8 @@ export type VpnStateContextType = VpnConnectionState & {
     protocol: string;
     encryption: string;
     server: VpnServer;
-  }) => void;
-  disconnect: () => void;
+  }) => Promise<any>;
+  disconnect: () => Promise<any>;
   updateSettings: (settings: Partial<VpnConnectionState>) => void;
   selectServer: (server: VpnServer) => void;
   setAvailableServers: (servers: VpnServer[]) => void;
@@ -62,8 +62,8 @@ export const VpnStateContext = createContext<VpnStateContextType>({
   customDns: false,
   customDnsServer: '1.1.1.1',
   // Functions
-  connect: () => {},
-  disconnect: () => {},
+  connect: async () => Promise.resolve({}),
+  disconnect: async () => Promise.resolve(true),
   updateSettings: () => {},
   selectServer: () => {},
   setAvailableServers: () => {},
@@ -92,33 +92,103 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     customDnsServer: '1.1.1.1',
   });
 
-  const connect = (options: {
+  const connect = async (options: {
     serverId: number;
     protocol: string;
     encryption: string;
     server: VpnServer;
   }) => {
-    // Use the existing virtualIp if already set by updateSettings
-    // This prevents the UI from displaying a random IP that differs from the one
-    // assigned by the server
-    setState((currentState) => ({
-      ...currentState,
-      connected: true,
-      connectTime: currentState.connectTime || new Date(),
-      protocol: options.protocol,
-      encryption: options.encryption,
-      selectedServer: options.server,
-      // Only generate a random IP if there isn't one already set
-      virtualIp: currentState.virtualIp || generateRandomIp(),
-    }));
+    try {
+      console.log("VPN Connect called with options:", options);
+      
+      // Update state immediately to reflect connection attempt
+      setState((currentState) => ({
+        ...currentState,
+        connected: true,
+        connectTime: new Date(),
+        protocol: options.protocol,
+        encryption: options.encryption,
+        selectedServer: options.server,
+      }));
+      
+      // Send the connection request to the server
+      const res = await fetch('/api/sessions/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          serverId: options.serverId,
+          protocol: options.protocol,
+          encryption: options.encryption,
+        }),
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Error starting VPN session:", errorText);
+        throw new Error("Failed to connect to VPN");
+      }
+      
+      const sessionData = await res.json();
+      console.log("VPN session started:", sessionData);
+      
+      // Update with server-provided values
+      setState((currentState) => ({
+        ...currentState,
+        connected: true,
+        connectTime: new Date(sessionData.startTime),
+        virtualIp: sessionData.virtualIp,
+        protocol: sessionData.protocol || options.protocol,
+        encryption: sessionData.encryption || options.encryption,
+      }));
+      
+      return sessionData;
+    } catch (error) {
+      console.error("VPN connect error:", error);
+      
+      // Reset connection state on error
+      setState(currentState => ({
+        ...currentState,
+        connected: false,
+        connectTime: null,
+      }));
+      
+      throw error;
+    }
   };
 
-  const disconnect = () => {
-    setState(currentState => ({
-      ...currentState,
-      connected: false,
-      connectTime: null,
-    }));
+  const disconnect = async () => {
+    try {
+      console.log("VPN Disconnect called");
+      
+      // Update state immediately to reflect disconnection attempt
+      setState(currentState => ({
+        ...currentState,
+        connected: false,
+        connectTime: null,
+      }));
+      
+      // Send the disconnection request to the server
+      const res = await fetch('/api/sessions/end', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Error ending VPN session:", errorText);
+        throw new Error("Failed to disconnect from VPN");
+      }
+      
+      console.log("VPN session ended successfully");
+      return true;
+    } catch (error) {
+      console.error("VPN disconnect error:", error);
+      throw error;
+    }
   };
 
   const updateSettings = (settings: Partial<VpnConnectionState>) => {
