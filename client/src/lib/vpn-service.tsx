@@ -99,7 +99,9 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
   // Connection state management
   const isConnectingRef = useRef(false);
   const lastConnectionAttemptRef = useRef(0);
-  const CONNECTION_COOLDOWN = 5000; // 5 seconds cooldown
+  // In development mode, set a very short cooldown or disable it entirely
+  const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost';
+  const CONNECTION_COOLDOWN = isDevelopment ? 100 : 5000; // Almost no cooldown in dev mode
 
   const connect = async (options: {
     serverId: number;
@@ -125,11 +127,11 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         });
       }
       
-      // Check if we need to respect the cooldown period
+      // Check if we need to respect the cooldown period (bypassed in development)
       const now = Date.now();
       const timeSinceLastAttempt = now - lastConnectionAttemptRef.current;
       
-      if (timeSinceLastAttempt < CONNECTION_COOLDOWN) {
+      if (!isDevelopment && timeSinceLastAttempt < CONNECTION_COOLDOWN) {
         const remainingCooldown = Math.ceil((CONNECTION_COOLDOWN - timeSinceLastAttempt) / 1000);
         console.warn(`Connection on cooldown. Please wait ${remainingCooldown} seconds.`);
         
@@ -389,11 +391,11 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         });
       }
       
-      // Check if we need to respect the cooldown period
+      // Check if we need to respect the cooldown period (bypassed in development)
       const now = Date.now();
       const timeSinceLastAttempt = now - lastConnectionAttemptRef.current;
       
-      if (timeSinceLastAttempt < CONNECTION_COOLDOWN) {
+      if (!isDevelopment && timeSinceLastAttempt < CONNECTION_COOLDOWN) {
         const remainingCooldown = Math.ceil((CONNECTION_COOLDOWN - timeSinceLastAttempt) / 1000);
         console.warn(`Connection on cooldown. Please wait ${remainingCooldown} seconds.`);
         
