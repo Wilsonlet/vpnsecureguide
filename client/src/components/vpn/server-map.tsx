@@ -14,6 +14,19 @@ export default function ServerMap({ servers, className = '' }: ServerMapProps) {
   const [region, setRegion] = useState('all');
   const [filteredServers, setFilteredServers] = useState<VpnServer[]>([]);
   
+  // Initialize state with servers on first load
+  useEffect(() => {
+    if (servers && servers.length > 0) {
+      vpnState.setAvailableServers(servers);
+      
+      // Auto-select the first server if none is selected
+      if (!vpnState.selectedServer) {
+        const bestServer = servers.find(s => s.load < 50 && s.latency < 100) || servers[0];
+        vpnState.selectServer(bestServer);
+      }
+    }
+  }, [servers]);
+
   // Update the filtered servers based on region selection
   useEffect(() => {
     if (region === 'all') {
@@ -38,6 +51,11 @@ export default function ServerMap({ servers, className = '' }: ServerMapProps) {
       });
       setFilteredServers(filtered);
       vpnState.setAvailableServers(filtered);
+      
+      // If a server was previously selected but is no longer in the filtered list, select a new one
+      if (vpnState.selectedServer && !filtered.some(s => s.id === vpnState.selectedServer?.id) && filtered.length > 0) {
+        vpnState.selectServer(filtered[0]);
+      }
     }
   }, [region, servers]);
 

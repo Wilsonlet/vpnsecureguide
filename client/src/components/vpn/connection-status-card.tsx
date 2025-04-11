@@ -55,18 +55,25 @@ export default function ConnectionStatusCard() {
         if (!vpnState.selectedServer && vpnState.availableServers.length > 0) {
           const firstServer = vpnState.availableServers[0];
           vpnState.selectServer(firstServer);
+          
+          // Give a small delay to ensure the state update has completed
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
         
+        // Double-check we have a server or pick one from available servers
+        const serverToUse = vpnState.selectedServer || 
+                          (vpnState.availableServers.length > 0 ? vpnState.availableServers[0] : null);
+        
         // Start a VPN session on the backend
-        if (vpnState.selectedServer) {
+        if (serverToUse) {
           console.log("Starting VPN session with:", {
-            serverId: vpnState.selectedServer.id,
+            serverId: serverToUse.id,
             protocol: vpnState.protocol,
             encryption: vpnState.encryption
           });
           
           const res = await apiRequest('POST', '/api/sessions/start', {
-            serverId: vpnState.selectedServer.id,
+            serverId: serverToUse.id,
             protocol: vpnState.protocol,
             encryption: vpnState.encryption
           });
@@ -77,10 +84,10 @@ export default function ConnectionStatusCard() {
             
             // Update VPN state with virtual IP from response
             vpnState.connect({
-              serverId: vpnState.selectedServer.id,
+              serverId: serverToUse.id,
               protocol: vpnState.protocol,
               encryption: vpnState.encryption,
-              server: vpnState.selectedServer
+              server: serverToUse
             });
             
             // Set virtual IP if available
@@ -92,7 +99,7 @@ export default function ConnectionStatusCard() {
             
             toast({
               title: 'Connected',
-              description: `Successfully connected to ${vpnState.selectedServer.name} (${vpnState.selectedServer.country})`,
+              description: `Successfully connected to ${serverToUse.name} (${serverToUse.country})`,
             });
             
             // Refresh current session data
@@ -104,7 +111,7 @@ export default function ConnectionStatusCard() {
         } else {
           toast({
             title: 'Connection Error',
-            description: 'Please select a server first',
+            description: 'No VPN servers available. Please try again later.',
             variant: 'destructive'
           });
           return;
