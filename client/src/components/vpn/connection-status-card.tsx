@@ -569,12 +569,37 @@ export default function ConnectionStatusCard() {
                 )}
               </div>
             </div>
-            <div>
-              <ToggleSwitch 
-                checked={vpnState.connected || forceConnected} 
-                onChange={handleConnectionToggle}
-                disabled={isToggling} 
-              />
+            <div className="flex items-center gap-3">
+              {(vpnState.connected || forceConnected) ? (
+                <DisconnectButton
+                  onDisconnectStart={() => {
+                    setIsToggling(true);
+                    // Update UI immediately for better responsiveness
+                    setForceConnected(false);
+                    vpnState.updateSettings({
+                      connected: false,
+                      connectTime: null,
+                      virtualIp: ''
+                    });
+                  }}
+                  onDisconnectComplete={() => {
+                    // Ensure we are disconnected
+                    setIsToggling(false);
+                    setForceConnected(false);
+                    queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
+                  }}
+                />
+              ) : (
+                <Button 
+                  onClick={() => handleConnectionToggle(true)}
+                  disabled={isToggling}
+                  variant="outline" 
+                  size="sm"
+                  className="bg-gradient-to-r from-blue-600 to-cyan-400 text-white font-medium px-4 h-9"
+                >
+                  {isToggling ? 'Connecting...' : 'Connect'}
+                </Button>
+              )}
             </div>
           </div>
         </div>
