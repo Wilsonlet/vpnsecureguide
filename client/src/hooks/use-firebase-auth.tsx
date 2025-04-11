@@ -8,7 +8,7 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { getFirebaseAuth, getCurrentUser } from "@/lib/firebase";
 import { useToast } from "./use-toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -29,6 +29,8 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Use the lazy-loaded Firebase auth instance
+    const auth = getFirebaseAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setFirebaseUser(user);
       setIsLoading(false);
@@ -45,6 +47,7 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       setIsLoading(true);
+      const auth = getFirebaseAuth();
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       toast({
@@ -66,6 +69,7 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
   const signInWithEmail = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      const auth = getFirebaseAuth();
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: "Success!",
@@ -87,6 +91,7 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
   const signUpWithEmail = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      const auth = getFirebaseAuth();
       await createUserWithEmailAndPassword(auth, email, password);
       toast({
         title: "Success!",
@@ -108,6 +113,7 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       setIsLoading(true);
+      const auth = getFirebaseAuth();
       await signOut(auth);
       // Clear the query cache for user data
       queryClient.setQueryData(["/api/user"], null);
