@@ -9,6 +9,7 @@ import { eq, and, isNull } from "drizzle-orm";
 import Stripe from "stripe";
 import { vpnLoadBalancer, connectionRateLimiter, connectionStatistics } from "./scaling";
 import { verifyFirebaseToken } from "./firebase-auth";
+import { setupKillSwitchRoutes, killSwitchManager } from "./kill-switch";
 
 // Initialize Stripe if the secret key is available
 let stripe: Stripe | undefined;
@@ -29,6 +30,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // If valid, it will set req.user based on Firebase auth
   // If not, it will proceed to the next middleware (passport session auth)
   app.use(verifyFirebaseToken);
+  
+  // Set up kill switch routes for VPN protection
+  setupKillSwitchRoutes(app);
 
   // VPN Server endpoints
   app.get("/api/servers", async (req, res, next) => {

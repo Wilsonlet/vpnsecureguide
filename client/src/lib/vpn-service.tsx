@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useRef } from 'react';
+import { createContext, useContext, useState, useRef, useEffect } from 'react';
 import { VpnServer } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
+import { VpnKillSwitchService } from './kill-switch-service';
 
 export type VpnConnectionState = {
   connected: boolean;
@@ -95,6 +96,27 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     customDns: false,
     customDnsServer: '1.1.1.1',
   });
+  
+  // Initialize kill switch service
+  useEffect(() => {
+    // Start connection monitoring if kill switch is enabled
+    const killSwitchService = VpnKillSwitchService.getInstance();
+    
+    if (state.killSwitch && state.connected) {
+      // Start monitoring VPN connection for kill switch activation
+      killSwitchService.startConnectionMonitoring();
+      
+      console.log('Kill switch monitoring activated');
+    } else {
+      // Stop monitoring if kill switch is disabled or VPN is disconnected
+      killSwitchService.stopConnectionMonitoring();
+    }
+    
+    return () => {
+      // Clean up monitoring on unmount
+      killSwitchService.stopConnectionMonitoring();
+    };
+  }, [state.killSwitch, state.connected]);
 
   // Connection state management
   const isConnectingRef = useRef(false);
@@ -249,13 +271,36 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       console.log("VPN Disconnect called");
       
-      // First update state immediately to reflect disconnection attempt
-      setState(currentState => ({
-        ...currentState,
-        connected: false,
-        connectTime: null,
-        virtualIp: '', // Clear virtual IP
-      }));
+      // Get kill switch service
+      const killSwitchService = VpnKillSwitchService.getInstance();
+      
+      // If kill switch is enabled, ask if this is an intentional disconnect
+      if (state.killSwitch) {
+        console.log("Kill switch is enabled, this disconnect is controlled");
+        
+        // We'll mark this as a controlled disconnect to prevent kill switch activation
+        // This is for user-initiated disconnections
+        const abrupt = false;
+        
+        // First update state immediately to reflect disconnection attempt
+        setState(currentState => ({
+          ...currentState,
+          connected: false,
+          connectTime: null,
+          virtualIp: '', // Clear virtual IP
+        }));
+        
+        // Stop monitoring connection for kill switch
+        killSwitchService.stopConnectionMonitoring();
+      } else {
+        // Normal disconnect flow without kill switch
+        setState(currentState => ({
+          ...currentState,
+          connected: false,
+          connectTime: null,
+          virtualIp: '', // Clear virtual IP
+        }));
+      }
       
       // Track if we're successfully disconnected at the server level
       let serverDisconnectSuccess = false;
@@ -265,12 +310,16 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         console.log(`Disconnect attempt ${attempt} of 3...`);
         
         try {
-          // Send the disconnection request to the server
+          // Send the disconnection request to the server with abrupt flag
+          // This tells the server if it's a controlled disconnect vs unexpected
           const res = await fetch('/api/sessions/end', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+              abrupt: false // This is a controlled disconnect
+            })
           });
           
           if (res.ok) {

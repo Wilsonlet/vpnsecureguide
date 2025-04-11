@@ -7,6 +7,7 @@ import ServerMap from '@/components/vpn/server-map';
 import SecuritySettingsCard from '@/components/vpn/security-settings-card';
 import UsageStatsCard from '@/components/vpn/usage-stats-card';
 import SmartModeCard from '@/components/vpn/smart-mode-card';
+import { KillSwitchCard } from '@/components/vpn/kill-switch';
 import AdBanner from '@/components/ads/AdBanner';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
@@ -133,6 +134,11 @@ export default function Dashboard() {
             
             {/* Smart Mode & Split Tunneling */}
             <SmartModeCard />
+          </div>
+          
+          {/* Kill Switch */}
+          <div className="mt-6">
+            <KillSwitchCard />
           </div>
           
           {/* AdSense Banner for Free Users */}
