@@ -1,9 +1,9 @@
 import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
 import Header from '@/components/layout/header';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { useVpnState } from '@/lib/vpn-service';
@@ -196,7 +196,7 @@ PLACEHOLDER_CLIENT_PRIVATE_KEY
                 className="flex flex-col items-center py-3" 
                 onClick={() => setPlatform('macos')}
               >
-                <SiApple className="h-6 w-6 mb-1" />
+                <FaApple className="h-6 w-6 mb-1" />
                 <span className="text-xs">macOS</span>
               </Button>
               <Button 
@@ -204,7 +204,7 @@ PLACEHOLDER_CLIENT_PRIVATE_KEY
                 className="flex flex-col items-center py-3" 
                 onClick={() => setPlatform('linux')}
               >
-                <SiLinux className="h-6 w-6 mb-1" />
+                <FaLinux className="h-6 w-6 mb-1" />
                 <span className="text-xs">Linux</span>
               </Button>
               <Button 
@@ -212,7 +212,7 @@ PLACEHOLDER_CLIENT_PRIVATE_KEY
                 className="flex flex-col items-center py-3" 
                 onClick={() => setPlatform('android')}
               >
-                <SiAndroid className="h-6 w-6 mb-1" />
+                <FaAndroid className="h-6 w-6 mb-1" />
                 <span className="text-xs">Android</span>
               </Button>
               <Button 
@@ -220,7 +220,7 @@ PLACEHOLDER_CLIENT_PRIVATE_KEY
                 className="flex flex-col items-center py-3" 
                 onClick={() => setPlatform('ios')}
               >
-                <SiIos className="h-6 w-6 mb-1" />
+                <FaAppStore className="h-6 w-6 mb-1" />
                 <span className="text-xs">iOS</span>
               </Button>
             </div>
@@ -427,7 +427,7 @@ export default function ClientsPage() {
       title: "Windows Client",
       version: "2.8.3",
       description: "Our full-featured Windows VPN client with intuitive interface and advanced security features.",
-      icon: <SiWindows className="text-primary" />,
+      icon: <FaWindows className="text-primary" />,
       downloadUrl: "#windows-client",
       releaseDate: "April 5, 2025",
       size: "18.7 MB",
@@ -445,7 +445,7 @@ export default function ClientsPage() {
       title: "macOS Client",
       version: "2.7.5",
       description: "Native macOS application with Apple Silicon and Intel support for maximum performance.",
-      icon: <SiApple className="text-primary" />,
+      icon: <FaApple className="text-primary" />,
       downloadUrl: "#macos-client",
       releaseDate: "March 28, 2025",
       size: "24.3 MB",
@@ -463,7 +463,7 @@ export default function ClientsPage() {
       title: "Linux Client",
       version: "2.6.1",
       description: "Open-source Linux client with support for major distributions and advanced customization.",
-      icon: <SiLinux className="text-primary" />,
+      icon: <FaLinux className="text-primary" />,
       downloadUrl: "#linux-client",
       releaseDate: "March 15, 2025",
       size: "12.6 MB",
@@ -485,7 +485,7 @@ export default function ClientsPage() {
       title: "Android Client",
       version: "3.1.0",
       description: "Feature-rich Android VPN with advanced security, battery optimization, and easy server switching.",
-      icon: <SiAndroid className="text-primary" />,
+      icon: <FaAndroid className="text-primary" />,
       downloadUrl: "#android-client",
       releaseDate: "April 8, 2025",
       size: "22.4 MB",
@@ -503,7 +503,7 @@ export default function ClientsPage() {
       title: "iOS Client",
       version: "3.0.2",
       description: "Sleek, privacy-focused iOS app with iCloud sync, On-Demand VPN, and easy widget access.",
-      icon: <SiIos className="text-primary" />,
+      icon: <FaAppStore className="text-primary" />,
       downloadUrl: "#ios-client",
       releaseDate: "March 30, 2025",
       size: "28.1 MB",
@@ -611,7 +611,7 @@ export default function ClientsPage() {
                     className="flex flex-col items-center py-4" 
                     onClick={() => setPlatform('windows')}
                   >
-                    <SiWindows className="h-8 w-8 mb-2" />
+                    <FaWindows className="h-8 w-8 mb-2" />
                     <span>Windows</span>
                   </Button>
                   <Button 
@@ -619,7 +619,7 @@ export default function ClientsPage() {
                     className="flex flex-col items-center py-4" 
                     onClick={() => setPlatform('macos')}
                   >
-                    <SiApple className="h-8 w-8 mb-2" />
+                    <FaApple className="h-8 w-8 mb-2" />
                     <span>macOS</span>
                   </Button>
                   <Button 
@@ -627,7 +627,7 @@ export default function ClientsPage() {
                     className="flex flex-col items-center py-4" 
                     onClick={() => setPlatform('linux')}
                   >
-                    <SiLinux className="h-8 w-8 mb-2" />
+                    <FaLinux className="h-8 w-8 mb-2" />
                     <span>Linux</span>
                   </Button>
                   <Button 
@@ -635,7 +635,7 @@ export default function ClientsPage() {
                     className="flex flex-col items-center py-4" 
                     onClick={() => setPlatform('android')}
                   >
-                    <SiAndroid className="h-8 w-8 mb-2" />
+                    <FaAndroid className="h-8 w-8 mb-2" />
                     <span>Android</span>
                   </Button>
                   <Button 
@@ -643,7 +643,7 @@ export default function ClientsPage() {
                     className="flex flex-col items-center py-4" 
                     onClick={() => setPlatform('ios')}
                   >
-                    <SiIos className="h-8 w-8 mb-2" />
+                    <FaAppStore className="h-8 w-8 mb-2" />
                     <span>iOS</span>
                   </Button>
                 </div>
