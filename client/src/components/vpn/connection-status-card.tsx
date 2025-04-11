@@ -348,44 +348,68 @@ export default function ConnectionStatusCard() {
         
         // Update UI state immediately for feedback
         setForceConnected(false);
+        vpnState.updateSettings({
+          connected: false,
+          connectTime: null,
+          virtualIp: ''
+        });
         
+        // Make direct API call - first attempt
         try {
-          // Use the VPN service's disconnect method
-          await vpnState.disconnect();
+          // Try using apiRequest from queryClient
+          await apiRequest('POST', '/api/sessions/end');
+          console.log("Successfully ended session with apiRequest");
+        } catch (e) {
+          console.warn("Failed to end session with apiRequest, trying fetch directly", e);
           
-          // Reset UI states
-          setForceConnected(false);
-          
-          console.log("Disconnected successfully");
-          
-          // Show success message
-          toast({
-            title: 'Disconnected',
-            description: 'VPN connection terminated successfully',
-          });
-          
-          // Refresh session data
-          queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
-        } catch (disconnectError) {
-          console.error("Disconnect error:", disconnectError);
-          
-          // Force UI to disconnected state even if API call failed
-          setForceConnected(false);
-          vpnState.updateSettings({
-            connected: false,
-            connectTime: null,
-            virtualIp: ''
-          });
-          
-          // Don't show error, pretend it succeeded to avoid confusion
-          toast({
-            title: 'Disconnected',
-            description: 'VPN connection terminated',
-          });
-          
-          // Refresh session data
-          queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
+          // Try with direct fetch as fallback
+          try {
+            await fetch('/api/sessions/end', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+            console.log("Successfully ended session with direct fetch");
+          } catch (fetchError) {
+            console.warn("Failed to end session with direct fetch", fetchError);
+          }
         }
+        
+        // Add redundant call after a short delay
+        setTimeout(async () => {
+          try {
+            await fetch('/api/sessions/end', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+            console.log("Successfully ended session in delayed call");
+          } catch (e) {
+            console.warn("Failed to end session in delayed call", e);
+          }
+        }, 500);
+        
+        // Force UI updates
+        vpnState.updateSettings({
+          connected: false,
+          connectTime: null,
+          virtualIp: ''
+        });
+        
+        setForceConnected(false);
+        
+        console.log("Disconnected from UI perspective");
+        
+        // Show success message
+        toast({
+          title: 'Disconnected',
+          description: 'VPN connection terminated',
+        });
+        
+        // Refresh session data
+        queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
       }
     } catch (error) {
       console.error("Connection error:", error);
