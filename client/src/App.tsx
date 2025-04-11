@@ -9,6 +9,7 @@ import SubscriptionPage from "@/pages/subscription-page";
 import AccountPage from "@/pages/account-page";
 import AdminPage from "@/pages/admin-page";
 import ServersPage from "@/pages/servers-page";
+import ClientsPage from "@/pages/clients-page";
 import SettingsPage from "@/pages/settings-page";
 import SupportPage from "@/pages/support-page";
 import { ProtectedRoute } from "./lib/protected-route";
@@ -25,6 +26,7 @@ function Router() {
       <ProtectedRoute path="/account" component={AccountPage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/servers" component={ServersPage} />
+      <ProtectedRoute path="/clients" component={ClientsPage} />
       <ProtectedRoute path="/settings" component={SettingsPage} />
       <ProtectedRoute path="/support" component={SupportPage} />
       <Route path="/auth" component={AuthPage} />
