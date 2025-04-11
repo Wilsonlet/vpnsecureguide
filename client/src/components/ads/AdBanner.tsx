@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
-import { subscriptionTiers } from '@shared/schema';
+import { subscriptionTiers, AppSetting } from '@shared/schema';
 
 // Define the SubscriptionResponse type
 interface SubscriptionResponse {
@@ -31,12 +31,19 @@ export default function AdBanner({ adSlot, format = 'auto', className = '' }: Ad
     enabled: !!user,
   });
   
-  // Only show ads for free tier users
-  const shouldShowAds = !subscription || subscription.subscription === subscriptionTiers.FREE;
+  // Fetch Google AdSense ID from app settings
+  const { data: adsenseSetting } = useQuery<AppSetting>({
+    queryKey: ['/api/app-settings/google_adsense_id'],
+  });
+  
+  // Only show ads for free tier users if AdSense ID is configured
+  const shouldShowAds = 
+    (!subscription || subscription.subscription === subscriptionTiers.FREE) && 
+    !!adsenseSetting?.value;
 
   useEffect(() => {
-    // Skip for paid users or when component is not mounted
-    if (!shouldShowAds || !adRef.current) return;
+    // Skip for paid users, without AdSense ID, or when component is not mounted
+    if (!shouldShowAds || !adRef.current || !adsenseSetting?.value) return;
     
     // Clean up any previous ad instances
     if (adRef.current.innerHTML !== '') {
@@ -50,7 +57,7 @@ export default function AdBanner({ adSlot, format = 'auto', className = '' }: Ad
       adElement.style.display = 'block';
       adElement.style.width = '100%';
       adElement.style.height = format === 'auto' ? 'auto' : '100%';
-      adElement.setAttribute('data-ad-client', 'ca-pub-YOUR_ADSENSE_ID'); // Replace with your AdSense ID
+      adElement.setAttribute('data-ad-client', `ca-pub-${adsenseSetting.value}`);
       adElement.setAttribute('data-ad-slot', adSlot);
       adElement.setAttribute('data-ad-format', format);
       adElement.setAttribute('data-full-width-responsive', 'true');
@@ -75,7 +82,7 @@ export default function AdBanner({ adSlot, format = 'auto', className = '' }: Ad
         adRef.current.innerHTML = '';
       }
     };
-  }, [adSlot, format, shouldShowAds]);
+  }, [adSlot, format, shouldShowAds, adsenseSetting]);
 
   // Don't render anything for paid users
   if (!shouldShowAds) return null;

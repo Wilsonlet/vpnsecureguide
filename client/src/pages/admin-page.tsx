@@ -305,7 +305,7 @@ export default function AdminPage() {
                     1. Log in to your Google AdSense account
                   </p>
                   <p>
-                    2. Go to Account {`>`} Account information
+                    2. Go to Account &rarr; Account information
                   </p>
                   <p>
                     3. Look for "Publisher ID" which starts with "ca-pub-"
