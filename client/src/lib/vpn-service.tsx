@@ -118,7 +118,11 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
           description: "Please wait while connecting to VPN",
           variant: "default",
         });
-        return Promise.reject(new Error("Connection already in progress"));
+        return Promise.resolve({ 
+          success: false, 
+          error: "Connection already in progress",
+          inProgress: true
+        });
       }
       
       // Check if we need to respect the cooldown period
@@ -378,7 +382,11 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
           description: "Please wait while connecting to VPN",
           variant: "default",
         });
-        return Promise.reject(new Error("Connection already in progress"));
+        return Promise.resolve({ 
+          success: false, 
+          error: "Connection already in progress",
+          inProgress: true
+        });
       }
       
       // Check if we need to respect the cooldown period

@@ -73,19 +73,29 @@ export default function Dashboard() {
     if (currentSession) {
       const server = servers.find(s => s.id === currentSession.serverId);
       if (server) {
+        // Call connect and properly handle the response including cooldown errors
         vpnState.connect({
           serverId: server.id,
           protocol: currentSession.protocol,
           encryption: currentSession.encryption,
           server
+        }).then(response => {
+          // Check if response indicates a cooldown or other error
+          if (response && typeof response === 'object' && 'success' in response && !response.success) {
+            // This is a cooldown or in-progress response, we don't need to do anything
+            // Toast notifications are already displayed by the vpn-service component
+            console.log("VPN connection delayed:", response.error);
+          }
+          
+          // Set the virtual IP if available
+          if (currentSession.virtualIp) {
+            vpnState.updateSettings({
+              virtualIp: currentSession.virtualIp
+            });
+          }
+        }).catch(error => {
+          console.error("Error restoring VPN session:", error);
         });
-        
-        // Set the virtual IP if available
-        if (currentSession.virtualIp) {
-          vpnState.updateSettings({
-            virtualIp: currentSession.virtualIp
-          });
-        }
       }
     }
   }, [settings, currentSession, servers, isSessionLoading, vpnState]);
