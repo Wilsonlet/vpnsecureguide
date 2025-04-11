@@ -437,31 +437,136 @@ export default function ConnectionStatusCard() {
           </div>
         </div>
         
-        {vpnState.connected && vpnState.selectedServer && (
-          <div className="mt-8 flex gap-4 md:gap-6 flex-wrap">
-            <div className="bg-gray-800 rounded-lg py-3 px-4 min-w-[130px] flex-1">
-              <div className="text-sm text-gray-400 mb-1">Location</div>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{vpnState.selectedServer.country}</span>
+        <div className="mt-8">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium mb-3">Quick Server Selection</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.location.href = '/servers'}
+              className="text-xs text-primary hover:text-primary/80"
+            >
+              View All
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {vpnState.availableServers.slice(0, 8).map(server => (
+              <button
+                key={server.id}
+                onClick={async () => {
+                  if (vpnState.connected) {
+                    // Change to this server
+                    vpnState.selectServer(server);
+                    
+                    try {
+                      // End current session
+                      await apiRequest('POST', '/api/sessions/end');
+                      
+                      // Start new session with selected server
+                      const res = await apiRequest('POST', '/api/sessions/start', {
+                        serverId: server.id,
+                        protocol: vpnState.protocol,
+                        encryption: vpnState.encryption
+                      });
+                      
+                      if (res.ok) {
+                        const sessionData = await res.json();
+                        
+                        // Update VPN state
+                        vpnState.connect({
+                          serverId: server.id,
+                          protocol: vpnState.protocol,
+                          encryption: vpnState.encryption,
+                          server
+                        });
+                        
+                        // Set virtual IP if available
+                        if (sessionData.virtualIp) {
+                          vpnState.updateSettings({
+                            virtualIp: sessionData.virtualIp,
+                            connectTime: new Date()
+                          });
+                        }
+                        
+                        toast({
+                          title: 'Server Changed',
+                          description: `Connected to ${server.name} (${server.country})`,
+                        });
+                        
+                        // Refresh current session data
+                        queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
+                      }
+                    } catch (error) {
+                      console.error("Server change error:", error);
+                      toast({
+                        title: 'Server Change Failed',
+                        description: error instanceof Error ? error.message : 'Failed to change server',
+                        variant: 'destructive'
+                      });
+                    }
+                  } else {
+                    // Just select the server for when the user connects
+                    vpnState.selectServer(server);
+                    toast({
+                      title: 'Server Selected',
+                      description: `${server.name} will be used when you connect`,
+                    });
+                  }
+                }}
+                className={`flex flex-col items-start rounded-lg p-3 text-left transition-colors hover:bg-gray-700/50 ${
+                  vpnState.selectedServer?.id === server.id
+                    ? 'bg-gray-700 border border-primary/30'
+                    : 'bg-gray-800 border border-transparent'
+                }`}
+              >
+                <div className="text-sm font-medium mb-1">{server.country}</div>
+                <div className="text-xs text-gray-400 mb-2">{server.name}</div>
+                <div className="flex items-center gap-2 justify-between w-full">
+                  <span className="text-xs bg-gray-700/50 rounded px-2 py-0.5">
+                    {server.latency} ms
+                  </span>
+                  <span className={`text-xs rounded px-2 py-0.5 ${
+                    (server.load || 0) < 30 
+                      ? 'bg-green-900/30 text-green-400' 
+                      : (server.load || 0) < 70 
+                        ? 'bg-amber-900/30 text-amber-400' 
+                        : 'bg-red-900/30 text-red-400'
+                  }`}>
+                    {server.load}%
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+          
+          {vpnState.connected && vpnState.selectedServer && (
+            <div className="mt-4 p-4 bg-gray-800/50 border border-gray-700 rounded-lg">
+              <div className="text-sm font-medium mb-2">Active Connection</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <div className="text-xs text-gray-400">Location</div>
+                  <div className="font-medium text-sm">{vpnState.selectedServer.country}</div>
+                </div>
+                
+                <div>
+                  <div className="text-xs text-gray-400">Server</div>
+                  <div className="font-medium text-sm">{vpnState.selectedServer.name}</div>
+                </div>
+                
+                <div>
+                  <div className="text-xs text-gray-400">Latency</div>
+                  <div className="font-medium text-sm text-green-500">{vpnState.selectedServer.latency} ms</div>
+                </div>
+                
+                <div>
+                  <div className="text-xs text-gray-400">Load</div>
+                  <div className="font-medium text-sm">{vpnState.selectedServer.load}%</div>
+                </div>
               </div>
             </div>
-            
-            <div className="bg-gray-800 rounded-lg py-3 px-4 min-w-[130px] flex-1">
-              <div className="text-sm text-gray-400 mb-1">Server</div>
-              <div className="font-medium">{vpnState.selectedServer.name}</div>
-            </div>
-            
-            <div className="bg-gray-800 rounded-lg py-3 px-4 min-w-[130px] flex-1">
-              <div className="text-sm text-gray-400 mb-1">Latency</div>
-              <div className="font-medium text-green-500">{vpnState.selectedServer.latency} ms</div>
-            </div>
-            
-            <div className="bg-gray-800 rounded-lg py-3 px-4 min-w-[130px] flex-1">
-              <div className="text-sm text-gray-400 mb-1">Load</div>
-              <div className="font-medium">{vpnState.selectedServer.load}%</div>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
     </Card>
   );
