@@ -255,13 +255,34 @@ export default function ConnectionStatusCard() {
   // Add cooldown for toggle to prevent rapid state changes
   const [isToggling, setIsToggling] = useState(false);
   const lastToggleTime = useRef(0);
+  const connectionInProgress = useRef(false);
   
-  // Main function to handle VPN connection toggle
+  // Main function to handle VPN connection toggle with debounce
   const handleConnectionToggle = async (checked: boolean) => {
     console.log("Toggle clicked with value:", checked);
     
+    // Prevent multiple concurrent connection attempts
+    if (connectionInProgress.current) {
+      console.log("Connection operation already in progress, ignoring");
+      return;
+    }
+    
+    // Implement a cooldown to prevent rapid toggling
+    const now = Date.now();
+    if (now - lastToggleTime.current < 3000) { // 3 second cooldown
+      console.log("Toggle cooldown in effect, please wait");
+      toast({
+        title: "Please wait",
+        description: "Please wait a moment before toggling again",
+        variant: "default"
+      });
+      return;
+    }
+    
     // Set loading state immediately
     setIsToggling(true);
+    connectionInProgress.current = true;
+    lastToggleTime.current = now;
     
     try {
       if (checked) {
@@ -429,6 +450,10 @@ export default function ConnectionStatusCard() {
       });
     } finally {
       setIsToggling(false);
+      // Reset connection in progress flag only after everything is complete
+      setTimeout(() => {
+        connectionInProgress.current = false;
+      }, 500);
     }
   };
 

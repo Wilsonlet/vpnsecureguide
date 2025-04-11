@@ -162,14 +162,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create a connection request limiter with a sliding window
+  const connectionRequestLimiter = new Map<number, number[]>();
+  
+  // Function to cleanup old requests
+  const cleanupConnectionRequests = () => {
+    const now = Date.now();
+    // Cleanup requests older than 5 seconds
+    connectionRequestLimiter.forEach((timestamps, userId) => {
+      const newTimestamps = timestamps.filter(timestamp => now - timestamp < 5000);
+      if (newTimestamps.length === 0) {
+        connectionRequestLimiter.delete(userId);
+      } else {
+        connectionRequestLimiter.set(userId, newTimestamps);
+      }
+    });
+  };
+  
+  // Run cleanup every minute
+  setInterval(cleanupConnectionRequests, 60000);
+  
   app.post("/api/sessions/start", async (req, res, next) => {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
       
+      const userId = req.user.id;
+      const now = Date.now();
+      
       // Check if there's a recent disconnect flag set in session to prevent auto-reconnections
       if (req.session && (req.session as any).vpnDisconnected) {
         const disconnectTime = (req.session as any).vpnDisconnectTime || 0;
-        const now = Date.now();
         
         // If disconnect happened recently (within 5 seconds), block reconnection attempt
         if (now - disconnectTime < 5000) {
@@ -181,13 +203,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Rate limit connection requests to maximum 3 in 5 seconds
+      const userRequests = connectionRequestLimiter.get(userId) || [];
+      const recentRequests = userRequests.filter(timestamp => now - timestamp < 5000);
+      
+      if (recentRequests.length >= 3) {
+        console.log(`Rate limiting connection attempts for user ${userId}: ${recentRequests.length} requests in last 5 seconds`);
+        return res.status(429).json({
+          message: "Too many connection attempts. Please slow down and try again in a few seconds.",
+          rateLimited: true
+        });
+      }
+      
+      // Track this request
+      recentRequests.push(now);
+      connectionRequestLimiter.set(userId, recentRequests);
+      
       // End any existing session first
-      await storage.endCurrentSession(req.user.id);
+      await storage.endCurrentSession(userId);
+      
+      // Make sure we don't have other active sessions by using SQL
+      try {
+        const query = `
+          UPDATE vpn_sessions 
+          SET end_time = NOW()
+          WHERE user_id = $1 
+          AND end_time IS NULL
+        `;
+        
+        await db.execute(query, [userId]);
+        console.log("Ended all active sessions before creating a new one");
+      } catch (sqlErr) {
+        console.error("Error ending active sessions with SQL:", sqlErr);
+      }
       
       // Validate request body
       const parsedData = insertVpnSessionSchema.parse({
         ...req.body,
-        userId: req.user.id
+        userId
       });
       
       // Create a new session
