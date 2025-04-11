@@ -31,6 +31,7 @@ export type VpnStateContextType = VpnConnectionState & {
     server: VpnServer;
   }) => Promise<any>;
   disconnect: () => Promise<any>;
+  changeIp: () => Promise<any>;
   updateSettings: (settings: Partial<VpnConnectionState>) => void;
   selectServer: (server: VpnServer | null) => void;
   setAvailableServers: (servers: VpnServer[]) => void;
@@ -64,6 +65,7 @@ export const VpnStateContext = createContext<VpnStateContextType>({
   // Functions
   connect: async () => Promise.resolve({}),
   disconnect: async () => Promise.resolve(true),
+  changeIp: async () => Promise.resolve({}),
   updateSettings: () => {},
   selectServer: () => {},
   setAvailableServers: () => {},
@@ -212,12 +214,88 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     }));
   };
 
+  // Add change IP functionality
+  const changeIp = async () => {
+    try {
+      console.log("VPN Change IP called");
+      
+      // Get the current session status
+      const sessionRes = await fetch('/api/sessions/current');
+      if (!sessionRes.ok) {
+        throw new Error("Not connected to VPN");
+      }
+      
+      const sessionData = await sessionRes.json();
+      if (!sessionData || sessionData.endTime) {
+        throw new Error("No active VPN session");
+      }
+      
+      // Store current server and session data
+      const currentServer = state.selectedServer;
+      const currentProtocol = state.protocol;
+      const currentEncryption = state.encryption;
+      
+      if (!currentServer) {
+        throw new Error("No server selected");
+      }
+      
+      // End current session
+      const endRes = await fetch('/api/sessions/end', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (!endRes.ok) {
+        throw new Error("Failed to end current session");
+      }
+      
+      // Wait a bit to ensure session is properly ended
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Start a new session with same server
+      const startRes = await fetch('/api/sessions/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          serverId: currentServer.id,
+          protocol: currentProtocol || 'wireguard',
+          encryption: currentEncryption || 'aes_256_gcm'
+        }),
+      });
+      
+      if (!startRes.ok) {
+        throw new Error("Failed to start new VPN session");
+      }
+      
+      const newSessionData = await startRes.json();
+      console.log("VPN session restarted with new IP:", newSessionData);
+      
+      // Update state with new session data
+      setState((currentState) => ({
+        ...currentState,
+        connected: true,
+        connectTime: new Date(newSessionData.startTime),
+        virtualIp: newSessionData.virtualIp,
+      }));
+      
+      return newSessionData;
+    } catch (error) {
+      console.error("VPN change IP error:", error);
+      throw error;
+    }
+  };
+
   return (
     <VpnStateContext.Provider
       value={{
         ...state,
         connect,
         disconnect,
+        changeIp, // Add the new function
         updateSettings,
         selectServer,
         setAvailableServers,
