@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useVpnState } from '@/lib/vpn-service';
 import { useToast } from '@/hooks/use-toast';
-import { VpnKillSwitchService } from '@/lib/kill-switch-service';
+import { VpnKillSwitchService } from '../../lib/kill-switch-service';
 
 // Component representing the current state of the kill switch protection
 export function KillSwitchStatusIndicator() {

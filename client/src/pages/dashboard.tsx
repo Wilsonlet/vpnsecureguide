@@ -12,7 +12,7 @@ import AdBanner from '@/components/ads/AdBanner';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import { VpnServer, VpnUserSettings, subscriptionTiers } from '@shared/schema';
-import { useVpnState } from '@/lib/vpn-service.tsx';
+import { useVpnState } from '@/lib/vpn-service';
 
 export default function Dashboard() {
   const { user } = useAuth();
