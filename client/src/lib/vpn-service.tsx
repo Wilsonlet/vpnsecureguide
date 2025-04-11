@@ -32,7 +32,7 @@ export type VpnStateContextType = VpnConnectionState & {
   }) => Promise<any>;
   disconnect: () => Promise<any>;
   updateSettings: (settings: Partial<VpnConnectionState>) => void;
-  selectServer: (server: VpnServer) => void;
+  selectServer: (server: VpnServer | null) => void;
   setAvailableServers: (servers: VpnServer[]) => void;
 };
 
@@ -198,7 +198,7 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     }));
   };
 
-  const selectServer = (server: VpnServer) => {
+  const selectServer = (server: VpnServer | null) => {
     setState(currentState => ({
       ...currentState,
       selectedServer: server,
