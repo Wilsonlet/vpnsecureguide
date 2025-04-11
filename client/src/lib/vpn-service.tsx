@@ -274,7 +274,15 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       // Get kill switch service
       const killSwitchService = VpnKillSwitchService.getInstance();
       
-      // If kill switch is enabled, ask if this is an intentional disconnect
+      // Set disconnected state first for immediate feedback
+      setState(currentState => ({
+        ...currentState,
+        connected: false,
+        connectTime: null,
+        virtualIp: '', // Clear virtual IP
+      }));
+      
+      // If kill switch is enabled, handle disconnection differently
       if (state.killSwitch) {
         console.log("Kill switch is enabled, this disconnect is controlled");
         
@@ -282,24 +290,8 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         // This is for user-initiated disconnections
         const abrupt = false;
         
-        // First update state immediately to reflect disconnection attempt
-        setState(currentState => ({
-          ...currentState,
-          connected: false,
-          connectTime: null,
-          virtualIp: '', // Clear virtual IP
-        }));
-        
         // Stop monitoring connection for kill switch
         killSwitchService.stopConnectionMonitoring();
-      } else {
-        // Normal disconnect flow without kill switch
-        setState(currentState => ({
-          ...currentState,
-          connected: false,
-          connectTime: null,
-          virtualIp: '', // Clear virtual IP
-        }));
       }
       
       // Track if we're successfully disconnected at the server level
@@ -322,14 +314,35 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
             })
           });
           
-          if (res.ok) {
-            const data = await res.json();
-            console.log("VPN session ended successfully:", data);
+          // Check for common network error responses
+          if (res.status >= 200 && res.status < 300) {
+            // Success case
+            try {
+              const data = await res.json();
+              console.log("VPN session ended successfully:", data);
+            } catch (e) {
+              // It's ok if there's no JSON response
+              console.log("VPN session ended successfully");
+            }
             serverDisconnectSuccess = true;
             break; // Exit the loop if successful
+          } else if (res.status === 401) {
+            // Authentication issue - treat as successful disconnect
+            console.log("Server reported user not authenticated - treating as successful disconnect");
+            serverDisconnectSuccess = true;
+            break;
+          } else if (res.status === 404) {
+            // No active session - treat as successful disconnect
+            console.log("Server reported no active session - treating as successful disconnect");
+            serverDisconnectSuccess = true;
+            break;
           } else {
-            const errorText = await res.text();
-            console.warn(`Disconnect attempt ${attempt} failed:`, errorText);
+            try {
+              const errorText = await res.text();
+              console.warn(`Disconnect attempt ${attempt} failed:`, errorText);
+            } catch (e) {
+              console.warn(`Disconnect attempt ${attempt} failed with status: ${res.status}`);
+            }
           }
         } catch (attemptError) {
           console.warn(`Error during disconnect attempt ${attempt}:`, attemptError);
@@ -351,10 +364,6 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         connected: false,
         connectTime: null,
         virtualIp: '',
-        killSwitch: false,
-        dnsLeakProtection: false,
-        doubleVpn: false,
-        obfuscation: false,
       }));
       
       // Set a special flag to prevent auto-reconnection
@@ -369,6 +378,10 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
             headers: {
               'Content-Type': 'application/json',
             },
+            body: JSON.stringify({
+              abrupt: false,
+              final: true  // Mark as final disconnect attempt
+            })
           });
           
           // Force disconnected state again

@@ -271,6 +271,13 @@ export default function ConnectionStatusCard() {
   const handleConnectionToggle = async (checked: boolean) => {
     console.log("Toggle clicked with value:", checked);
     
+    // Force the toggle button to stay in its current state until we process
+    // the toggle action - this prevents UI inconsistencies
+    if (!checked) {
+      // For disconnection, we keep checked state until we complete disconnection
+      setForceConnected(true);
+    }
+    
     // Prevent multiple concurrent connection attempts
     if (connectionInProgress.current) {
       console.log("Connection operation already in progress, ignoring");
@@ -279,6 +286,11 @@ export default function ConnectionStatusCard() {
         description: "Please wait while the current operation completes",
         variant: "default"
       });
+      
+      // Reset forced state if we're aborting
+      if (!checked) {
+        setForceConnected(vpnState.connected);
+      }
       return;
     }
     
@@ -296,6 +308,11 @@ export default function ConnectionStatusCard() {
         description: `Please wait ${remainingSeconds} seconds before toggling again`,
         variant: "default"
       });
+      
+      // Reset forced state if we're aborting
+      if (!checked) {
+        setForceConnected(vpnState.connected);
+      }
       return;
     }
     
