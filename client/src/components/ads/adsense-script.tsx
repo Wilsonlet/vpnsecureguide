@@ -1,8 +1,29 @@
+import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { AppSetting } from '@shared/schema';
+
 /**
- * Loads the Google AdSense script
+ * Loads the Google AdSense script using the ID from app settings
  * 
- * This should be called once in your app's initialization
+ * This should be used once in your app's initialization
  * It adds the AdSense script to the document head
+ */
+export function AdSenseScript() {
+  const { data: adsenseSetting } = useQuery<AppSetting>({
+    queryKey: ['/api/app-settings/google_adsense_id'],
+  });
+
+  useEffect(() => {
+    if (!adsenseSetting?.value) return;
+    
+    loadAdSenseScript(adsenseSetting.value);
+  }, [adsenseSetting]);
+
+  return null; // This component doesn't render anything
+}
+
+/**
+ * Utility function to load the AdSense script
  */
 export function loadAdSenseScript(adsenseId: string) {
   if (typeof window !== 'undefined' && !document.getElementById('google-adsense-script')) {
