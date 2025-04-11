@@ -13,6 +13,33 @@ export default function ConnectionStatusCard() {
   const { toast } = useToast();
   const [connectionTime, setConnectionTime] = useState('00:00:00');
   
+  // Fetch servers data when component mounts
+  useEffect(() => {
+    const loadServersIfNeeded = async () => {
+      if (!vpnState.availableServers || vpnState.availableServers.length === 0) {
+        try {
+          const res = await apiRequest('GET', '/api/servers');
+          if (res.ok) {
+            const serversData = await res.json();
+            if (Array.isArray(serversData) && serversData.length > 0) {
+              console.log("Preloaded servers:", serversData);
+              vpnState.setAvailableServers(serversData);
+              
+              // If no server selected, select the first one
+              if (!vpnState.selectedServer) {
+                vpnState.selectServer(serversData[0]);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Failed to preload servers:", error);
+        }
+      }
+    };
+    
+    loadServersIfNeeded();
+  }, []);
+
   // Start a timer to track connection time
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -53,7 +80,8 @@ export default function ConnectionStatusCard() {
   const [isChangingIp, setIsChangingIp] = useState(false);
   
   const handleChangeIp = async () => {
-    if (!vpnState.connected || !vpnState.selectedServer) {
+    // Check if we're connected
+    if (!vpnState.connected) {
       toast({
         title: "Not Connected",
         description: "You must be connected to a VPN server to change your IP.",
@@ -62,14 +90,75 @@ export default function ConnectionStatusCard() {
       return;
     }
     
+    // Make sure we have a server selected
+    if (!vpnState.selectedServer) {
+      // Fetch servers if needed
+      if (!vpnState.availableServers || vpnState.availableServers.length === 0) {
+        try {
+          const serversRes = await apiRequest('GET', '/api/servers');
+          if (!serversRes.ok) {
+            throw new Error("Failed to fetch server data");
+          }
+          
+          const servers = await serversRes.json();
+          if (!Array.isArray(servers) || servers.length === 0) {
+            throw new Error("No VPN servers available");
+          }
+          
+          // Update available servers
+          vpnState.setAvailableServers(servers);
+          
+          // Select the first server
+          vpnState.selectServer(servers[0]);
+          
+          // Give time for state update
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          console.error("Server fetch error:", error);
+          toast({
+            title: "Server Error",
+            description: error instanceof Error ? error.message : "Failed to fetch server information",
+            variant: "destructive"
+          });
+          return;
+        }
+      } else if (vpnState.availableServers.length > 0) {
+        // Select the first available server
+        vpnState.selectServer(vpnState.availableServers[0]);
+        
+        // Give time for state update
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } else {
+        toast({
+          title: "No Servers Available",
+          description: "Unable to find any VPN servers. Please try again later.",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+    
     setIsChangingIp(true);
     
     try {
+      // Check once more that we have a server
+      if (!vpnState.selectedServer) {
+        throw new Error("No server selected");
+      }
+      
       // End current session and start a new one with the same server
       await apiRequest('POST', '/api/sessions/end', {});
       
+      // Double check that the selected server is properly set with an ID
+      const serverId = vpnState.selectedServer.id;
+      if (!serverId) {
+        throw new Error("Invalid server ID");
+      }
+      
+      console.log("Changing IP with server:", vpnState.selectedServer);
+      
       const res = await apiRequest('POST', '/api/sessions/start', {
-        serverId: vpnState.selectedServer.id,
+        serverId: serverId,
         protocol: vpnState.protocol,
         encryption: vpnState.encryption
       });
