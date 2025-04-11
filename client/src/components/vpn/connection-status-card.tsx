@@ -167,127 +167,151 @@ export default function ConnectionStatusCard() {
   const [isChangingIp, setIsChangingIp] = useState(false);
   
   const handleChangeIp = async () => {
-    // Check if we're connected using both standard and force connected states
-    if (!vpnState.connected && !forceConnected) {
-      toast({
-        title: "Not Connected",
-        description: "You must be connected to a VPN server to change your IP.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     // Set changing IP state immediately for UI feedback
     setIsChangingIp(true);
     
     try {
-      // Make sure we have a server selected
-      if (!vpnState.selectedServer) {
-        // Fetch servers if needed
-        if (!vpnState.availableServers || vpnState.availableServers.length === 0) {
-          try {
-            const serversRes = await apiRequest('GET', '/api/servers');
-            if (!serversRes.ok) {
-              throw new Error("Failed to fetch server data");
-            }
-            
-            const servers = await serversRes.json();
-            if (!Array.isArray(servers) || servers.length === 0) {
-              throw new Error("No VPN servers available");
-            }
-            
-            // Update available servers
-            vpnState.setAvailableServers(servers);
-            
-            // Select the first server
-            vpnState.selectServer(servers[0]);
-            
-            // Give time for state update
-            await new Promise(resolve => setTimeout(resolve, 100));
-          } catch (error) {
-            console.error("Server fetch error:", error);
-            toast({
-              title: "Server Error",
-              description: error instanceof Error ? error.message : "Failed to fetch server information",
-              variant: "destructive"
-            });
-            return;
-          }
-        } else if (vpnState.availableServers.length > 0) {
-          // Select the first available server
-          vpnState.selectServer(vpnState.availableServers[0]);
-          
-          // Give time for state update
-          await new Promise(resolve => setTimeout(resolve, 100));
-        } else {
-          toast({
-            title: "No Servers Available",
-            description: "Unable to find any VPN servers. Please try again later.",
-            variant: "destructive"
-          });
-          return;
-        }
+      console.log("Change IP button clicked");
+      
+      // Force connection status check with server
+      const sessionCheckRes = await apiRequest('GET', '/api/sessions/current');
+      const isActiveSession = sessionCheckRes.ok && sessionCheckRes.status !== 204;
+      const activeSessionData = isActiveSession ? await sessionCheckRes.json() : null;
+      
+      // Update the internal connected state variables based on server response
+      const isReallyConnected = isActiveSession && activeSessionData && !activeSessionData.endTime;
+      
+      console.log("Session check:", { 
+        isActiveSession, 
+        hasSessionData: !!activeSessionData,
+        isReallyConnected
+      });
+      
+      if (!isReallyConnected) {
+        toast({
+          title: "Not Connected",
+          description: "You must be connected to a VPN server to change your IP.",
+          variant: "destructive"
+        });
+        setIsChangingIp(false);
+        return;
       }
       
-      // Check once more that we have a server
-      if (!vpnState.selectedServer) {
-        throw new Error("No server selected");
+      // Get the most up-to-date list of servers
+      console.log("Fetching latest server list...");
+      const serversRes = await apiRequest('GET', '/api/servers');
+      if (!serversRes.ok) {
+        throw new Error("Failed to fetch server data");
       }
+      
+      const servers = await serversRes.json();
+      if (!Array.isArray(servers) || servers.length === 0) {
+        throw new Error("No VPN servers available");
+      }
+      
+      // Update available servers list
+      vpnState.setAvailableServers(servers);
+      
+      // Find the correct server from the server list that matches our active session
+      let targetServer = servers.find(s => s.id === activeSessionData.serverId);
+      
+      // If we can't find the server, use the first one
+      if (!targetServer && servers.length > 0) {
+        targetServer = servers[0];
+        console.log("Could not find matching server, using first available:", targetServer);
+      }
+      
+      if (!targetServer) {
+        throw new Error("No valid server found for reconnection");
+      }
+      
+      // Make sure the VPN state has the correct server selected
+      vpnState.selectServer(targetServer);
       
       console.log("Ending current session to change IP address...");
       
-      // End current session and start a new one with the same server
+      // End current session explicitly
       const endRes = await apiRequest('POST', '/api/sessions/end', {});
+      
+      // Log the result but continue even if there's an issue
       if (!endRes.ok) {
         console.warn("Session end response:", await endRes.text());
+      } else {
+        console.log("Successfully ended previous session");
       }
       
       // Wait a bit to ensure session is properly ended
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Double check that the selected server is properly set with an ID
-      const serverId = vpnState.selectedServer.id;
-      if (!serverId) {
-        throw new Error("Invalid server ID");
-      }
+      // Now start a new session with the same server
+      console.log("Starting new session with server:", targetServer);
       
-      console.log("Starting new session with server:", vpnState.selectedServer);
-      
-      const res = await apiRequest('POST', '/api/sessions/start', {
-        serverId: serverId,
-        protocol: vpnState.protocol || 'wireguard',
-        encryption: vpnState.encryption || 'aes_256_gcm'
+      const startRes = await apiRequest('POST', '/api/sessions/start', {
+        serverId: targetServer.id,
+        protocol: activeSessionData.protocol || vpnState.protocol || 'wireguard',
+        encryption: activeSessionData.encryption || vpnState.encryption || 'aes_256_gcm'
       });
       
-      if (!res.ok) {
-        const errorText = await res.text();
+      if (!startRes.ok) {
+        const errorText = await startRes.text();
         console.error("Failed to start new session:", errorText);
         throw new Error('Failed to change IP address');
       }
       
-      const sessionData = await res.json();
-      console.log('Session restarted with new IP:', sessionData);
+      const newSessionData = await startRes.json();
+      console.log('Session restarted with new IP:', newSessionData);
       
-      // Update the UI state
+      // Update both UI states
       setForceConnected(true);
       
-      // Update the VPN state with new session data
+      // Update the VPN state with the new session data
       vpnState.updateSettings({
         connected: true,
-        virtualIp: sessionData.virtualIp,
-        connectTime: new Date(sessionData.startTime),
-        selectedServer: vpnState.selectedServer
+        connectTime: new Date(newSessionData.startTime),
+        virtualIp: newSessionData.virtualIp,
+        protocol: newSessionData.protocol || vpnState.protocol,
+        encryption: newSessionData.encryption || vpnState.encryption,
+        selectedServer: targetServer
       });
       
+      // Show success message
       toast({
-        title: "IP Changed",
-        description: "Your virtual IP address has been successfully updated.",
+        title: "IP Changed Successfully",
+        description: `Your virtual IP address is now ${newSessionData.virtualIp}`,
       });
       
-      // Refresh current session data
+      // Refresh current session data in all components
       queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
     } catch (error) {
       console.error('IP change error:', error);
+      
+      // Verify current state after error
+      try {
+        const verifyRes = await apiRequest('GET', '/api/sessions/current');
+        const isStillConnected = verifyRes.ok && verifyRes.status !== 204;
+        const verifyData = isStillConnected ? await verifyRes.json() : null;
+        
+        if (isStillConnected && verifyData && !verifyData.endTime) {
+          // We're still connected, update UI state to match reality
+          setForceConnected(true);
+          vpnState.updateSettings({
+            connected: true,
+            connectTime: new Date(verifyData.startTime),
+            virtualIp: verifyData.virtualIp
+          });
+        } else {
+          // We're actually disconnected
+          setForceConnected(false);
+          vpnState.updateSettings({
+            connected: false,
+            connectTime: null
+          });
+        }
+      } catch (verifyError) {
+        console.error("Error verifying connection state:", verifyError);
+      }
+      
+      // Show error message
       toast({
         title: "IP Change Failed",
         description: error instanceof Error ? error.message : 'Failed to change IP address',
