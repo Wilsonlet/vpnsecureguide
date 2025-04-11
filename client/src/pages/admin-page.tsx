@@ -112,6 +112,33 @@ export default function AdminPage() {
     }
   };
   
+  const savePaystackPlanCodes = async () => {
+    setIsSaving(true);
+    try {
+      const response = await apiRequest('POST', '/api/admin/update-paystack-plan-codes', { paystackPlanCodes });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update Paystack plan codes');
+      }
+      
+      toast({
+        title: 'Success',
+        description: 'Paystack plan codes have been updated',
+      });
+      
+      setIsEditingPaystack(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/subscription-plans'] });
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to update Paystack plan codes',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const saveAdsenseId = async () => {
     setIsSaving(true);
     try {
@@ -256,6 +283,83 @@ export default function AdminPage() {
               {isEditing && (
                 <div className="mt-4">
                   <Button onClick={savePriceIds} disabled={isSaving}>
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Changes
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="paystack" className="space-y-6">
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditingPaystack(!isEditingPaystack)}
+                  disabled={isSaving}
+                >
+                  {isEditingPaystack ? 'Cancel' : 'Edit Plan Codes'}
+                </Button>
+              </div>
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Plan Name</TableHead>
+                    <TableHead>Price ($/month)</TableHead>
+                    <TableHead>Paystack Plan Code</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {plans.map(plan => (
+                    <TableRow key={plan.id}>
+                      <TableCell className="font-medium">{plan.name}</TableCell>
+                      <TableCell>${(plan.price / 100).toFixed(2)}</TableCell>
+                      <TableCell>
+                        {isEditingPaystack ? (
+                          <Input
+                            value={paystackPlanCodes[plan.id] || ''}
+                            onChange={e => handlePaystackPlanCodeChange(plan.id, e.target.value)}
+                            placeholder="Enter Paystack Plan Code (e.g., PLN_xxxx...)"
+                            className="max-w-md"
+                            disabled={plan.price === 0} // Free plan doesn't need a plan code
+                          />
+                        ) : (
+                          <span className="text-sm font-mono">
+                            {plan.paystackPlanCode || (plan.price === 0 ? '(not required)' : 'Not set')}
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <div className="text-sm text-gray-500 mt-4 space-y-2">
+                <p>
+                  <strong>Note:</strong> Paystack Plan Codes can be found in your{' '}
+                  <a
+                    href="https://dashboard.paystack.com/#/plans"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline"
+                  >
+                    Paystack Dashboard
+                  </a>
+                </p>
+                <p>
+                  1. Log in to your Paystack Dashboard and go to Products → Plans
+                </p>
+                <p>
+                  2. Create a plan for each subscription tier with the appropriate pricing
+                </p>
+                <p>
+                  3. Copy the Plan Code (starts with "PLN_") for each plan
+                </p>
+              </div>
+              
+              {isEditingPaystack && (
+                <div className="mt-4">
+                  <Button onClick={savePaystackPlanCodes} disabled={isSaving}>
                     {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Save Changes
                   </Button>

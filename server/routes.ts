@@ -552,6 +552,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error updating price IDs", error: error.message });
     }
   });
+  
+  // Admin endpoint to update Paystack plan codes
+  app.post("/api/admin/update-paystack-plan-codes", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // In a real app, check for admin role
+      // For demo purposes, consider user with ID 1 as admin
+      if (req.user.id !== 1) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const { paystackPlanCodes } = req.body;
+      if (!paystackPlanCodes || typeof paystackPlanCodes !== 'object') {
+        return res.status(400).json({ message: "Invalid Paystack plan codes data" });
+      }
+      
+      // Update each plan's Paystack plan code
+      for (const [planId, planCode] of Object.entries(paystackPlanCodes)) {
+        if (typeof planCode === 'string') {
+          // Skip updating free plan's code if it's empty
+          const plan = await storage.getSubscriptionPlan(parseInt(planId));
+          if (plan && plan.price === 0 && !planCode) {
+            continue;
+          }
+          
+          // Update the Paystack plan code in the database
+          await db
+            .update(subscriptionPlans)
+            .set({ paystackPlanCode: planCode })
+            .where(eq(subscriptionPlans.id, parseInt(planId)));
+        }
+      }
+      
+      res.json({
+        success: true,
+        message: "Paystack plan codes updated successfully"
+      });
+    } catch (error: any) {
+      console.error("Update Paystack plan codes error:", error);
+      res.status(500).json({ message: "Error updating Paystack plan codes", error: error.message });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
