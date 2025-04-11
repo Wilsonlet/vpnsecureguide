@@ -198,6 +198,12 @@ export class DatabaseStorage implements IStorage {
     // Get all servers first
     const allServers = await this.getAllServers();
     
+    // Check if user is admin
+    if (user.role === 'admin') {
+      // Admin users get access to all servers regardless of subscription tier
+      return allServers;
+    }
+    
     // Filter based on subscription tier
     if (user.subscription === subscriptionTiers.FREE || user.subscription === subscriptionTiers.BASIC) {
       // Free and basic users can only access standard servers (not premium)
