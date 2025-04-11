@@ -44,41 +44,64 @@ export default function ConnectionStatusCard() {
   useEffect(() => {
     const checkCurrentSession = async () => {
       try {
-        const res = await apiRequest('GET', '/api/sessions/current');
-        if (res.ok) {
-          const sessionData = await res.json();
+        // First get available servers to ensure we have them
+        const serversRes = await apiRequest('GET', '/api/servers');
+        if (!serversRes.ok) {
+          throw new Error("Failed to fetch server list");
+        }
+        
+        const serversData = await serversRes.json();
+        if (Array.isArray(serversData) && serversData.length > 0) {
+          // Update available servers
+          vpnState.setAvailableServers(serversData);
           
-          if (sessionData && !sessionData.endTime) {
-            console.log("Found active session:", sessionData);
+          // Now check for active session
+          const sessionRes = await apiRequest('GET', '/api/sessions/current');
+          
+          if (sessionRes.ok) {
+            const sessionData = await sessionRes.json();
             
-            // Fetch server details for the active session
-            if (sessionData.serverId && (!vpnState.selectedServer || vpnState.selectedServer.id !== sessionData.serverId)) {
-              try {
-                const serverRes = await apiRequest('GET', `/api/servers`);
-                if (serverRes.ok) {
-                  const serversData = await serverRes.json();
-                  const activeServer = serversData.find((s: any) => s.id === sessionData.serverId);
-                  
-                  if (activeServer) {
-                    // Update VPN state with active session
-                    vpnState.connect({
-                      serverId: sessionData.serverId,
-                      protocol: sessionData.protocol || vpnState.protocol,
-                      encryption: sessionData.encryption || vpnState.encryption,
-                      server: activeServer
-                    });
-                    
-                    if (sessionData.virtualIp) {
-                      vpnState.updateSettings({
-                        virtualIp: sessionData.virtualIp,
-                        connectTime: new Date(sessionData.startTime)
-                      });
-                    }
-                  }
-                }
-              } catch (error) {
-                console.error("Error fetching server data:", error);
+            if (sessionData && sessionData.id && !sessionData.endTime) {
+              console.log("Found active session:", sessionData);
+              
+              // Find server in our list
+              const activeServer = serversData.find((s) => s.id === sessionData.serverId);
+              
+              if (activeServer) {
+                console.log("Syncing with active server:", activeServer);
+                
+                // Force update VPN connected state
+                vpnState.updateSettings({
+                  connected: true,
+                  connectTime: new Date(sessionData.startTime),
+                  virtualIp: sessionData.virtualIp,
+                  protocol: sessionData.protocol,
+                  encryption: sessionData.encryption,
+                  selectedServer: activeServer
+                });
               }
+            } else {
+              // No active session found, ensure disconnected state
+              vpnState.updateSettings({
+                connected: false,
+                connectTime: null
+              });
+              
+              // Select first server for future connections
+              if (!vpnState.selectedServer && serversData.length > 0) {
+                vpnState.selectServer(serversData[0]);
+              }
+            }
+          } else if (sessionRes.status === 404 || sessionRes.status === 204) {
+            // No active session
+            vpnState.updateSettings({
+              connected: false,
+              connectTime: null
+            });
+            
+            // Select first server for future connections
+            if (!vpnState.selectedServer && serversData.length > 0) {
+              vpnState.selectServer(serversData[0]);
             }
           }
         }
@@ -249,7 +272,13 @@ export default function ConnectionStatusCard() {
   const handleConnectionToggle = async (checked: boolean) => {
     try {
       if (checked) {
-        // First, make sure we have servers data
+        // First update local state to give immediate feedback
+        vpnState.updateSettings({
+          connected: true,
+          connectTime: new Date()
+        });
+        
+        // Make sure we have servers data
         if (!vpnState.availableServers || vpnState.availableServers.length === 0) {
           // Try to fetch servers if they're not available
           try {
@@ -260,8 +289,6 @@ export default function ConnectionStatusCard() {
                 vpnState.setAvailableServers(serversData);
                 // Auto-select the first server
                 vpnState.selectServer(serversData[0]);
-                // Wait for state update
-                await new Promise(resolve => setTimeout(resolve, 100));
               } else {
                 throw new Error("No servers available from API");
               }
@@ -269,6 +296,12 @@ export default function ConnectionStatusCard() {
               throw new Error("Failed to fetch VPN servers");
             }
           } catch (error) {
+            // Revert state on error
+            vpnState.updateSettings({
+              connected: false,
+              connectTime: null
+            });
+            
             console.error("Server fetch error:", error);
             toast({
               title: 'Server Error',
@@ -283,9 +316,6 @@ export default function ConnectionStatusCard() {
         if (!vpnState.selectedServer && vpnState.availableServers.length > 0) {
           const firstServer = vpnState.availableServers[0];
           vpnState.selectServer(firstServer);
-          
-          // Give a small delay to ensure the state update has completed
-          await new Promise(resolve => setTimeout(resolve, 100));
         }
         
         // Double-check we have a server or pick one from available servers
@@ -310,20 +340,15 @@ export default function ConnectionStatusCard() {
             const sessionData = await res.json();
             console.log("Session started:", sessionData);
             
-            // Update VPN state with virtual IP from response
-            vpnState.connect({
-              serverId: serverToUse.id,
-              protocol: vpnState.protocol,
-              encryption: vpnState.encryption,
-              server: serverToUse
+            // Update VPN state with all session data
+            vpnState.updateSettings({
+              connected: true,
+              connectTime: new Date(sessionData.startTime),
+              virtualIp: sessionData.virtualIp,
+              protocol: sessionData.protocol,
+              encryption: sessionData.encryption,
+              selectedServer: serverToUse
             });
-            
-            // Set virtual IP if available
-            if (sessionData.virtualIp) {
-              vpnState.updateSettings({
-                virtualIp: sessionData.virtualIp
-              });
-            }
             
             toast({
               title: 'Connected',
@@ -333,10 +358,22 @@ export default function ConnectionStatusCard() {
             // Refresh current session data
             queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
           } else {
+            // Revert state on error
+            vpnState.updateSettings({
+              connected: false,
+              connectTime: null
+            });
+            
             console.error("Failed to start session:", await res.text());
             throw new Error("Failed to start VPN session");
           }
         } else {
+          // Revert state on error
+          vpnState.updateSettings({
+            connected: false,
+            connectTime: null
+          });
+          
           toast({
             title: 'Connection Error',
             description: 'No VPN servers available. Please refresh and try again.',
@@ -345,11 +382,16 @@ export default function ConnectionStatusCard() {
           return;
         }
       } else {
+        // Update local state immediately for better UX
+        vpnState.updateSettings({
+          connected: false,
+          connectTime: null
+        });
+        
         // End the current VPN session
         const res = await apiRequest('POST', '/api/sessions/end');
         
         if (res.ok) {
-          vpnState.disconnect();
           toast({
             title: 'Disconnected',
             description: 'VPN connection terminated successfully',
@@ -359,7 +401,21 @@ export default function ConnectionStatusCard() {
           queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
         } else {
           console.error("Failed to end session:", await res.text());
-          throw new Error("Failed to end VPN session");
+          
+          // If the session didn't actually end, do a full check
+          const sessionCheck = await apiRequest('GET', '/api/sessions/current');
+          if (sessionCheck.ok) {
+            const activeSession = await sessionCheck.json();
+            
+            // If there's still an active session, revert UI state
+            if (activeSession && activeSession.id && !activeSession.endTime) {
+              vpnState.updateSettings({
+                connected: true,
+                connectTime: new Date(activeSession.startTime)
+              });
+              throw new Error("Failed to end VPN session");
+            }
+          }
         }
       }
     } catch (error) {
@@ -456,7 +512,8 @@ export default function ConnectionStatusCard() {
                 key={server.id}
                 onClick={async () => {
                   if (vpnState.connected) {
-                    // Change to this server
+                    // Update UI immediately for better UX
+                    const previousServer = vpnState.selectedServer;
                     vpnState.selectServer(server);
                     
                     try {
@@ -473,21 +530,15 @@ export default function ConnectionStatusCard() {
                       if (res.ok) {
                         const sessionData = await res.json();
                         
-                        // Update VPN state
-                        vpnState.connect({
-                          serverId: server.id,
-                          protocol: vpnState.protocol,
-                          encryption: vpnState.encryption,
-                          server
+                        // Update VPN state with all session details
+                        vpnState.updateSettings({
+                          connected: true,
+                          connectTime: new Date(sessionData.startTime),
+                          virtualIp: sessionData.virtualIp,
+                          protocol: sessionData.protocol,
+                          encryption: sessionData.encryption,
+                          selectedServer: server
                         });
-                        
-                        // Set virtual IP if available
-                        if (sessionData.virtualIp) {
-                          vpnState.updateSettings({
-                            virtualIp: sessionData.virtualIp,
-                            connectTime: new Date()
-                          });
-                        }
                         
                         toast({
                           title: 'Server Changed',
@@ -496,6 +547,13 @@ export default function ConnectionStatusCard() {
                         
                         // Refresh current session data
                         queryClient.invalidateQueries({ queryKey: ['/api/sessions/current'] });
+                      } else {
+                        // Revert to previous server on error
+                        if (previousServer) {
+                          vpnState.selectServer(previousServer);
+                        }
+                        
+                        throw new Error("Failed to change server");
                       }
                     } catch (error) {
                       console.error("Server change error:", error);
