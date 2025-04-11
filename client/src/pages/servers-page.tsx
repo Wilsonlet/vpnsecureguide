@@ -145,7 +145,7 @@ function ServerItem({ server, isSelected, isPremiumUser, onSelect }: ServerItemP
       </div>
       
       <div className="ml-4 hidden md:block">
-        {server.premium && !isPremiumUser ? (
+        {server.premium && !isPremiumUser && user?.role !== 'admin' ? (
           <div className="flex items-center text-xs text-amber-500">
             <Lock className="h-3 w-3 mr-1" />
             <span>Premium Only</span>
@@ -153,7 +153,7 @@ function ServerItem({ server, isSelected, isPremiumUser, onSelect }: ServerItemP
         ) : (
           <div className="flex items-center text-xs text-green-500">
             <Unlock className="h-3 w-3 mr-1" />
-            <span>Available</span>
+            <span>{user?.role === 'admin' && server.premium ? 'Admin Access' : 'Available'}</span>
           </div>
         )}
       </div>
@@ -270,8 +270,10 @@ export default function ServersPage() {
   
   // Handle server selection
   const handleServerSelect = (server: VpnServer) => {
-    // Don't allow premium server selection for non-premium users
-    if (server.premium && user?.subscription !== 'premium') {
+    // Admins can access any server regardless of premium status
+    // Premium users can access premium servers
+    // Others can only access non-premium servers
+    if (server.premium && user?.subscription !== 'premium' && user?.role !== 'admin') {
       return;
     }
     vpnState.selectServer(server);

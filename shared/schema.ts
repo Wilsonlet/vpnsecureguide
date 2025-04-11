@@ -11,12 +11,20 @@ export const subscriptionTiers = {
 
 export type SubscriptionTier = typeof subscriptionTiers[keyof typeof subscriptionTiers];
 
+export const userRoles = {
+  USER: "user",
+  ADMIN: "admin"
+} as const;
+
+export type UserRole = typeof userRoles[keyof typeof userRoles];
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   email: text("email"),
   firebaseId: text("firebase_id").unique(), // Add Firebase UID for authentication
+  role: text("role").default(userRoles.USER).notNull(),
   subscription: text("subscription").default(subscriptionTiers.FREE).notNull(),
   subscriptionExpiryDate: timestamp("subscription_expiry_date"),
   stripeCustomerId: text("stripe_customer_id"),
