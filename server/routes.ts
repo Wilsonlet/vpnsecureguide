@@ -761,6 +761,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes for user management
+  app.get("/api/admin/users", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // Check if user is admin (for demo, user with ID 1 is admin)
+      if (req.user.id !== 1) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      
+      // Get all users from storage
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error: any) {
+      console.error("Admin get users error:", error);
+      res.status(500).json({ message: "Error retrieving users", error: error.message });
+    }
+  });
+
+  app.post("/api/admin/update-user-subscription", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // Check if user is admin (for demo, user with ID 1 is admin)
+      if (req.user.id !== 1) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      
+      const { userId, subscription, expiryDate } = req.body;
+      
+      if (!userId || !subscription) {
+        return res.status(400).json({ message: "User ID and subscription are required" });
+      }
+      
+      // Update user subscription
+      const updatedUser = await storage.updateUserSubscription(
+        parseInt(userId), 
+        subscription, 
+        expiryDate ? new Date(expiryDate) : undefined
+      );
+      
+      res.json({
+        success: true,
+        message: "User subscription updated successfully",
+        user: updatedUser
+      });
+    } catch (error: any) {
+      console.error("Admin update user subscription error:", error);
+      res.status(500).json({ message: "Error updating user subscription", error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

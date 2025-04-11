@@ -1,23 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { SubscriptionPlan, AppSetting } from '@shared/schema';
+import { SubscriptionPlan, AppSetting, User } from '@shared/schema';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Save } from 'lucide-react';
+import { 
+  Loader2, Save, User as UserIcon, Shield, Calendar, 
+  Mail, Search, RefreshCw, CheckCircle, XCircle, Edit
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLocation } from 'wouter';
 
 export default function AdminPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState('stripe');
+  const [activeTab, setActiveTab] = useState('users');
   const [stripePriceIds, setStripePriceIds] = useState<Record<number, string>>({});
   const [paystackPlanCodes, setPaystackPlanCodes] = useState<Record<number, string>>({});
   const [adsenseId, setAdsenseId] = useState('');
@@ -25,6 +32,7 @@ export default function AdminPage() {
   const [isEditingPaystack, setIsEditingPaystack] = useState(false);
   const [isEditingAdsense, setIsEditingAdsense] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   // Only admins should access this page
   useEffect(() => {
@@ -48,6 +56,12 @@ export default function AdminPage() {
   // Fetch AdSense settings
   const { data: adsenseSetting, isLoading: isLoadingAdsense, error: adsenseError } = useQuery<AppSetting>({
     queryKey: ['/api/app-settings/google_adsense_id'],
+  });
+  
+  // Fetch all users for the admin panel
+  const { data: users, isLoading: isLoadingUsers, error: usersError } = useQuery<User[]>({
+    queryKey: ['/api/admin/users'],
+    enabled: !!user && user.id === 1,
   });
 
   // Initialize stripePriceIds and paystackPlanCodes state when plans are loaded
@@ -178,7 +192,39 @@ export default function AdminPage() {
     ); // Redirect handled in useEffect
   }
 
-  if (isLoadingPlans || isLoadingAdsense) {
+  // Update user subscription plan function
+  const updateUserSubscription = async (userId: number, subscription: string, expiryDate?: string) => {
+    setIsSaving(true);
+    try {
+      const response = await apiRequest('POST', '/api/admin/update-user-subscription', { 
+        userId, 
+        subscription,
+        expiryDate
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update user subscription');
+      }
+      
+      toast({
+        title: 'Success',
+        description: 'User subscription has been updated',
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      setSelectedUserId(null);
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to update user subscription',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoadingPlans || isLoadingAdsense || isLoadingUsers) {
     return (
       <div className="container py-8 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -190,7 +236,19 @@ export default function AdminPage() {
     return (
       <div className="container py-8">
         <Alert variant="destructive">
+          <AlertTitle>Error Loading Plans</AlertTitle>
           <AlertDescription>Failed to load subscription plans</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+  
+  if (usersError) {
+    return (
+      <div className="container py-8">
+        <Alert variant="destructive">
+          <AlertTitle>Error Loading Users</AlertTitle>
+          <AlertDescription>Failed to load user data</AlertDescription>
         </Alert>
       </div>
     );
@@ -208,10 +266,170 @@ export default function AdminPage() {
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
             <TabsList>
+              <TabsTrigger value="users">User Management</TabsTrigger>
               <TabsTrigger value="stripe">Stripe Payment</TabsTrigger>
               <TabsTrigger value="paystack">Paystack Payment</TabsTrigger>
               <TabsTrigger value="adsense">Google AdSense</TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="users" className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium">Manage Users</h3>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center gap-1"
+                    onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] })}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Username</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Subscription</TableHead>
+                      <TableHead>Expiry Date</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {users?.map(user => (
+                      <TableRow key={user.id}>
+                        <TableCell>{user.id}</TableCell>
+                        <TableCell className="font-medium">{user.username}</TableCell>
+                        <TableCell>{user.email || '-'}</TableCell>
+                        <TableCell>
+                          <Badge variant={user.subscription === 'free' ? 'outline' : 'default'}>
+                            {user.subscription}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {user.expiryDate ? new Date(user.expiryDate).toLocaleDateString() : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setSelectedUserId(user.id)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {users?.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                          No users found
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {/* User Edit Dialog */}
+              {selectedUserId !== null && users && (
+                <Dialog open={selectedUserId !== null} onOpenChange={(open) => !open && setSelectedUserId(null)}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Edit User</DialogTitle>
+                      <DialogDescription>
+                        Update subscription details for this user
+                      </DialogDescription>
+                    </DialogHeader>
+                    
+                    {(() => {
+                      const selectedUser = users.find(u => u.id === selectedUserId);
+                      if (!selectedUser) return null;
+                      
+                      return (
+                        <div className="space-y-4 py-2">
+                          <div className="space-y-2">
+                            <h4 className="font-medium">User Information</h4>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div className="font-medium">Username:</div>
+                              <div>{selectedUser.username}</div>
+                              
+                              <div className="font-medium">Email:</div>
+                              <div>{selectedUser.email || '-'}</div>
+                              
+                              <div className="font-medium">Current Plan:</div>
+                              <div>
+                                <Badge variant={selectedUser.subscription === 'free' ? 'outline' : 'default'}>
+                                  {selectedUser.subscription}
+                                </Badge>
+                              </div>
+                              
+                              <div className="font-medium">Expiry Date:</div>
+                              <div>
+                                {selectedUser.expiryDate 
+                                  ? new Date(selectedUser.expiryDate).toLocaleDateString() 
+                                  : '-'}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <Separator />
+                          
+                          <div className="space-y-3">
+                            <h4 className="font-medium">Update Subscription</h4>
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                  <label htmlFor="plan" className="text-sm font-medium">Subscription Plan</label>
+                                  <Select
+                                    defaultValue={selectedUser.subscription || 'free'}
+                                    onValueChange={(value) => {
+                                      const nextWeek = new Date();
+                                      nextWeek.setDate(nextWeek.getDate() + 30);
+                                      
+                                      if (value === 'free') {
+                                        updateUserSubscription(selectedUser.id, value);
+                                      } else {
+                                        updateUserSubscription(
+                                          selectedUser.id, 
+                                          value, 
+                                          nextWeek.toISOString()
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select plan" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectGroup>
+                                        <SelectItem value="free">Free</SelectItem>
+                                        <SelectItem value="standard">Standard</SelectItem>
+                                        <SelectItem value="premium">Premium</SelectItem>
+                                        <SelectItem value="ultimate">Ultimate</SelectItem>
+                                      </SelectGroup>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setSelectedUserId(null)}>Cancel</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </TabsContent>
             
             <TabsContent value="stripe" className="space-y-6">
               <div className="flex justify-end">
