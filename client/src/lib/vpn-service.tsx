@@ -13,6 +13,14 @@ export type VpnConnectionState = {
   selectedServer: VpnServer | null;
   availableServers: VpnServer[];
   virtualIp: string;
+  // New settings for general tab
+  autoConnect?: boolean;
+  quickConnectType?: string;
+  startWithSystem?: boolean;
+  // New settings for advanced tab
+  splitTunneling?: boolean;
+  customDns?: boolean;
+  customDnsServer?: string;
 };
 
 export type VpnStateContextType = VpnConnectionState & {
@@ -46,6 +54,14 @@ export const VpnStateContext = createContext<VpnStateContextType>({
   selectedServer: null,
   availableServers: [],
   virtualIp: generateRandomIp(),
+  // New settings
+  autoConnect: false,
+  quickConnectType: 'fastest',
+  startWithSystem: false,
+  splitTunneling: false,
+  customDns: false,
+  customDnsServer: '1.1.1.1',
+  // Functions
   connect: () => {},
   disconnect: () => {},
   updateSettings: () => {},
@@ -67,6 +83,13 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     selectedServer: null,
     availableServers: [],
     virtualIp: generateRandomIp(),
+    // New settings with defaults
+    autoConnect: false,
+    quickConnectType: 'fastest',
+    startWithSystem: false,
+    splitTunneling: false,
+    customDns: false,
+    customDnsServer: '1.1.1.1',
   });
 
   const connect = (options: {

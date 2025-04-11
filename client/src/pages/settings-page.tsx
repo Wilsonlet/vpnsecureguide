@@ -125,9 +125,8 @@ export default function SettingsPage() {
                         <p className="text-sm text-gray-400 mt-1">Automatically connect to VPN when application starts</p>
                       </div>
                       <Switch 
-                        checked={false} 
-                        onCheckedChange={() => {}} 
-                        disabled={user?.subscription === 'free'}
+                        checked={vpnState.autoConnect || false} 
+                        onCheckedChange={(checked) => vpnState.updateSettings({ autoConnect: checked })} 
                       />
                     </div>
                     
@@ -136,7 +135,10 @@ export default function SettingsPage() {
                         <h4 className="font-medium">Quick Connect</h4>
                         <p className="text-sm text-gray-400 mt-1">Choose preferred server for one-click connect</p>
                       </div>
-                      <Select disabled={user?.subscription === 'free'}>
+                      <Select 
+                        value={vpnState.quickConnectType || 'fastest'} 
+                        onValueChange={(value) => vpnState.updateSettings({ quickConnectType: value })}
+                      >
                         <SelectTrigger className="w-[180px] bg-gray-800 border-gray-700">
                           <SelectValue placeholder="Fastest server" />
                         </SelectTrigger>
@@ -155,9 +157,8 @@ export default function SettingsPage() {
                         <p className="text-sm text-gray-400 mt-1">Launch application when Windows starts</p>
                       </div>
                       <Switch 
-                        checked={false} 
-                        onCheckedChange={() => {}} 
-                        disabled={user?.subscription === 'free'}
+                        checked={vpnState.startWithSystem || false} 
+                        onCheckedChange={(checked) => vpnState.updateSettings({ startWithSystem: checked })} 
                       />
                     </div>
                   </div>
@@ -267,9 +268,8 @@ export default function SettingsPage() {
                         <p className="text-sm text-gray-400 mt-1">Choose which apps use the VPN connection</p>
                       </div>
                       <Switch 
-                        checked={false} 
-                        onCheckedChange={() => {}} 
-                        disabled={user?.subscription === 'free'}
+                        checked={vpnState.splitTunneling || false} 
+                        onCheckedChange={(checked) => vpnState.updateSettings({ splitTunneling: checked })} 
                       />
                     </div>
                     
@@ -279,11 +279,26 @@ export default function SettingsPage() {
                         <p className="text-sm text-gray-400 mt-1">Use a specific DNS server with your VPN connection</p>
                       </div>
                       <Switch 
-                        checked={false} 
-                        onCheckedChange={() => {}} 
-                        disabled={user?.subscription === 'free'}
+                        checked={vpnState.customDns || false} 
+                        onCheckedChange={(checked) => vpnState.updateSettings({ customDns: checked })} 
                       />
                     </div>
+                    
+                    {vpnState.customDns && (
+                      <div className="mt-3 ml-6">
+                        <div className="flex flex-col space-y-2">
+                          <Label htmlFor="customDns">DNS Server</Label>
+                          <Input
+                            id="customDns"
+                            placeholder="e.g., 1.1.1.1"
+                            className="bg-gray-800 border-gray-700 w-full max-w-xs"
+                            value={vpnState.customDnsServer || '1.1.1.1'}
+                            onChange={(e) => vpnState.updateSettings({ customDnsServer: e.target.value })}
+                          />
+                          <p className="text-xs text-gray-400">Enter the IP address of your preferred DNS server</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
