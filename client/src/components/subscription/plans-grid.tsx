@@ -149,19 +149,42 @@ export default function PlansGrid() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Wifi className="h-5 w-5 text-primary" />
-                <span>{plan.serverAccess === "premium" ? "Premium Servers" : "Standard Servers"}</span>
+                <span>
+                  {plan.serverAccess === "all" 
+                    ? "All Server Types" 
+                    : plan.serverAccess === "premium" 
+                      ? "Premium Servers" 
+                      : "Standard Servers"}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-primary" />
-                <span>{formatBytes(plan.dataLimit)} Data</span>
+                <span>
+                  {plan.dataLimit === 0
+                    ? "Unlimited Data"
+                    : plan.name === "free"
+                      ? "500 MB/month"
+                      : formatBytes(plan.dataLimit)}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-primary" />
-                <span>{plan.dailyTimeLimit} minutes/day</span>
+                <span>
+                  {plan.dailyTimeLimit === 0
+                    ? "Unlimited Usage Time"
+                    : `${plan.dailyTimeLimit} minutes/day`}
+                </span>
               </div>
             </div>
             
             <div className="pt-2 space-y-2">
+              {/* Standard features for all plans */}
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-500" />
+                <span>{plan.maxDevices} {plan.maxDevices === 1 ? "Device" : "Devices"}</span>
+              </div>
+              
+              {/* Features that vary by plan */}
               <div className="flex items-center gap-2">
                 {plan.doubleVpnAccess ? (
                   <Check className="h-4 w-4 text-green-500" />
@@ -186,10 +209,24 @@ export default function PlansGrid() {
                 )}
                 <span>Ad-Free Experience</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-green-500" />
-                <span>{plan.maxDevices} {plan.maxDevices === 1 ? "Device" : "Devices"}</span>
-              </div>
+              
+              {/* Ultimate plan specific features */}
+              {plan.name === "ultimate" && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>Streaming & P2P Optimized</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>Kill Switch</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>Split Tunneling</span>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
           <CardFooter>

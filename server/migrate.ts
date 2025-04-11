@@ -14,12 +14,12 @@ async function seed() {
   if (existingPlans.length === 0) {
     console.log('Seeding subscription plans...');
     
-    // Define default subscription plans
+    // Define default subscription plans based on updated pricing and features
     const plans = [
       {
         name: subscriptionTiers.FREE,
         price: 0, // Free
-        dataLimit: 1 * 1024 * 1024 * 1024, // 1GB
+        dataLimit: 500 * 1024 * 1024, // 500MB
         dailyTimeLimit: 60, // 60 minutes
         serverAccess: 'standard',
         maxDevices: 1,
@@ -32,12 +32,12 @@ async function seed() {
       {
         name: subscriptionTiers.BASIC,
         price: 499, // $4.99
-        dataLimit: 50 * 1024 * 1024 * 1024, // 50GB
-        dailyTimeLimit: 120, // 2 hours
+        dataLimit: 0, // Unlimited data (0 means unlimited)
+        dailyTimeLimit: 0, // Unlimited time
         serverAccess: 'standard',
         maxDevices: 2,
         doubleVpnAccess: false,
-        obfuscationAccess: false,
+        obfuscationAccess: true, // New feature: Obfuscation
         adFree: true,
         priority: 1,
         stripePriceId: process.env.STRIPE_BASIC_PRICE_ID || null,
@@ -45,21 +45,21 @@ async function seed() {
       {
         name: subscriptionTiers.PREMIUM,
         price: 999, // $9.99
-        dataLimit: 200 * 1024 * 1024 * 1024, // 200GB
-        dailyTimeLimit: 0, // Unlimited
+        dataLimit: 0, // Unlimited data
+        dailyTimeLimit: 0, // Unlimited time
         serverAccess: 'premium',
         maxDevices: 5,
-        doubleVpnAccess: true,
-        obfuscationAccess: false,
+        doubleVpnAccess: true, // Double VPN feature
+        obfuscationAccess: true, // Obfuscation feature
         adFree: true,
         priority: 2,
         stripePriceId: process.env.STRIPE_PREMIUM_PRICE_ID || null,
       },
       {
         name: subscriptionTiers.ULTIMATE,
-        price: 1499, // $14.99
-        dataLimit: 500 * 1024 * 1024 * 1024, // 500GB
-        dailyTimeLimit: 0, // Unlimited
+        price: 1999, // $19.99 (high-end of range)
+        dataLimit: 0, // Unlimited data
+        dailyTimeLimit: 0, // Unlimited time
         serverAccess: 'all',
         maxDevices: 10,
         doubleVpnAccess: true,

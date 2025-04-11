@@ -41,7 +41,7 @@ export default function SubscriptionPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-2">Subscription Plans</h1>
         <p className="text-muted-foreground mb-6">
-          Choose the plan that works best for you. All plans include military-grade encryption and our no-log policy.
+          Choose the plan that works best for your needs. All plans include military-grade encryption (AES-256-GCM/ChaCha20-Poly1305) and our strict no-logs policy with diskless servers for enhanced privacy.
         </p>
 
         {user && subscription && (
