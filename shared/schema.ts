@@ -16,6 +16,7 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   email: text("email"),
+  firebaseId: text("firebase_id").unique(), // Add Firebase UID for authentication
   subscription: text("subscription").default(subscriptionTiers.FREE).notNull(),
   subscriptionExpiryDate: timestamp("subscription_expiry_date"),
   stripeCustomerId: text("stripe_customer_id"),
