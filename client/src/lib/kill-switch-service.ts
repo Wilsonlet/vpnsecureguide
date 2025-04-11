@@ -70,7 +70,15 @@ export class VpnKillSwitchService {
   public async activate(): Promise<boolean> {
     try {
       // Call the server API to activate kill switch
-      const response = await apiRequest('POST', '/api/killswitch/activate', {});
+      const response = await fetch('/api/killswitch/activate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          reason: 'manual'
+        })
+      });
       
       if (response.ok) {
         this.setActive(true);
@@ -100,7 +108,12 @@ export class VpnKillSwitchService {
   public async deactivate(): Promise<boolean> {
     try {
       // Call the server API to deactivate kill switch
-      const response = await apiRequest('POST', '/api/killswitch/deactivate', {});
+      const response = await fetch('/api/killswitch/deactivate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (response.ok) {
         this.setActive(false);
@@ -190,7 +203,12 @@ export class VpnKillSwitchService {
    */
   private async refreshStateFromServer(): Promise<void> {
     try {
-      const response = await apiRequest('GET', '/api/killswitch/status', {});
+      const response = await fetch('/api/killswitch/status', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
       if (response.ok) {
         const { active, activatedAt } = await response.json();
@@ -292,7 +310,13 @@ export class VpnKillSwitchService {
     
     // Check if kill switch is enabled in settings
     try {
-      const settingsResponse = await apiRequest('GET', '/api/settings', {});
+      const settingsResponse = await fetch('/api/settings', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
       if (settingsResponse.ok) {
         const settings = await settingsResponse.json();
         
