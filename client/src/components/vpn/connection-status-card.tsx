@@ -522,24 +522,29 @@ export default function ConnectionStatusCard() {
   };
 
   return (
-    <Card className="border border-gray-800 shadow-lg bg-gray-950">
-      <CardContent className="p-6 md:p-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+    <Card className="border border-blue-900/50 shadow-xl bg-gradient-to-br from-gray-950 to-blue-950 backdrop-blur-sm">
+      <CardContent className="p-6 md:p-8 relative overflow-hidden">
+        {/* Futuristic background elements */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none"></div>
+        <div className="absolute -right-24 -top-24 w-48 h-48 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
+        <div className="absolute -left-24 -bottom-24 w-48 h-48 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none"></div>
+        
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative z-10">
           <div className="space-y-1 md:space-y-2">
             <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${vpnState.connected || forceConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <h3 className="text-sm font-medium text-gray-400">STATUS</h3>
+              <div className={`w-3 h-3 rounded-full ${vpnState.connected || forceConnected ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50 animate-pulse' : 'bg-red-500'}`}></div>
+              <h3 className="text-sm font-medium text-blue-300 tracking-wide">STATUS</h3>
             </div>
             <div className="md:mt-1">
-              <h2 className="text-xl md:text-2xl font-bold">
+              <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
                 {vpnState.connected || forceConnected ? 'Connected' : 'Disconnected'}
               </h2>
               <p className="text-gray-400 mt-1 flex items-center gap-2">
-                <span>{connectionTime}</span>
+                <span className="font-mono">{connectionTime}</span>
                 {(vpnState.connected || forceConnected) && (
                   <>
                     <span>•</span>
-                    <span className="font-mono text-teal-400">
+                    <span className="font-mono text-cyan-400">
                       {vpnState.protocol === 'openvpn_tcp' 
                         ? 'OpenVPN (TCP)' 
                         : vpnState.protocol === 'openvpn_udp' 
@@ -558,9 +563,9 @@ export default function ConnectionStatusCard() {
           
           <div className="flex flex-col md:items-end gap-2 md:gap-3">
             <div className="flex items-center gap-3">
-              <span className="text-gray-400">Your IP:</span>
+              <span className="text-blue-300">Your IP:</span>
               <div className="flex items-center gap-2">
-                <span className="font-mono bg-gray-800 py-1 px-3 rounded-lg text-teal-300">
+                <span className="font-mono bg-black/30 border border-blue-900/50 py-1 px-3 rounded-lg text-cyan-300 shadow-inner backdrop-blur-sm">
                   {(vpnState.connected || forceConnected) ? vpnState.virtualIp : '198.51.100.0'}
                 </span>
                 {(vpnState.connected || forceConnected) && (
@@ -569,10 +574,10 @@ export default function ConnectionStatusCard() {
                     size="sm" 
                     onClick={handleChangeIp}
                     disabled={isChangingIp || isToggling}
-                    className="h-8 bg-gray-800 border-gray-700 hover:bg-gray-700"
+                    className="h-8 bg-black/30 border border-blue-500/50 hover:bg-blue-900/30 hover:border-blue-400 transition-all"
                   >
-                    <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isChangingIp ? 'animate-spin' : ''}`} />
-                    Change IP
+                    <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isChangingIp ? 'animate-spin text-cyan-400' : 'text-blue-300'}`} />
+                    <span className={isChangingIp ? 'text-cyan-400' : 'text-blue-300'}>Change IP</span>
                   </Button>
                 )}
               </div>
@@ -587,14 +592,14 @@ export default function ConnectionStatusCard() {
           </div>
         </div>
         
-        <div className="mt-8">
+        <div className="mt-8 relative z-10">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium mb-3">Quick Server Selection</h3>
+            <h3 className="text-sm font-medium mb-3 text-blue-300 tracking-wide">NETWORK NODES</h3>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => window.location.href = '/servers'}
-              className="text-xs text-primary hover:text-primary/80"
+              className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
             >
               View All
             </Button>
@@ -666,24 +671,27 @@ export default function ConnectionStatusCard() {
                     });
                   }
                 }}
-                className={`flex flex-col items-start rounded-lg p-3 text-left transition-colors hover:bg-gray-700/50 ${
+                className={`relative overflow-hidden flex flex-col items-start rounded-lg p-3 text-left transition-colors hover:bg-blue-900/30 group ${
                   vpnState.selectedServer?.id === server.id
-                    ? 'bg-gray-700 border border-primary/30'
-                    : 'bg-gray-800 border border-transparent'
+                    ? 'bg-black/40 border border-blue-500/50 shadow-lg shadow-blue-500/10'
+                    : 'bg-black/20 border border-blue-800/30 hover:border-blue-600/50'
                 }`}
               >
-                <div className="text-sm font-medium mb-1">{server.country}</div>
+                {/* Futuristic hover effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                
+                <div className="text-sm font-medium mb-1 text-blue-100">{server.country}</div>
                 <div className="text-xs text-gray-400 mb-2">{server.name}</div>
                 <div className="flex items-center gap-2 justify-between w-full">
-                  <span className="text-xs bg-gray-700/50 rounded px-2 py-0.5">
+                  <span className="text-xs bg-black/30 border border-blue-900/20 rounded-md px-2 py-0.5 text-blue-300">
                     {server.latency} ms
                   </span>
-                  <span className={`text-xs rounded px-2 py-0.5 ${
+                  <span className={`text-xs rounded-md px-2 py-0.5 ${
                     (server.load || 0) < 30 
-                      ? 'bg-green-900/30 text-green-400' 
+                      ? 'bg-emerald-900/20 text-emerald-400 border border-emerald-500/20' 
                       : (server.load || 0) < 70 
-                        ? 'bg-amber-900/30 text-amber-400' 
-                        : 'bg-red-900/30 text-red-400'
+                        ? 'bg-amber-900/20 text-amber-400 border border-amber-500/20' 
+                        : 'bg-red-900/20 text-red-400 border border-red-500/20'
                   }`}>
                     {server.load}%
                   </span>
@@ -693,43 +701,48 @@ export default function ConnectionStatusCard() {
           </div>
           
           {(vpnState.connected || forceConnected) && vpnState.selectedServer && (
-            <div className="mt-4 p-4 bg-gray-800/50 border border-gray-700 rounded-lg">
-              <div className="text-sm font-medium mb-2">Active Connection</div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                  <div className="text-xs text-gray-400">Location</div>
-                  <div className="font-medium text-sm">{vpnState.selectedServer.country}</div>
-                </div>
-                
-                <div>
-                  <div className="text-xs text-gray-400">Server</div>
-                  <div className="font-medium text-sm">{vpnState.selectedServer.name}</div>
-                </div>
-                
-                <div>
-                  <div className="text-xs text-gray-400">Protocol</div>
-                  <div className="font-medium text-sm">{
-                    vpnState.protocol === 'openvpn_tcp' 
-                      ? 'OpenVPN (TCP)' 
-                      : vpnState.protocol === 'openvpn_udp' 
-                        ? 'OpenVPN (UDP)' 
-                        : vpnState.protocol === 'wireguard' 
-                          ? 'WireGuard' 
-                          : vpnState.protocol === 'shadowsocks'
-                            ? 'Shadowsocks'
-                            : 'IKEv2/IPSec'
-                  }</div>
-                </div>
-                
-                <div>
-                  <div className="text-xs text-gray-400">Encryption</div>
-                  <div className="font-medium text-sm">{
-                    vpnState.encryption === 'aes_256_gcm' 
-                      ? 'AES-256-GCM'
-                      : vpnState.encryption === 'chacha20_poly1305' 
-                        ? 'ChaCha20-Poly1305'
-                        : vpnState.encryption
-                  }</div>
+            <div className="mt-6 p-4 bg-black/30 border border-blue-900/30 rounded-lg backdrop-blur-sm relative overflow-hidden">
+              {/* Background glow effect */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-blue-500/0 blur opacity-30"></div>
+              
+              <div className="relative z-10">
+                <div className="text-sm font-medium mb-3 text-blue-300">ACTIVE CONNECTION</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <div className="text-xs text-gray-400">Location</div>
+                    <div className="font-medium text-sm text-blue-100">{vpnState.selectedServer.country}</div>
+                  </div>
+                  
+                  <div>
+                    <div className="text-xs text-gray-400">Server</div>
+                    <div className="font-medium text-sm text-blue-100">{vpnState.selectedServer.name}</div>
+                  </div>
+                  
+                  <div>
+                    <div className="text-xs text-gray-400">Protocol</div>
+                    <div className="font-medium text-sm text-cyan-400">{
+                      vpnState.protocol === 'openvpn_tcp' 
+                        ? 'OpenVPN (TCP)' 
+                        : vpnState.protocol === 'openvpn_udp' 
+                          ? 'OpenVPN (UDP)' 
+                          : vpnState.protocol === 'wireguard' 
+                            ? 'WireGuard' 
+                            : vpnState.protocol === 'shadowsocks'
+                              ? 'Shadowsocks'
+                              : 'IKEv2/IPSec'
+                    }</div>
+                  </div>
+                  
+                  <div>
+                    <div className="text-xs text-gray-400">Encryption</div>
+                    <div className="font-medium text-sm text-cyan-400">{
+                      vpnState.encryption === 'aes_256_gcm' 
+                        ? 'AES-256-GCM'
+                        : vpnState.encryption === 'chacha20_poly1305' 
+                          ? 'ChaCha20-Poly1305'
+                          : vpnState.encryption
+                    }</div>
+                  </div>
                 </div>
               </div>
             </div>

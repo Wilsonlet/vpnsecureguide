@@ -8,6 +8,81 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased bg-gradient-to-b from-gray-950 via-blue-950/30 to-gray-950 text-foreground min-h-screen;
+  }
+}
+
+/* Futuristic UI Elements */
+@layer utilities {
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(to right, rgba(25, 113, 194, 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(25, 113, 194, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  
+  .text-shadow-glow {
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.5),
+                 0 0 20px rgba(56, 189, 248, 0.3);
+  }
+  
+  .animate-pulse-subtle {
+    animation: pulse-subtle 3s infinite;
+  }
+  
+  @keyframes pulse-subtle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+  
+  /* Futuristic Gradient Border */
+  .border-gradient {
+    position: relative;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+  
+  .border-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    margin: -1px;
+    border-radius: inherit;
+    background: linear-gradient(to right, #0ea5e9, #2563eb, #0ea5e9);
+  }
+  
+  /* Cyber dots animation */
+  .cyber-dots {
+    position: relative;
+  }
+  
+  .cyber-dots::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #0ea5e9;
+    top: 50%;
+    right: -12px;
+    transform: translateY(-50%);
+    animation: blink 1.5s infinite;
+  }
+  
+  @keyframes blink {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.3;
+    }
   }
 }
