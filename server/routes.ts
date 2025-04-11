@@ -957,10 +957,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const parsedData = insertAppSettingSchema.parse(req.body);
       
+      // Ensure value and description are strings or undefined (not null)
+      const settingValue = typeof parsedData.value === 'string' ? parsedData.value : '';
+      const settingDescription = typeof parsedData.description === 'string' ? parsedData.description : undefined;
+      
       const setting = await storage.setAppSetting(
         parsedData.key,
-        parsedData.value,
-        parsedData.description
+        settingValue,
+        settingDescription
       );
       
       res.status(201).json(setting);

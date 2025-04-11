@@ -1,5 +1,5 @@
 import { db } from './db';
-import { subscriptionPlans, subscriptionTiers, vpnServers } from '@shared/schema';
+import { subscriptionPlans, subscriptionTiers, vpnServers, appSettings } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 
 /**
@@ -75,6 +75,48 @@ async function seed() {
     console.log('Added subscription plans:', plans.map(p => p.name).join(', '));
   } else {
     console.log('Subscription plans already exist, skipping...');
+  }
+
+  // Seed app settings if they don't exist
+  const existingSettings = await db.select().from(appSettings);
+  
+  if (existingSettings.length === 0) {
+    console.log('Seeding app settings...');
+    
+    // Define default app settings
+    const settings = [
+      {
+        key: 'google_adsense_id',
+        value: '1234567890', // Placeholder - replace with real AdSense ID when available
+        description: 'Google AdSense Publisher ID (without ca-pub- prefix)',
+      },
+      {
+        key: 'company_name',
+        value: 'SecureVPN',
+        description: 'Name of the VPN service',
+      },
+      {
+        key: 'company_email',
+        value: 'support@securevpn.example.com',
+        description: 'Support email address',
+      },
+      {
+        key: 'version',
+        value: '1.0.0',
+        description: 'Current application version',
+      },
+      {
+        key: 'maintenance_mode',
+        value: 'false',
+        description: 'Set to true during maintenance periods',
+      },
+    ];
+    
+    // Insert settings
+    await db.insert(appSettings).values(settings);
+    console.log('Added app settings:', settings.map(s => s.key).join(', '));
+  } else {
+    console.log('App settings already exist, skipping...');
   }
 
   // Seed VPN servers if they don't exist
