@@ -44,10 +44,15 @@ export default function SubscriptionPage() {
           // Redirect to Stripe hosted checkout
           window.location.href = data.url;
         } else if (data.paymentProvider === 'paystack' && data.authorizationUrl) {
-          // Redirect to our Paystack checkout page with plan price
+          // Redirect to our Paystack checkout page
           const selectedPlan = plans.find((p: SubscriptionPlan) => p.name === data.planName);
           const planPrice = selectedPlan ? (selectedPlan.price / 100) : 0; // Convert from cents to dollars
-          const checkoutUrl = `${data.authorizationUrl}&price=${planPrice}`;
+          
+          // Extract reference from authorizationUrl
+          const ref = data.reference || data.authorizationUrl.split('ref=')[1]?.split('&')[0];
+          
+          // Use new URL path format to avoid query parameter issues
+          const checkoutUrl = `/checkout/paystack/${data.planName}/${ref}?price=${planPrice}`;
           window.location.href = checkoutUrl;
         } else if (data.redirectUrl) {
           // Free plan or other non-payment scenario with redirect

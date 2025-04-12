@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, useRoute, useParams } from 'wouter';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ArrowLeft, CheckCircle, CreditCard, Lock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -105,12 +105,20 @@ export default function PaystackCheckout() {
   const [planPrice, setPlanPrice] = useState<number>(0);
   const [planDetails, setPlanDetails] = useState<any>(null);
   
+  // Get path parameters using Wouter's useRoute
+  // Match the "/checkout/paystack/:plan/:ref" pattern
+  const [matched, params] = useRoute('/checkout/paystack/:plan/:ref');
+  
   // Parse URL parameters and fetch plan price
   useEffect(() => {
+    // Get URL parameters from path
     const urlParams = new URLSearchParams(window.location.search);
-    const plan = urlParams.get('plan');
-    const ref = urlParams.get('ref');
+    // Get price from query parameter
     const price = urlParams.get('price');
+    
+    // Use the URL path parameters instead of query parameters
+    const plan = params?.plan;
+    const ref = params?.ref;
     
     if (!plan || !ref) {
       setError('Invalid payment information. Please try again.');
@@ -151,7 +159,7 @@ export default function PaystackCheckout() {
     };
     
     fetchPlanData();
-  }, []);
+  }, [params]);
 
   const handleBackToSubscription = () => {
     setLocation('/subscription');
