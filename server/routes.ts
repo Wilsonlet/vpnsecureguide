@@ -726,19 +726,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create a reference for the transaction
         const reference = `paystack_${Date.now()}_${user.id}`;
         
+        // Generate the checkout URL
+        const authorizationUrl = `/paystack-checkout?plan=${plan.name}&user=${user.id}&ref=${reference}&price=${plan.price / 100}`;
+        
         // Create the response data
-        const mockPaystackData = {
+        const paystackData = {
           reference,
           paymentMethod: 'paystack',
-          // Generate actual authorization URL to our checkout page
-          authorizationUrl: `/paystack-checkout?plan=${plan.name}&user=${user.id}&ref=${reference}&price=${plan.price / 100}`
+          authorizationUrl
         };
         
         // Store the reference in user metadata or a separate table
-        // await storage.storePaystackReference(user.id, mockPaystackData.reference);
+        // await storage.storePaystackReference(user.id, reference);
         
         return res.json({
-          ...mockPaystackData,
+          ...paystackData,
           message: "Redirecting to Paystack for payment"
         });
       }
