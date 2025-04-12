@@ -707,16 +707,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Handle Paystack payment confirmation
   app.post("/api/confirm-subscription", async (req, res, next) => {
     try {
-      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      if (!req.isAuthenticated()) {
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(401).json({ message: "Not authenticated" });
+      }
       
       const { reference, plan, cardDetails } = req.body;
       if (!reference || !plan) {
+        res.setHeader('Content-Type', 'application/json');
         return res.status(400).json({ message: "Reference and plan are required" });
       }
       
       // Get the subscription plan to get the price
       const subscriptionPlan = await storage.getSubscriptionPlanByName(plan);
       if (!subscriptionPlan) {
+        res.setHeader('Content-Type', 'application/json');
         return res.status(404).json({ message: "Subscription plan not found" });
       }
       
@@ -747,18 +752,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For demo purposes, we'll simulate this with a log
       console.log(`[PAYMENT] Transaction successful. Subscription active until ${expiryDate.toISOString()}`);
       
-      // Return success response with price information
-      res.json({
+      // Create the response object
+      const responseData = {
         success: true,
         message: `Payment of $${subscriptionPlan.price} successful. Subscription to ${plan} plan confirmed.`,
         plan,
         amount: subscriptionPlan.price,
         currency: "USD",
         expiryDate: expiryDate.toISOString()
-      });
+      };
+      
+      // Explicitly set Content-Type header to application/json
+      res.setHeader('Content-Type', 'application/json');
+      
+      // Return success response with price information
+      return res.status(200).json(responseData);
     } catch (error: any) {
       console.error("Confirm subscription error:", error);
-      res.status(500).json({ message: "Error confirming subscription", error: error.message });
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(500).json({ 
+        success: false, 
+        message: "Error confirming subscription", 
+        error: error.message 
+      });
     }
   });
 

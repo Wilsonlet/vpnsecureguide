@@ -163,14 +163,30 @@ export default function PaystackCheckout() {
       };
       
       // After "successful" payment, update subscription status
-      // In a real implementation, this would verify payment status with Paystack
       const response = await apiRequest('POST', '/api/confirm-subscription', {
         reference: planRef,
         plan: planName,
         cardDetails // Send card details to the server
       });
       
-      const result = await response.json();
+      // Check if the response is valid JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server returned non-JSON response. Please try again.");
+      }
+      
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        throw new Error("Failed to parse server response. Please try again.");
+      }
+      
+      // Check if the result is valid
+      if (!result || typeof result !== 'object') {
+        throw new Error("Invalid response format from server");
+      }
       
       // Update subscription data in UI
       queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
