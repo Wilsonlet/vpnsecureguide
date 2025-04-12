@@ -103,10 +103,11 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     customDnsServer: '1.1.1.1',
   });
   
-  // Fetch user subscription on mount
+  // Fetch user data and settings on mount
   useEffect(() => {
-    const fetchUserSubscription = async () => {
+    const fetchUserDataAndSettings = async () => {
       try {
+        // Fetch user subscription
         const userResponse = await fetch('/api/user');
         if (userResponse.ok) {
           const userData = await userResponse.json();
@@ -118,12 +119,36 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
             console.log('User subscription loaded:', userData.subscription);
           }
         }
+        
+        // Fetch user settings 
+        try {
+          const settingsResponse = await fetch('/api/settings', {
+            credentials: 'include',
+          });
+          
+          if (settingsResponse.ok) {
+            const settings = await settingsResponse.json();
+            setState(currentState => ({
+              ...currentState,
+              // Update connection settings
+              protocol: settings.preferredProtocol || currentState.protocol,
+              encryption: settings.preferredEncryption || currentState.encryption,
+              killSwitch: settings.killSwitch || currentState.killSwitch,
+              dnsLeakProtection: settings.dnsLeakProtection || currentState.dnsLeakProtection,
+              doubleVpn: settings.doubleVpn || currentState.doubleVpn,
+              obfuscation: settings.obfuscation || currentState.obfuscation,
+            }));
+            console.log('VPN settings loaded from server');
+          }
+        } catch (settingsError) {
+          console.error('Error loading VPN settings:', settingsError);
+        }
       } catch (error) {
-        console.error('Error fetching user subscription:', error);
+        console.error('Error fetching user data:', error);
       }
     };
     
-    fetchUserSubscription();
+    fetchUserDataAndSettings();
   }, []);
 
   // Initialize kill switch service

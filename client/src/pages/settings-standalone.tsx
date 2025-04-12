@@ -13,6 +13,7 @@ import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
 import Header from '@/components/layout/header';
 import { useAuth } from '@/hooks/use-auth';
+import { useVpnState } from '@/lib/vpn-service';
 
 export default function SettingsStandalone() {
   const { user } = useAuth();
@@ -82,6 +83,9 @@ export default function SettingsStandalone() {
     checkVpnStatus();
   }, []);
   
+  // Import the VPN context
+  const vpnState = useVpnState();
+  
   // Handle saving connection settings
   const handleSaveConnectionSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +107,12 @@ export default function SettingsStandalone() {
       });
       
       if (response.ok) {
+        // Update the VPN context with new settings
+        vpnState.updateSettings({
+          protocol: protocol,
+          encryption: encryption
+        });
+        
         setSuccessMessage(`Settings saved successfully at ${new Date().toLocaleTimeString()}`);
       } else {
         const text = await response.text();
@@ -145,7 +155,23 @@ export default function SettingsStandalone() {
         credentials: 'include',
       });
       
-      if (!response.ok) {
+      if (response.ok) {
+        // Update the global VPN state
+        switch (setting) {
+          case 'killSwitch':
+            vpnState.updateSettings({ killSwitch: value });
+            break;
+          case 'dnsLeakProtection':
+            vpnState.updateSettings({ dnsLeakProtection: value });
+            break;
+          case 'doubleVpn':
+            vpnState.updateSettings({ doubleVpn: value });
+            break;
+          case 'obfuscation':
+            vpnState.updateSettings({ obfuscation: value });
+            break;
+        }
+      } else {
         // Revert on error
         switch (setting) {
           case 'killSwitch':
