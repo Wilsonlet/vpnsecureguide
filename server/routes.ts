@@ -725,21 +725,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Subscription plan not found" });
       }
       
-      // In a real implementation, this would call the Paystack API to charge the user
-      // For example:
-      // const paystack = new Paystack(process.env.PAYSTACK_SECRET_KEY);
-      // const chargeResult = await paystack.transaction.charge({
-      //   amount: subscriptionPlan.price * 100, // Convert to kobo/cents
-      //   email: req.user.email,
-      //   card: cardDetails,
-      //   reference: reference,
-      //   plan: subscriptionPlan.paystackPlanCode,
-      // });
+      // Import Paystack service
+      const { paystackService } = await import('./paystack-service');
       
-      // For demo purposes, we'll log what would be charged
+      // Make sure we have user email - needed for Paystack
+      if (!req.user.email) {
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(400).json({ message: "User email is required for payment processing" });
+      }
+      
+      // Log payment attempt
       console.log(`[PAYMENT] Processing payment for ${plan} plan at $${subscriptionPlan.price}.`);
       console.log(`[PAYMENT] Reference: ${reference}`);
       console.log(`[PAYMENT] User: ${req.user.id} (${req.user.username})`);
+      
+      // Process payment with Paystack
+      const paymentResult = await paystackService.chargeCard(
+        req.user.email,
+        subscriptionPlan.price,
+        {
+          number: cardDetails.number,
+          cvv: cardDetails.cvv,
+          expiryMonth: cardDetails.expiryMonth,
+          expiryYear: cardDetails.expiryYear
+        },
+        {
+          userId: req.user.id,
+          planName: plan,
+          custom_reference: reference
+        }
+      );
+      
+      // If the payment needs additional action (like OTP), return that info
+      if (paymentResult.data && paymentResult.data.status === 'send_otp') {
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(200).json({
+          success: false,
+          requires_action: true,
+          action_type: 'otp',
+          reference: paymentResult.data.reference,
+          message: "Please provide the OTP sent to your phone/email"
+        });
+      }
+      
+      // Verify the transaction
+      const verificationResult = await paystackService.verifyTransaction(
+        paymentResult.data?.reference || reference
+      );
+      
+      // Check if payment was successful
+      if (!verificationResult.status || verificationResult.data?.status !== 'success') {
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(400).json({
+          success: false,
+          message: "Payment was not successful",
+          paymentStatus: verificationResult.data?.status || 'failed'
+        });
+      }
       
       // Calculate when the subscription would expire (1 month from now)
       const expiryDate = new Date();
@@ -748,9 +790,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update user's subscription in the database with expiry date
       await storage.updateUserSubscription(req.user.id, plan, expiryDate);
       
-      // Record the payment (in a real app, this would store the transaction details)
-      // For demo purposes, we'll simulate this with a log
-      console.log(`[PAYMENT] Transaction successful. Subscription active until ${expiryDate.toISOString()}`);
+      // Record the transaction ID from Paystack if available
+      const transactionId = verificationResult.data?.id || '';
+      console.log(`[PAYMENT] Transaction successful (ID: ${transactionId}). Subscription active until ${expiryDate.toISOString()}`);
       
       // Create the response object
       const responseData = {
@@ -759,7 +801,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         plan,
         amount: subscriptionPlan.price,
         currency: "USD",
-        expiryDate: expiryDate.toISOString()
+        expiryDate: expiryDate.toISOString(),
+        transaction: {
+          id: transactionId,
+          reference: verificationResult.data?.reference || reference
+        }
       };
       
       // Explicitly set Content-Type header to application/json
@@ -768,12 +814,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Return success response with price information
       return res.status(200).json(responseData);
     } catch (error: any) {
-      console.error("Confirm subscription error:", error);
+      console.error("Confirm subscription error:", error.response?.data || error);
       res.setHeader('Content-Type', 'application/json');
       return res.status(500).json({ 
         success: false, 
         message: "Error confirming subscription", 
-        error: error.message 
+        error: error.response?.data?.message || error.message 
       });
     }
   });
