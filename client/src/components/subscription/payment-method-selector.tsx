@@ -13,22 +13,22 @@ interface PaymentMethodSelectorProps {
 export function PaymentMethodSelector({ selectedMethod, onChange }: PaymentMethodSelectorProps) {
   return (
     <Card className="w-full">
-      <CardContent className="pt-6">
+      <CardContent className="p-3 sm:p-4 pt-4 sm:pt-6">
         <RadioGroup
           value={selectedMethod}
           onValueChange={(value) => onChange(value as PaymentMethod)}
-          className="grid grid-cols-2 gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4"
         >
           <div>
-            <div className={`flex flex-col items-center justify-between rounded-md border-2 p-4 ${
+            <div className={`flex flex-col items-center justify-between rounded-md border-2 p-3 sm:p-4 ${
               selectedMethod === 'stripe' 
                 ? 'border-primary bg-primary/10' 
                 : 'border-muted bg-transparent hover:bg-muted/50'
             }`}>
               <RadioGroupItem value="stripe" id="stripe" className="sr-only" />
-              <Label htmlFor="stripe" className="flex flex-col items-center justify-center gap-2">
-                <CreditCard className="h-6 w-6 mb-1" />
-                <div className="font-semibold">Stripe</div>
+              <Label htmlFor="stripe" className="flex flex-col items-center justify-center gap-1 sm:gap-2 w-full cursor-pointer">
+                <CreditCard className="h-5 w-5 sm:h-6 sm:w-6 mb-1" />
+                <div className="font-semibold text-sm sm:text-base">Stripe</div>
                 <div className="text-xs text-muted-foreground text-center">
                   Credit/Debit Cards, Apple Pay, Google Pay
                 </div>
@@ -37,15 +37,15 @@ export function PaymentMethodSelector({ selectedMethod, onChange }: PaymentMetho
           </div>
 
           <div>
-            <div className={`flex flex-col items-center justify-between rounded-md border-2 p-4 ${
+            <div className={`flex flex-col items-center justify-between rounded-md border-2 p-3 sm:p-4 ${
               selectedMethod === 'paystack' 
                 ? 'border-primary bg-primary/10' 
                 : 'border-muted bg-transparent hover:bg-muted/50'
             }`}>
               <RadioGroupItem value="paystack" id="paystack" className="sr-only" />
-              <Label htmlFor="paystack" className="flex flex-col items-center justify-center gap-2">
-                <Globe className="h-6 w-6 mb-1" />
-                <div className="font-semibold">Paystack</div>
+              <Label htmlFor="paystack" className="flex flex-col items-center justify-center gap-1 sm:gap-2 w-full cursor-pointer">
+                <Globe className="h-5 w-5 sm:h-6 sm:w-6 mb-1" />
+                <div className="font-semibold text-sm sm:text-base">Paystack</div>
                 <div className="text-xs text-muted-foreground text-center">
                   Local payment methods, Bank transfers, Mobile money
                 </div>

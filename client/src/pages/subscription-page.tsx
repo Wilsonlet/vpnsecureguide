@@ -170,7 +170,7 @@ export default function SubscriptionPage() {
         )}
         
         {/* Payment Method Selection Section - moved to top */}
-        <div className="bg-muted p-6 rounded-lg mb-4">
+        <div className="bg-muted p-4 sm:p-6 rounded-lg mb-6">
           <h2 className="text-xl font-semibold mb-2">Payment Method</h2>
           <p className="text-muted-foreground mb-4">
             Choose your preferred payment method for your subscription
@@ -181,7 +181,7 @@ export default function SubscriptionPage() {
           />
         </div>
         
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
           {sortedPlans.map((plan) => (
             <PlanCard
               key={plan.id}
@@ -193,44 +193,44 @@ export default function SubscriptionPage() {
           ))}
         </div>
         
-        <div className="text-center mt-10">
-          <div className="inline-flex items-center justify-center rounded-full border bg-muted px-4 py-1.5 text-sm font-medium transition-colors">
-            <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+        <div className="text-center mt-8 sm:mt-10">
+          <div className="inline-flex items-center justify-center rounded-full border bg-muted px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium transition-colors">
+            <CheckCircle className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500" />
             <span>Secure payment processing with multiple options</span>
           </div>
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-2 px-1">
             All plans include our no-logs policy, military-grade encryption, and automatic kill switch.
           </p>
         </div>
         
-        <div className="bg-muted rounded-lg p-6 mt-10">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="bg-muted rounded-lg p-4 sm:p-6 mt-8 sm:mt-10">
+          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>Global Network</CardTitle>
+              <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+                <CardTitle className="text-base sm:text-lg">Global Network</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
+              <CardContent className="p-3 sm:p-4 pt-0">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Access to servers in 90+ countries with unlimited server switching
                 </p>
               </CardContent>
             </Card>
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>Device Compatibility</CardTitle>
+              <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+                <CardTitle className="text-base sm:text-lg">Device Compatibility</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
+              <CardContent className="p-3 sm:p-4 pt-0">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Works on all major platforms including Windows, macOS, iOS, Android, and Linux
                 </p>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>24/7 Support</CardTitle>
+            <Card className="md:col-span-2 lg:col-span-1">
+              <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+                <CardTitle className="text-base sm:text-lg">24/7 Support</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
+              <CardContent className="p-3 sm:p-4 pt-0">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Live chat and email support available around the clock
                 </p>
               </CardContent>

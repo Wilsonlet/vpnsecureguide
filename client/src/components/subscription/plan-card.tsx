@@ -176,40 +176,40 @@ export default function PlanCard({ plan, isCurrentPlan, onSelect, className = ''
         </div>
       )}
 
-      <CardHeader className="pb-2">
-        <div className="flex justify-center mb-2">
+      <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+        <div className="flex justify-center mb-1 sm:mb-2">
           {variant.icon}
         </div>
-        <CardTitle className="text-center text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
+        <CardTitle className="text-center text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
           {plan.name.charAt(0).toUpperCase() + plan.name.slice(1)}
         </CardTitle>
         <div className="text-center">
-          <span className="text-3xl font-bold">${formattedPrice}</span>
+          <span className="text-2xl sm:text-3xl font-bold">${formattedPrice}</span>
           <span className="text-gray-400">/month</span>
         </div>
-        <CardDescription className="text-center text-gray-400 mt-2 pb-2">
+        <CardDescription className="text-center text-gray-400 mt-1 sm:mt-2 pb-1 sm:pb-2 text-xs sm:text-sm">
           {plan.description || getPlanDescription(plan.name)}
         </CardDescription>
         
         {/* Value Badge - highlight the main value proposition */}
-        <div className="flex justify-center mt-2">
-          <Badge className={`${variant.badge} px-3 py-1`}>
+        <div className="flex justify-center mt-1 sm:mt-2">
+          <Badge className={`${variant.badge} text-xs px-2 py-1 sm:px-3`}>
             {getPlanValueBadge(plan.name)}
           </Badge>
         </div>
       </CardHeader>
 
-      <CardContent className="pb-4">
+      <CardContent className="p-3 sm:p-4 pb-2 sm:pb-4">
         {/* Category: Core Features */}
-        <div className="mb-3">
-          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+        <div className="mb-2 sm:mb-3">
+          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 sm:mb-2">
             Included Features
           </h4>
-          <ul className="space-y-2">
+          <ul className="space-y-1 sm:space-y-2">
             {features.slice(0, 3).map((feature, index) => (
               <li key={index} className="flex items-start">
-                <CheckCircle2 className="h-5 w-5 mr-2 text-green-500 flex-shrink-0 mt-0.5" />
-                <span className="text-sm text-gray-300">{feature}</span>
+                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 text-green-500 flex-shrink-0 mt-0.5" />
+                <span className="text-xs sm:text-sm text-gray-300">{feature}</span>
               </li>
             ))}
           </ul>
@@ -218,14 +218,14 @@ export default function PlanCard({ plan, isCurrentPlan, onSelect, className = ''
         {/* Category: Additional Benefits */}
         {features.length > 3 && (
           <div>
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 sm:mb-2">
               Additional Benefits
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-1 sm:space-y-2">
               {features.slice(3).map((feature, index) => (
                 <li key={index} className="flex items-start">
-                  <CheckCircle2 className="h-5 w-5 mr-2 text-green-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-300">{feature}</span>
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-xs sm:text-sm text-gray-300">{feature}</span>
                 </li>
               ))}
             </ul>
@@ -233,9 +233,9 @@ export default function PlanCard({ plan, isCurrentPlan, onSelect, className = ''
         )}
       </CardContent>
 
-      <CardFooter>
+      <CardFooter className="p-3 sm:p-4 pt-1 sm:pt-2">
         <Button 
-          className={`w-full ${variant.btn}`}
+          className={`w-full text-sm ${variant.btn}`}
           disabled={isCurrentPlan}
           onClick={() => onSelect(plan)}
         >
