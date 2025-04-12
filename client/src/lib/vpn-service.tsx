@@ -574,8 +574,11 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
   };
 
   // Track the last protocol and encryption update times to prevent duplicate updates
-  const lastProtocolUpdate = useRef<number>(0);
-  const lastEncryptionUpdate = useRef<number>(0);
+  // Using plain object variables instead of useRef since this is outside a functional component
+  const lastUpdateTimes = {
+    protocol: 0,
+    encryption: 0
+  };
   const UPDATE_DEBOUNCE_MS = 2000; // 2 seconds debounce
 
   const updateSettings = (settings: Partial<VpnConnectionState>) => {
@@ -588,8 +591,8 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       const now = Date.now();
       
       // Sync protocol with server if we're updating it - with debounce
-      if (settings.protocol && now - lastProtocolUpdate.current > UPDATE_DEBOUNCE_MS) {
-        lastProtocolUpdate.current = now;
+      if (settings.protocol && now - lastUpdateTimes.protocol > UPDATE_DEBOUNCE_MS) {
+        lastUpdateTimes.protocol = now;
         console.log(`VpnService: Syncing protocol to server: ${settings.protocol} (debounced)`);
         
         // Immediately try to persist protocol to server
@@ -624,8 +627,8 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       }
       
       // Sync encryption with server if we're updating it - with debounce
-      if (settings.encryption && now - lastEncryptionUpdate.current > UPDATE_DEBOUNCE_MS) {
-        lastEncryptionUpdate.current = now;
+      if (settings.encryption && now - lastUpdateTimes.encryption > UPDATE_DEBOUNCE_MS) {
+        lastUpdateTimes.encryption = now;
         console.log(`VpnService: Syncing encryption to server: ${settings.encryption} (debounced)`);
         
         // Immediately try to persist encryption to server
