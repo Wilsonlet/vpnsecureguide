@@ -138,7 +138,7 @@ export default function SecuritySettingsCard() {
     vpnState.obfuscation
   ]);
 
-  // Handle protocol change
+  // Handle protocol change - simpler implementation with direct DOM access
   const handleProtocolChange = async (value: string) => {
     console.log("Protocol selection changed to:", value);
     
@@ -156,16 +156,22 @@ export default function SecuritySettingsCard() {
       // Show loading state and temporarily set UI state
       setProtocol(value);
       
-      // Create a payload for the server with both parameter forms to ensure compatibility
+      // Use a simplified payload with both names to ensure compatibility
       const payload = { 
-        protocol: value,
-        preferredProtocol: value
+        preferredProtocol: value 
       };
       
       console.log("Sending protocol update request:", payload);
       
-      // Send update to server - use dedicated API endpoint
-      const response = await apiRequest('POST', '/api/protocol', payload);
+      // Send update to server - use /api/settings endpoint directly
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        credentials: 'include'
+      });
       
       if (!response.ok) {
         // Check if it's a feature access error
@@ -195,7 +201,7 @@ export default function SecuritySettingsCard() {
       // Show success toast
       toast({
         title: 'Protocol Updated',
-        description: result.message || `Protocol updated to ${value.replace('_', ' ').toUpperCase()}`,
+        description: `Protocol updated to ${value.replace('_', ' ').toUpperCase()}`,
         variant: 'default',
       });
       
@@ -211,7 +217,7 @@ export default function SecuritySettingsCard() {
     }
   };
 
-  // Handle encryption change
+  // Handle encryption change - simpler implementation with direct DOM access
   const handleEncryptionChange = async (value: string) => {
     console.log("Encryption selection changed to:", value);
     
@@ -229,16 +235,22 @@ export default function SecuritySettingsCard() {
       // Show loading state
       setEncryption(value);
       
-      // Create a payload for the server with both parameter forms to ensure compatibility
+      // Use a simplified payload with just one name to avoid confusion
       const payload = { 
-        encryption: value,
-        preferredEncryption: value
+        preferredEncryption: value 
       };
       
       console.log("Sending encryption update request:", payload);
       
-      // Send update to server - use dedicated API endpoint
-      const response = await apiRequest('POST', '/api/encryption', payload);
+      // Send update to server - use /api/settings endpoint directly
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        credentials: 'include'
+      });
       
       if (!response.ok) {
         // Check if it's a feature access error
@@ -268,7 +280,7 @@ export default function SecuritySettingsCard() {
       // Show success toast
       toast({
         title: 'Encryption Updated',
-        description: result.message || `Encryption updated to ${value.replace('_', '-').toUpperCase()}`,
+        description: `Encryption updated to ${value.replace('_', '-').toUpperCase()}`,
         variant: 'default',
       });
       
@@ -380,63 +392,59 @@ export default function SecuritySettingsCard() {
   return (
     <Card className="border border-gray-800 shadow-lg bg-gray-950">
       <CardHeader className="border-b border-gray-800 p-5">
-        <h3 className="font-medium">Protocol & Security</h3>
+        <div className="flex justify-between items-center">
+          <h3 className="font-medium">Protocol & Security</h3>
+          <button 
+            onClick={() => fetchSettings()} 
+            className="text-xs text-gray-400 hover:text-white"
+          >
+            Refresh Settings
+          </button>
+        </div>
       </CardHeader>
       <CardContent className="p-5 space-y-5">
         <div>
-          <label className="text-sm text-gray-400 block mb-2">VPN Protocol</label>
-          <Select value={protocol} onValueChange={handleProtocolChange} disabled={vpnState.connected}>
-            <SelectTrigger className="w-full bg-gray-800 border-gray-700">
-              <SelectValue placeholder="Select Protocol" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="openvpn_tcp">OpenVPN (TCP)</SelectItem>
-              <SelectItem value="openvpn_udp">OpenVPN (UDP)</SelectItem>
-              <SelectItem value="wireguard">WireGuard</SelectItem>
-              <SelectItem 
-                value="shadowsocks" 
-                disabled={!shadowsocksAccess?.hasAccess}
-                className="relative"
-              >
-                <div className="flex items-center">
-                  Shadowsocks
-                  {!shadowsocksAccess?.hasAccess && (
-                    <span className="ml-2 px-1.5 py-0.5 text-xs font-semibold bg-gradient-to-r from-amber-500 to-yellow-500 text-black rounded">
-                      Premium
-                    </span>
-                  )}
-                </div>
-              </SelectItem>
-              <SelectItem value="ikev2">IKEv2/IPSec</SelectItem>
-            </SelectContent>
-          </Select>
+          <label className="text-sm text-gray-400 block mb-2">
+            VPN Protocol (Current: {protocol || 'None'})
+          </label>
+          <select 
+            className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white"
+            value={protocol} 
+            onChange={(e) => handleProtocolChange(e.target.value)}
+            disabled={vpnState.connected}
+          >
+            <option value="openvpn_tcp">OpenVPN (TCP)</option>
+            <option value="openvpn_udp">OpenVPN (UDP)</option>
+            <option value="wireguard">WireGuard</option>
+            <option 
+              value="shadowsocks" 
+              disabled={!shadowsocksAccess?.hasAccess}
+            >
+              Shadowsocks {!shadowsocksAccess?.hasAccess ? '(Premium)' : ''}
+            </option>
+            <option value="ikev2">IKEv2/IPSec</option>
+          </select>
         </div>
         
         <div>
-          <label className="text-sm text-gray-400 block mb-2">Encryption Level</label>
-          <Select value={encryption} onValueChange={handleEncryptionChange} disabled={vpnState.connected}>
-            <SelectTrigger className="w-full bg-gray-800 border-gray-700">
-              <SelectValue placeholder="Select Encryption" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="aes_256_gcm">AES-256-GCM</SelectItem>
-              <SelectItem 
-                value="chacha20_poly1305"
-                disabled={!premiumEncryptionAccess?.hasAccess}
-                className="relative"
-              >
-                <div className="flex items-center">
-                  ChaCha20-Poly1305
-                  {!premiumEncryptionAccess?.hasAccess && (
-                    <span className="ml-2 px-1.5 py-0.5 text-xs font-semibold bg-gradient-to-r from-amber-500 to-yellow-500 text-black rounded">
-                      Premium
-                    </span>
-                  )}
-                </div>
-              </SelectItem>
-              <SelectItem value="aes_128_gcm">AES-128-GCM</SelectItem>
-            </SelectContent>
-          </Select>
+          <label className="text-sm text-gray-400 block mb-2">
+            Encryption Level (Current: {encryption || 'None'})
+          </label>
+          <select 
+            className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white"
+            value={encryption} 
+            onChange={(e) => handleEncryptionChange(e.target.value)}
+            disabled={vpnState.connected}
+          >
+            <option value="aes_256_gcm">AES-256-GCM</option>
+            <option 
+              value="chacha20_poly1305"
+              disabled={!premiumEncryptionAccess?.hasAccess}
+            >
+              ChaCha20-Poly1305 {!premiumEncryptionAccess?.hasAccess ? '(Premium)' : ''}
+            </option>
+            <option value="aes_128_gcm">AES-128-GCM</option>
+          </select>
         </div>
         
         <div>
