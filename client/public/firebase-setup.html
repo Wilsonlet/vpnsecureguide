@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Setup Guide</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      color: #0055ff;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #0066cc;
+      margin-top: 30px;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .alert {
+      background-color: #fff3cd;
+      color: #856404;
+      padding: 15px;
+      border-radius: 4px;
+      border-left: 4px solid #ffc107;
+      margin-bottom: 20px;
+    }
+    ol {
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+    .field {
+      display: flex;
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      font-family: monospace;
+      word-break: break-all;
+    }
+    .button {
+      display: inline-block;
+      background-color: #0066cc;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 4px;
+      text-decoration: none;
+      margin-right: 10px;
+      margin-top: 20px;
+    }
+    .button:hover {
+      background-color: #0055aa;
+    }
+    .button.outline {
+      background-color: transparent;
+      color: #0066cc;
+      border: 1px solid #0066cc;
+    }
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Firebase Authentication Setup Guide</h1>
+  
+  <div class="alert">
+    <strong>Configuration Issue Detected</strong><br>
+    Your application is having trouble authenticating with Firebase. Follow the steps below to resolve this issue.
+  </div>
+  
+  <div class="card">
+    <h2>Step 1: Add Your Replit Domain to Firebase</h2>
+    <p>For Firebase authentication to work, you need to add your application's domain to the authorized domains list in the Firebase console.</p>
+    
+    <div>
+      <p><strong>Your current domain:</strong></p>
+      <div class="field" id="current-domain">Loading...</div>
+    </div>
+    
+    <ol>
+      <li>Go to the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer">Firebase Console</a></li>
+      <li>Select your project</li>
+      <li>In the left sidebar, click on "Authentication"</li>
+      <li>Go to the "Settings" tab</li>
+      <li>Scroll down to "Authorized domains"</li>
+      <li>Click "Add domain" and paste your Replit domain</li>
+      <li>Click "Add"</li>
+    </ol>
+  </div>
+  
+  <div class="card">
+    <h2>Step 2: Verify Google Authentication is Enabled</h2>
+    <p>Make sure Google Sign-in method is enabled in your Firebase project.</p>
+    
+    <ol>
+      <li>In the Firebase Console, go to "Authentication"</li>
+      <li>Click on the "Sign-in method" tab</li>
+      <li>Find "Google" in the list of providers</li>
+      <li>Make sure it's enabled (toggle switch is on)</li>
+      <li>If it's disabled, click on it and enable it</li>
+      <li>Save your changes</li>
+    </ol>
+  </div>
+  
+  <div class="card">
+    <h2>Step 3: After Configuring Firebase</h2>
+    <p>Once you've completed the steps above, reload your application to verify authentication is working.</p>
+    <p>After making changes in the Firebase console, it may take a few minutes for the changes to propagate.
+       If authentication still doesn't work after 5 minutes, double-check the steps above and ensure
+       all configurations are correct.</p>
+       
+    <a href="/" class="button outline">Return to Home</a>
+    <a href="/auth" class="button">Try Authentication</a>
+  </div>
+  
+  <div class="footer">
+    <p>SecureVPN &copy; 2023 - All rights reserved</p>
+  </div>
+
+  <script>
+    // Display the current domain
+    document.getElementById('current-domain').textContent = window.location.hostname;
+    
+    // Function to copy domain to clipboard
+    function copyDomain() {
+      const domain = window.location.hostname;
+      navigator.clipboard.writeText(domain).then(() => {
+        alert('Domain copied to clipboard!');
+      }).catch(err => {
+        console.error('Failed to copy domain: ', err);
+      });
+    }
+  </script>
+</body>
+</html>
