@@ -45,52 +45,64 @@ export default function SecuritySettingsCard() {
     initialData: { hasAccess: false }
   });
   
-  // Load user settings on component mount
-  useEffect(() => {
-    const fetchUserSettings = async () => {
-      try {
-        const res = await fetch('/api/settings');
-        
-        if (res.ok) {
-          const settings = await res.json();
-          // Update local state with fetched settings
-          if (settings.preferredProtocol) {
-            setProtocol(settings.preferredProtocol);
-            // Also update the VPN state context
-            vpnState.updateSettings({
-              protocol: settings.preferredProtocol
-            });
-          }
-          
-          if (settings.preferredEncryption) {
-            setEncryption(settings.preferredEncryption);
-            // Also update the VPN state context
-            vpnState.updateSettings({
-              encryption: settings.preferredEncryption
-            });
-          }
+  // Define a settings fetching function that can be used both on mount and after updates
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/settings');
+      
+      if (res.ok) {
+        const settings = await res.json();
+        // Update local state with fetched settings
+        if (settings.preferredProtocol) {
+          setProtocol(settings.preferredProtocol);
+          // Also update the VPN state context
+          vpnState.updateSettings({
+            protocol: settings.preferredProtocol
+          });
         }
-      } catch (error) {
-        console.error('Failed to load user settings:', error);
+        
+        if (settings.preferredEncryption) {
+          setEncryption(settings.preferredEncryption);
+          // Also update the VPN state context
+          vpnState.updateSettings({
+            encryption: settings.preferredEncryption
+          });
+        }
+        
+        // Update other settings
+        setKillSwitch(settings.killSwitch);
+        setDnsLeakProtection(settings.dnsLeakProtection);
+        setDoubleVpn(settings.doubleVpn);
+        setObfuscation(settings.obfuscation);
+        
+        // Also update the VPN state context with all settings
+        vpnState.updateSettings({
+          killSwitch: settings.killSwitch,
+          dnsLeakProtection: settings.dnsLeakProtection,
+          doubleVpn: settings.doubleVpn,
+          obfuscation: settings.obfuscation
+        });
+        
+        console.log('Settings refreshed from server:', settings);
       }
-    };
-    
-    fetchUserSettings();
-  }, []);
-  
-  // Create a function to explicitly fetch settings that can be called from handlers
-  const fetchSettings = () => {
-    fetchUserSettings();
+    } catch (error) {
+      console.error('Failed to refresh user settings:', error);
+    }
   };
+  
+  // Fetch settings on component mount
+  useEffect(() => {
+    fetchSettings();
+  }, []);
   
   // Update local state when vpnState changes
   useEffect(() => {
-    setProtocol(vpnState.protocol);
-    setEncryption(vpnState.encryption);
-    setKillSwitch(vpnState.killSwitch);
-    setDnsLeakProtection(vpnState.dnsLeakProtection);
-    setDoubleVpn(vpnState.doubleVpn);
-    setObfuscation(vpnState.obfuscation);
+    setProtocol(vpnState.protocol || 'openvpn_tcp');
+    setEncryption(vpnState.encryption || 'aes_256_gcm');
+    setKillSwitch(vpnState.killSwitch || false);
+    setDnsLeakProtection(vpnState.dnsLeakProtection || false);
+    setDoubleVpn(vpnState.doubleVpn || false);
+    setObfuscation(vpnState.obfuscation || false);
   }, [
     vpnState.protocol,
     vpnState.encryption,
@@ -254,43 +266,67 @@ export default function SecuritySettingsCard() {
   // Update settings on the server and in local state
   const updateSettings = async (settings: any) => {
     try {
-      // Handle protocol and encryption separately
+      // Handle protocol using dedicated endpoint
       if (settings.preferredProtocol) {
-        vpnState.updateSettings({
-          protocol: settings.preferredProtocol
-        });
-      }
-      
-      if (settings.preferredEncryption) {
-        vpnState.updateSettings({
-          encryption: settings.preferredEncryption
-        });
-      }
-      
-      // Send the request to save on the server
-      const res = await apiRequest('POST', '/api/settings', {
-        ...settings
-      });
-      
-      if (res.ok) {
-        // Update other settings in local VPN state
-        vpnState.updateSettings({
-          killSwitch: settings.killSwitch !== undefined ? settings.killSwitch : vpnState.killSwitch,
-          dnsLeakProtection: settings.dnsLeakProtection !== undefined ? settings.dnsLeakProtection : vpnState.dnsLeakProtection,
-          doubleVpn: settings.doubleVpn !== undefined ? settings.doubleVpn : vpnState.doubleVpn,
-          obfuscation: settings.obfuscation !== undefined ? settings.obfuscation : vpnState.obfuscation
-        });
-        
-        // Show success toast for better feedback
-        if (settings.preferredProtocol || settings.preferredEncryption) {
-          toast({
-            title: 'Settings Updated',
-            description: 'Your security settings have been updated',
-            variant: 'default'
+        // Use the protocol endpoint
+        try {
+          const protocolRes = await apiRequest('POST', '/api/protocol', { 
+            protocol: settings.preferredProtocol 
           });
+          
+          if (protocolRes.ok) {
+            vpnState.updateSettings({
+              protocol: settings.preferredProtocol
+            });
+          }
+        } catch (protocolErr) {
+          console.error('Error updating protocol:', protocolErr);
+        }
+      }
+      
+      // Handle encryption using dedicated endpoint
+      if (settings.preferredEncryption) {
+        try {
+          const encryptionRes = await apiRequest('POST', '/api/encryption', { 
+            encryption: settings.preferredEncryption 
+          });
+          
+          if (encryptionRes.ok) {
+            vpnState.updateSettings({
+              encryption: settings.preferredEncryption
+            });
+          }
+        } catch (encryptionErr) {
+          console.error('Error updating encryption:', encryptionErr);
+        }
+      }
+      
+      // For other settings, use the general settings endpoint
+      const otherSettings = { ...settings };
+      delete otherSettings.preferredProtocol;
+      delete otherSettings.preferredEncryption;
+      
+      if (Object.keys(otherSettings).length > 0) {
+        // Send the request to save other settings on the server
+        const res = await apiRequest('POST', '/api/settings', otherSettings);
+        
+        if (res.ok) {
+          // Update other settings in local VPN state
+          vpnState.updateSettings({
+            killSwitch: settings.killSwitch !== undefined ? settings.killSwitch : vpnState.killSwitch,
+            dnsLeakProtection: settings.dnsLeakProtection !== undefined ? settings.dnsLeakProtection : vpnState.dnsLeakProtection,
+            doubleVpn: settings.doubleVpn !== undefined ? settings.doubleVpn : vpnState.doubleVpn,
+            obfuscation: settings.obfuscation !== undefined ? settings.obfuscation : vpnState.obfuscation
+          });
+          
+          // Force refresh settings from server to ensure everything is in sync
+          setTimeout(() => {
+            fetchSettings();
+          }, 500);
         }
       }
     } catch (error) {
+      console.error('General settings update error:', error);
       toast({
         title: 'Settings Error',
         description: 'Failed to update security settings',

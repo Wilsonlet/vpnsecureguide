@@ -264,12 +264,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Clear all caches related to this user's settings
-      for (const key of [...cache.keys()]) {
-        if (key.includes(`user:${req.user.id}`) || key.includes(`:${req.user.id}:`)) {
-          cache.delete(key);
-        }
-      }
+      // Clear specific cache for settings
+      const settingsCacheKey = `user:settings:${req.user.id}`;
+      cache.delete(settingsCacheKey);
       
       console.log(`Updated encryption for user ${req.user.id} to ${encryption}`);
       
