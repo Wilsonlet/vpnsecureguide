@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import ToggleSwitch from '@/components/common/toggle-switch';
 import { useVpnState } from '@/lib/vpn-service.tsx';
@@ -16,43 +16,70 @@ export default function SecuritySettingsCard() {
   const [obfuscation, setObfuscation] = useState(vpnState.obfuscation || false);
   const [antiCensorship, setAntiCensorship] = useState(vpnState.antiCensorship || false);
   
-  // Update local state when vpnState changes
+  // Track pending updates to prevent race conditions
+  const [pendingUpdates, setPendingUpdates] = useState<Record<string, boolean>>({});
+  
+  // Use a ref to track in-flight requests to prevent overlapping updates to the same setting
+  const activeRequests = useRef<Record<string, boolean>>({});
+  
+  // Update local state when vpnState changes, but only if we don't have a pending update
   useEffect(() => {
-    setKillSwitch(vpnState.killSwitch || false);
-    setDnsLeakProtection(vpnState.dnsLeakProtection || false);
-    setDoubleVpn(vpnState.doubleVpn || false);
-    setObfuscation(vpnState.obfuscation || false);
-    setAntiCensorship(vpnState.antiCensorship || false);
+    // Don't update local state if we have a pending update for this setting
+    if (!pendingUpdates['killSwitch']) {
+      setKillSwitch(vpnState.killSwitch || false);
+    }
+    if (!pendingUpdates['dnsLeakProtection']) {
+      setDnsLeakProtection(vpnState.dnsLeakProtection || false);
+    }
+    if (!pendingUpdates['doubleVpn']) {
+      setDoubleVpn(vpnState.doubleVpn || false);
+    }
+    if (!pendingUpdates['obfuscation']) {
+      setObfuscation(vpnState.obfuscation || false);
+    }
+    if (!pendingUpdates['antiCensorship']) {
+      setAntiCensorship(vpnState.antiCensorship || false);
+    }
   }, [
     vpnState.killSwitch,
     vpnState.dnsLeakProtection,
     vpnState.doubleVpn,
     vpnState.obfuscation,
-    vpnState.antiCensorship
+    vpnState.antiCensorship,
+    pendingUpdates
   ]);
 
   // Handle toggle changes
   const handleKillSwitchChange = async (checked: boolean) => {
+    // Prevent double-clicks and overlapping updates
+    if (activeRequests.current['killSwitch']) {
+      console.log('Ignoring killSwitch update - request already in progress');
+      return;
+    }
     setKillSwitch(checked);
     await updateSetting({ killSwitch: checked });
   };
 
   const handleDnsLeakProtectionChange = async (checked: boolean) => {
+    if (activeRequests.current['dnsLeakProtection']) return;
     setDnsLeakProtection(checked);
     await updateSetting({ dnsLeakProtection: checked });
   };
 
   const handleDoubleVpnChange = async (checked: boolean) => {
+    if (activeRequests.current['doubleVpn']) return;
     setDoubleVpn(checked);
     await updateSetting({ doubleVpn: checked });
   };
 
   const handleObfuscationChange = async (checked: boolean) => {
+    if (activeRequests.current['obfuscation']) return;
     setObfuscation(checked);
     await updateSetting({ obfuscation: checked });
   };
   
   const handleAntiCensorshipChange = async (checked: boolean) => {
+    if (activeRequests.current['antiCensorship']) return;
     console.log('Changing antiCensorship to:', checked);
     setAntiCensorship(checked);
     await updateSetting({ antiCensorship: checked });
@@ -60,24 +87,44 @@ export default function SecuritySettingsCard() {
 
   // Update a single setting on the server
   const updateSetting = async (setting: any) => {
+    // Extract the setting name and value
+    const settingName = Object.keys(setting)[0];
+    const settingValue = setting[settingName];
+    
+    // Mark this setting as having an active request
+    activeRequests.current[settingName] = true;
+    
+    // Mark as pending update to prevent UI changes
+    setPendingUpdates(prev => ({
+      ...prev,
+      [settingName]: true
+    }));
+    
     try {
-      // Log which setting is being updated and its value
-      const settingName = Object.keys(setting)[0];
-      const settingValue = setting[settingName];
       console.log(`SecuritySettings: Updating ${settingName} to ${settingValue}`);
       
       // Update VPN state immediately for responsive UI
       vpnState.updateSettings(setting);
       
-      // Send update to server
+      // Add a small delay to ensure the UI updates before making the API call
+      // This improves the perceived performance and prevents UI jank
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Send update to server with a timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      
       const response = await fetch('/api/settings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(setting),
-        credentials: 'include'
+        credentials: 'include',
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       if (response.ok) {
         // Get response data
@@ -85,7 +132,6 @@ export default function SecuritySettingsCard() {
         console.log('SecuritySettings: Server response for setting update:', data);
         
         // Update global VPN state with server response data to ensure sync
-        // This overwrites our initial optimistic update with the real server values
         vpnState.updateSettings({
           killSwitch: data.killSwitch,
           dnsLeakProtection: data.dnsLeakProtection, 
@@ -115,6 +161,8 @@ export default function SecuritySettingsCard() {
       }
     } catch (error) {
       console.error('SecuritySettings: Update error:', error);
+      
+      // Show toast error
       toast({
         title: 'Update Error',
         description: 'Failed to update security setting. Please try again.',
@@ -128,7 +176,7 @@ export default function SecuritySettingsCard() {
       if ('obfuscation' in setting) setObfuscation(!setting.obfuscation);
       if ('antiCensorship' in setting) setAntiCensorship(!setting.antiCensorship);
       
-      // Also revert the VPN state to match what's in local state
+      // Also revert the VPN state to match what's in server state
       vpnState.updateSettings({
         killSwitch: vpnState.killSwitch, 
         dnsLeakProtection: vpnState.dnsLeakProtection,
@@ -138,9 +186,16 @@ export default function SecuritySettingsCard() {
       });
       
       // Refresh the entire settings from server to ensure we're completely in sync
-      fetch('/api/settings', { credentials: 'include' })
-        .then(res => res.json())
-        .then(data => {
+      try {
+        const refreshResponse = await fetch('/api/settings', { 
+          credentials: 'include',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        if (refreshResponse.ok) {
+          const data = await refreshResponse.json();
           vpnState.updateSettings(data);
           setKillSwitch(data.killSwitch);
           setDnsLeakProtection(data.dnsLeakProtection);
@@ -148,8 +203,22 @@ export default function SecuritySettingsCard() {
           setObfuscation(data.obfuscation);
           setAntiCensorship(data.antiCensorship);
           console.log('SecuritySettings: Refreshed all settings from server after error');
-        })
-        .catch(err => console.error('Failed to refresh settings after error:', err));
+        }
+      } catch (refreshError) {
+        console.error('Failed to refresh settings after error:', refreshError);
+      }
+    } finally {
+      // Clean up: mark this setting as no longer having an active request
+      activeRequests.current[settingName] = false;
+      
+      // Remove from pending updates after a short delay
+      // This delay prevents visual "flicker" on fast networks
+      setTimeout(() => {
+        setPendingUpdates(prev => ({
+          ...prev,
+          [settingName]: false
+        }));
+      }, 300);
     }
   };
 
@@ -169,7 +238,11 @@ export default function SecuritySettingsCard() {
               <h4 className="font-medium">Kill Switch</h4>
               <p className="text-sm text-gray-400 mt-1">Block internet if VPN disconnects</p>
             </div>
-            <ToggleSwitch checked={killSwitch} onChange={handleKillSwitchChange} />
+            <ToggleSwitch 
+              checked={killSwitch} 
+              onChange={handleKillSwitchChange}
+              disabled={pendingUpdates['killSwitch'] || activeRequests.current['killSwitch']} 
+            />
           </div>
           
           <div className="flex items-center justify-between mb-4">
@@ -177,7 +250,11 @@ export default function SecuritySettingsCard() {
               <h4 className="font-medium">DNS Leak Protection</h4>
               <p className="text-sm text-gray-400 mt-1">Use secure DNS servers only</p>
             </div>
-            <ToggleSwitch checked={dnsLeakProtection} onChange={handleDnsLeakProtectionChange} />
+            <ToggleSwitch 
+              checked={dnsLeakProtection} 
+              onChange={handleDnsLeakProtectionChange}
+              disabled={pendingUpdates['dnsLeakProtection'] || activeRequests.current['dnsLeakProtection']} 
+            />
           </div>
           
           <div className="flex items-center justify-between mb-4">
@@ -185,7 +262,11 @@ export default function SecuritySettingsCard() {
               <h4 className="font-medium">Double VPN</h4>
               <p className="text-sm text-gray-400 mt-1">Route through two servers</p>
             </div>
-            <ToggleSwitch checked={doubleVpn} onChange={handleDoubleVpnChange} disabled={vpnState.connected} />
+            <ToggleSwitch 
+              checked={doubleVpn} 
+              onChange={handleDoubleVpnChange} 
+              disabled={vpnState.connected || pendingUpdates['doubleVpn'] || activeRequests.current['doubleVpn']} 
+            />
           </div>
           
           <div className="flex items-center justify-between mb-4">
@@ -193,7 +274,11 @@ export default function SecuritySettingsCard() {
               <h4 className="font-medium">Obfuscation</h4>
               <p className="text-sm text-gray-400 mt-1">Hide VPN traffic pattern</p>
             </div>
-            <ToggleSwitch checked={obfuscation} onChange={handleObfuscationChange} disabled={vpnState.connected} />
+            <ToggleSwitch 
+              checked={obfuscation} 
+              onChange={handleObfuscationChange} 
+              disabled={vpnState.connected || pendingUpdates['obfuscation'] || activeRequests.current['obfuscation']} 
+            />
           </div>
           
           <div className="flex items-center justify-between">

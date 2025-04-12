@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 type ToggleSwitchProps = {
@@ -12,20 +12,48 @@ export default function ToggleSwitch({ checked, onChange, disabled = false, clas
   // Use internal state to ensure smooth transitions and prevent flickering
   const [internalState, setInternalState] = useState(checked);
   
-  // Sync internal state with external checked prop
+  // Use refs to track pending updates and debounce time
+  const isPendingRef = useRef(false);
+  const lastToggleTimeRef = useRef(0);
+  const debounceTimeMs = 1000; // 1 second debounce to prevent rapid toggling
+  
+  // Sync internal state with external checked prop, but only if we don't have a pending update
   useEffect(() => {
-    setInternalState(checked);
+    if (!isPendingRef.current) {
+      setInternalState(checked);
+    }
   }, [checked]);
   
-  // Handler for the change event
+  // Handler for the change event with debouncing
   const handleChange = (newState: boolean) => {
-    if (disabled) return;
+    // Don't handle change if disabled or if there's a pending update
+    if (disabled || isPendingRef.current) return;
+    
+    const now = Date.now();
+    const timeSinceLastToggle = now - lastToggleTimeRef.current;
+    
+    // Enforce debounce period to prevent rapid toggling
+    if (timeSinceLastToggle < debounceTimeMs) {
+      console.log(`Toggle action ignored - too soon since last toggle (${timeSinceLastToggle}ms)`);
+      return;
+    }
+    
+    // Mark as pending update
+    isPendingRef.current = true;
     
     // Update internal state immediately for visual feedback
     setInternalState(newState);
     
+    // Update last toggle time
+    lastToggleTimeRef.current = now;
+    
     // Call the parent's onChange handler
     onChange(newState);
+    
+    // Reset pending state after a short delay to allow the API call to complete
+    setTimeout(() => {
+      isPendingRef.current = false;
+    }, debounceTimeMs);
   };
   
   return (
