@@ -96,7 +96,7 @@ export default function SecuritySettingsCard() {
   ]);
 
   // Handle protocol change
-  const handleProtocolChange = (value: string) => {
+  const handleProtocolChange = async (value: string) => {
     // Check if user is trying to select Shadowsocks without premium access
     if (value === 'shadowsocks' && !shadowsocksAccess?.hasAccess) {
       toast({
@@ -107,8 +107,49 @@ export default function SecuritySettingsCard() {
       return; // Don't allow the change
     }
     
-    setProtocol(value);
-    updateSettings({ preferredProtocol: value });
+    try {
+      // Show loading state
+      setProtocol(value);
+      
+      // Try to update the setting
+      const response = await apiRequest('POST', '/api/settings', { 
+        preferredProtocol: value 
+      });
+      
+      if (!response.ok) {
+        // Check if it's a feature access error
+        if (response.status === 403) {
+          const data = await response.json();
+          toast({
+            title: 'Premium Feature Required',
+            description: 'This protocol requires a premium subscription plan',
+            variant: 'destructive',
+          });
+          // Revert to previous value
+          setProtocol(vpnState.protocol);
+          return;
+        }
+        
+        throw new Error('Failed to update protocol setting');
+      }
+      
+      // Update local state and show success toast
+      vpnState.updateSettings({ protocol: value });
+      toast({
+        title: 'Protocol Updated',
+        description: `Your VPN protocol has been set to ${value.replace('_', ' ').toUpperCase()}`,
+        variant: 'default',
+      });
+    } catch (error) {
+      console.error('Error updating protocol:', error);
+      // Revert to previous value
+      setProtocol(vpnState.protocol);
+      toast({
+        title: 'Update Failed',
+        description: 'Failed to update protocol setting',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Handle encryption change
