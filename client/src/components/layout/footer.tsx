@@ -119,28 +119,28 @@ export function Footer({ className = '' }: FooterProps) {
             <h3 className="font-medium mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors">Dashboard</a>
+                <Link href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Dashboard
                 </Link>
               </li>
               <li>
-                <Link href="/settings">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors">Settings</a>
+                <Link href="/settings" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Settings
                 </Link>
               </li>
               <li>
-                <Link href="/servers">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors">Servers</a>
+                <Link href="/servers" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Servers
                 </Link>
               </li>
               <li>
-                <Link href="/subscription">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors">Subscription</a>
+                <Link href="/subscription" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Subscription
                 </Link>
               </li>
               <li>
-                <Link href="/support">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors">Support</a>
+                <Link href="/support" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Support
                 </Link>
               </li>
             </ul>
@@ -198,8 +198,8 @@ export function Footer({ className = '' }: FooterProps) {
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Need help with your VPN connection?</p>
               <Button variant="outline" className="w-full">
-                <Link href="/support">
-                  <a className="w-full">Contact Support</a>
+                <Link href="/support" className="w-full">
+                  Contact Support
                 </Link>
               </Button>
             </div>
