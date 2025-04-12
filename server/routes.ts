@@ -162,7 +162,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
       
-      const { protocol } = req.body;
+      // Allow for both client-side and server-side property names
+      const protocol = req.body.protocol || req.body.preferredProtocol;
+      console.log("Protocol update request:", req.body, "Using protocol value:", protocol);
+      
       if (!protocol) {
         return res.status(400).json({ message: "Protocol is required" });
       }
@@ -224,7 +227,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
       
-      const { encryption } = req.body;
+      // Allow for both client-side and server-side property names
+      const encryption = req.body.encryption || req.body.preferredEncryption;
+      console.log("Encryption update request:", req.body, "Using encryption value:", encryption);
+      
       if (!encryption) {
         return res.status(400).json({ message: "Encryption is required" });
       }

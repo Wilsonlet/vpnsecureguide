@@ -140,6 +140,8 @@ export default function SecuritySettingsCard() {
 
   // Handle protocol change
   const handleProtocolChange = async (value: string) => {
+    console.log("Protocol selection changed to:", value);
+    
     // Check if user is trying to select Shadowsocks without premium access
     if (value === 'shadowsocks' && !shadowsocksAccess?.hasAccess) {
       toast({
@@ -154,11 +156,16 @@ export default function SecuritySettingsCard() {
       // Show loading state and temporarily set UI state
       setProtocol(value);
       
-      // Use dedicated protocol-specific API endpoint
-      // Server API expects 'protocol' as the parameter name
-      const response = await apiRequest('POST', '/api/protocol', { 
-        protocol: value
-      });
+      // Create a payload for the server with both parameter forms to ensure compatibility
+      const payload = { 
+        protocol: value,
+        preferredProtocol: value
+      };
+      
+      console.log("Sending protocol update request:", payload);
+      
+      // Send update to server - use dedicated API endpoint
+      const response = await apiRequest('POST', '/api/protocol', payload);
       
       if (!response.ok) {
         // Check if it's a feature access error
@@ -178,6 +185,7 @@ export default function SecuritySettingsCard() {
       
       // Get the response data
       const result = await response.json();
+      console.log("Protocol update success:", result);
       
       // Update local state permanently with the protocol value
       vpnState.updateSettings({ 
@@ -190,7 +198,6 @@ export default function SecuritySettingsCard() {
         description: result.message || `Protocol updated to ${value.replace('_', ' ').toUpperCase()}`,
         variant: 'default',
       });
-      
       
     } catch (error) {
       console.error('Error updating protocol:', error);
@@ -206,6 +213,8 @@ export default function SecuritySettingsCard() {
 
   // Handle encryption change
   const handleEncryptionChange = async (value: string) => {
+    console.log("Encryption selection changed to:", value);
+    
     // Check if user is trying to select premium encryption without access
     if (value === 'chacha20_poly1305' && !premiumEncryptionAccess?.hasAccess) {
       toast({
@@ -220,11 +229,16 @@ export default function SecuritySettingsCard() {
       // Show loading state
       setEncryption(value);
       
-      // Use dedicated encryption-specific API endpoint
-      // Server API expects 'encryption' as the parameter name
-      const response = await apiRequest('POST', '/api/encryption', { 
-        encryption: value
-      });
+      // Create a payload for the server with both parameter forms to ensure compatibility
+      const payload = { 
+        encryption: value,
+        preferredEncryption: value
+      };
+      
+      console.log("Sending encryption update request:", payload);
+      
+      // Send update to server - use dedicated API endpoint
+      const response = await apiRequest('POST', '/api/encryption', payload);
       
       if (!response.ok) {
         // Check if it's a feature access error
@@ -244,6 +258,7 @@ export default function SecuritySettingsCard() {
       
       // Get the response data
       const result = await response.json();
+      console.log("Encryption update success:", result);
       
       // Update local state permanently with the encryption value
       vpnState.updateSettings({ 
@@ -256,7 +271,6 @@ export default function SecuritySettingsCard() {
         description: result.message || `Encryption updated to ${value.replace('_', '-').toUpperCase()}`,
         variant: 'default',
       });
-      
       
     } catch (error) {
       console.error('Error updating encryption:', error);
@@ -294,12 +308,15 @@ export default function SecuritySettingsCard() {
   // Update settings on the server and in local state
   const updateSettings = async (settings: any) => {
     try {
+      console.log("Updating settings:", settings);
+      
       // Handle protocol - convert from client property name to server property name
       if (settings.protocol) {
         // Use the protocol endpoint
         try {
           const protocolRes = await apiRequest('POST', '/api/protocol', { 
-            protocol: settings.protocol
+            protocol: settings.protocol,
+            preferredProtocol: settings.protocol // Send both for compatibility
           });
           
           if (protocolRes.ok) {
@@ -316,7 +333,8 @@ export default function SecuritySettingsCard() {
       if (settings.encryption) {
         try {
           const encryptionRes = await apiRequest('POST', '/api/encryption', { 
-            encryption: settings.encryption
+            encryption: settings.encryption,
+            preferredEncryption: settings.encryption // Send both for compatibility
           });
           
           if (encryptionRes.ok) {
