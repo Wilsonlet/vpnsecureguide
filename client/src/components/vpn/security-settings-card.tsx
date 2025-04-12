@@ -61,7 +61,15 @@ export default function SecuritySettingsCard() {
   // Update a single setting on the server
   const updateSetting = async (setting: any) => {
     try {
-      console.log('Sending setting update:', setting);
+      // Log which setting is being updated and its value
+      const settingName = Object.keys(setting)[0];
+      const settingValue = setting[settingName];
+      console.log(`SecuritySettings: Updating ${settingName} to ${settingValue}`);
+      
+      // Update VPN state immediately for responsive UI
+      vpnState.updateSettings(setting);
+      
+      // Send update to server
       const response = await fetch('/api/settings', {
         method: 'POST',
         headers: {
@@ -74,36 +82,74 @@ export default function SecuritySettingsCard() {
       if (response.ok) {
         // Get response data
         const data = await response.json();
-        console.log('Setting updated successfully, response:', data);
+        console.log('SecuritySettings: Server response for setting update:', data);
         
-        // Update global VPN state with server response data instead of request data
-        // This ensures we're using the values actually saved by the server
-        vpnState.updateSettings(data);
+        // Update global VPN state with server response data to ensure sync
+        // This overwrites our initial optimistic update with the real server values
+        vpnState.updateSettings({
+          killSwitch: data.killSwitch,
+          dnsLeakProtection: data.dnsLeakProtection, 
+          doubleVpn: data.doubleVpn,
+          obfuscation: data.obfuscation,
+          antiCensorship: data.antiCensorship
+        });
+        
+        // Also update local state to match server response
+        if ('killSwitch' in data) setKillSwitch(data.killSwitch);
+        if ('dnsLeakProtection' in data) setDnsLeakProtection(data.dnsLeakProtection);
+        if ('doubleVpn' in data) setDoubleVpn(data.doubleVpn);
+        if ('obfuscation' in data) setObfuscation(data.obfuscation);
+        if ('antiCensorship' in data) setAntiCensorship(data.antiCensorship);
+        
+        console.log(`SecuritySettings: Successfully updated ${settingName} to ${data[settingName]}`);
         
         toast({
           title: 'Setting Updated',
-          description: 'Your security setting has been updated',
+          description: `${settingName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} has been updated`,
           variant: 'default',
         });
       } else {
         const errorText = await response.text();
-        console.error('Failed to update setting:', errorText);
-        throw new Error(`Failed to update setting: ${errorText}`);
+        console.error(`SecuritySettings: Failed to update ${settingName}:`, errorText);
+        throw new Error(`Failed to update ${settingName}: ${errorText}`);
       }
     } catch (error) {
-      console.error('Setting update error:', error);
+      console.error('SecuritySettings: Update error:', error);
       toast({
         title: 'Update Error',
-        description: 'Failed to update security setting',
+        description: 'Failed to update security setting. Please try again.',
         variant: 'destructive'
       });
       
-      // Revert UI state on error
+      // Revert local state on error
       if ('killSwitch' in setting) setKillSwitch(!setting.killSwitch);
       if ('dnsLeakProtection' in setting) setDnsLeakProtection(!setting.dnsLeakProtection);
       if ('doubleVpn' in setting) setDoubleVpn(!setting.doubleVpn);
       if ('obfuscation' in setting) setObfuscation(!setting.obfuscation);
       if ('antiCensorship' in setting) setAntiCensorship(!setting.antiCensorship);
+      
+      // Also revert the VPN state to match what's in local state
+      vpnState.updateSettings({
+        killSwitch: vpnState.killSwitch, 
+        dnsLeakProtection: vpnState.dnsLeakProtection,
+        doubleVpn: vpnState.doubleVpn, 
+        obfuscation: vpnState.obfuscation, 
+        antiCensorship: vpnState.antiCensorship
+      });
+      
+      // Refresh the entire settings from server to ensure we're completely in sync
+      fetch('/api/settings', { credentials: 'include' })
+        .then(res => res.json())
+        .then(data => {
+          vpnState.updateSettings(data);
+          setKillSwitch(data.killSwitch);
+          setDnsLeakProtection(data.dnsLeakProtection);
+          setDoubleVpn(data.doubleVpn);
+          setObfuscation(data.obfuscation);
+          setAntiCensorship(data.antiCensorship);
+          console.log('SecuritySettings: Refreshed all settings from server after error');
+        })
+        .catch(err => console.error('Failed to refresh settings after error:', err));
     }
   };
 

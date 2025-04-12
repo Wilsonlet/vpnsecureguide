@@ -535,10 +535,65 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
   };
 
   const updateSettings = (settings: Partial<VpnConnectionState>) => {
-    setState(currentState => ({
-      ...currentState,
-      ...settings,
-    }));
+    console.log('VpnService: Updating settings with:', settings);
+    
+    // Special handling for protocol and encryption to ensure they are explicitly updated
+    if (settings.protocol !== undefined || settings.encryption !== undefined) {
+      console.log('VpnService: Protocol/Encryption update detected');
+      
+      // Sync protocol and encryption with server if we're updating them
+      if (settings.protocol) {
+        // Immediately try to persist protocol to server
+        fetch('/api/protocol', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ protocol: settings.protocol }),
+          credentials: 'include'
+        }).then(res => {
+          if (!res.ok) console.error('Failed to sync protocol with server');
+          return res.json();
+        }).then(data => {
+          console.log('Protocol synced with server:', data);
+        }).catch(err => {
+          console.error('Error syncing protocol with server:', err);
+        });
+      }
+      
+      if (settings.encryption) {
+        // Immediately try to persist encryption to server
+        fetch('/api/encryption', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ encryption: settings.encryption }),
+          credentials: 'include'
+        }).then(res => {
+          if (!res.ok) console.error('Failed to sync encryption with server');
+          return res.json();
+        }).then(data => {
+          console.log('Encryption synced with server:', data);
+        }).catch(err => {
+          console.error('Error syncing encryption with server:', err);
+        });
+      }
+    }
+    
+    setState(currentState => {
+      const updatedState = {
+        ...currentState,
+        ...settings
+      };
+      console.log('VpnService: State updated to:', {
+        protocol: updatedState.protocol,
+        encryption: updatedState.encryption,
+        // Add other important settings for logging
+        killSwitch: updatedState.killSwitch,
+        dnsLeakProtection: updatedState.dnsLeakProtection,
+        doubleVpn: updatedState.doubleVpn,
+        obfuscation: updatedState.obfuscation,
+        antiCensorship: updatedState.antiCensorship
+      });
+      return updatedState;
+    });
   };
 
   const selectServer = (server: VpnServer | null) => {
