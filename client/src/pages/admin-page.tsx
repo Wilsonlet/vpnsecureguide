@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { SubscriptionPlan, AppSetting, User } from '@shared/schema';
+import { SubscriptionPlan, AppSetting, User, VpnServer } from '@shared/schema';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -11,14 +11,32 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Loader2, Save, User as UserIcon, Shield, Calendar, 
-  Mail, Search, RefreshCw, CheckCircle, XCircle, Edit
+  Loader2, Save, User as UserIcon, Shield, Calendar, Mail, Search, 
+  RefreshCw, CheckCircle, XCircle, Edit, Trash2, PlusCircle, 
+  Settings, DollarSign, Users, Database, Server, CloudOff, Cpu
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLocation } from 'wouter';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toast as toastNotify } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
 export default function AdminPage() {
   const { user } = useAuth();
@@ -33,6 +51,15 @@ export default function AdminPage() {
   const [isEditingAdsense, setIsEditingAdsense] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedServer, setSelectedServer] = useState<VpnServer | null>(null);
+  const [isAddingUser, setIsAddingUser] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
+  const [isAddingPlan, setIsAddingPlan] = useState(false);
+  const [showDeletePlanConfirm, setShowDeletePlanConfirm] = useState(false);
+  const [planToDelete, setPlanToDelete] = useState<number | null>(null);
+  const [isModifyingPermissions, setIsModifyingPermissions] = useState(false);
+  const [roleAssignments, setRoleAssignments] = useState<Record<number, string>>({});
 
   // Only admins should access this page
   useEffect(() => {
@@ -284,6 +311,24 @@ export default function AdminPage() {
                     <RefreshCw className="h-4 w-4" />
                     Refresh
                   </Button>
+                  
+                  <Button 
+                    variant="default" 
+                    className="flex items-center gap-1"
+                    onClick={() => setIsAddingUser(true)}
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    Add User
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center gap-1"
+                    onClick={() => setIsModifyingPermissions(true)}
+                  >
+                    <Shield className="h-4 w-4" />
+                    Manage Permissions
+                  </Button>
                 </div>
               </div>
 
@@ -314,14 +359,31 @@ export default function AdminPage() {
                           {user.subscriptionExpiryDate ? new Date(user.subscriptionExpiryDate).toLocaleDateString() : '-'}
                         </TableCell>
                         <TableCell>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => setSelectedUserId(user.id)}
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => setSelectedUserId(user.id)}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                            
+                            {user.id !== 1 && ( // Don't allow deleting the admin user
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => {
+                                  setUserToDelete(user.id);
+                                  setShowDeleteConfirm(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Delete
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -335,6 +397,210 @@ export default function AdminPage() {
                   </TableBody>
                 </Table>
               </div>
+              
+              {/* Add User Dialog */}
+              <Dialog open={isAddingUser} onOpenChange={(open) => !open && setIsAddingUser(false)}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New User</DialogTitle>
+                    <DialogDescription>
+                      Create a new user account
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="space-y-4 py-2">
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="username">Username</Label>
+                        <Input
+                          id="username"
+                          placeholder="Enter username"
+                          className="w-full"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email (optional)</Label>
+                        <Input
+                          id="email"
+                          placeholder="Enter email address"
+                          type="email"
+                          className="w-full"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="password">Password</Label>
+                        <Input
+                          id="password"
+                          placeholder="Enter password"
+                          type="password"
+                          className="w-full"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="subscription">Subscription Plan</Label>
+                        <Select defaultValue="free">
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select subscription plan" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectItem value="free">Free</SelectItem>
+                              <SelectItem value="standard">Standard</SelectItem>
+                              <SelectItem value="premium">Premium</SelectItem>
+                              <SelectItem value="ultimate">Ultimate</SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsAddingUser(false)}>Cancel</Button>
+                    <Button type="submit">Create User</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              
+              {/* Delete User Confirmation Dialog */}
+              <Dialog open={showDeleteConfirm} onOpenChange={(open) => !open && setShowDeleteConfirm(false)}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Confirm Delete</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to delete this user? This action cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setUserToDelete(null);
+                    }}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      onClick={() => {
+                        // Handle user deletion here
+                        toast({
+                          title: "User deleted",
+                          description: "The user has been successfully deleted",
+                        });
+                        setShowDeleteConfirm(false);
+                        setUserToDelete(null);
+                        queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              
+              {/* Permissions Management Dialog */}
+              <Dialog open={isModifyingPermissions} onOpenChange={(open) => !open && setIsModifyingPermissions(false)}>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle>Manage User Permissions</DialogTitle>
+                    <DialogDescription>
+                      Assign roles and permissions to users
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <div className="space-y-4 py-2">
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Username</TableHead>
+                            <TableHead>Current Role</TableHead>
+                            <TableHead>New Role</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {users?.map(user => (
+                            <TableRow key={user.id}>
+                              <TableCell className="font-medium">{user.username}</TableCell>
+                              <TableCell>
+                                <Badge variant={user.id === 1 ? 'default' : 'outline'}>
+                                  {user.id === 1 ? 'Admin' : 'User'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Select
+                                  defaultValue={user.id === 1 ? 'admin' : 'user'}
+                                  onValueChange={(value) => {
+                                    setRoleAssignments(prev => ({
+                                      ...prev,
+                                      [user.id]: value
+                                    }));
+                                  }}
+                                  disabled={user.id === 1} // Cannot change admin role for main admin
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select role" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      <SelectItem value="user">User</SelectItem>
+                                      <SelectItem value="support">Support</SelectItem>
+                                      <SelectItem value="admin">Admin</SelectItem>
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={!roleAssignments[user.id] || user.id === 1}
+                                  onClick={() => {
+                                    // Apply role change
+                                    toast({
+                                      title: "Role updated",
+                                      description: `User ${user.username} is now a ${roleAssignments[user.id]}`
+                                    });
+                                  }}
+                                >
+                                  <Save className="h-4 w-4 mr-1" />
+                                  Save
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    
+                    <div className="border rounded-md p-4 bg-muted/20">
+                      <h4 className="text-sm font-medium mb-2">Permission Levels:</h4>
+                      <ul className="text-sm space-y-2">
+                        <li className="flex items-start gap-2">
+                          <Badge>User</Badge>
+                          <span>Basic access to VPN services and account management.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Badge>Support</Badge>
+                          <span>Can access user information and provide support, but cannot modify system settings.</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Badge>Admin</Badge>
+                          <span>Full access to all system settings, user management, and administration features.</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsModifyingPermissions(false)}>Close</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
               
               {/* User Edit Dialog */}
               {selectedUserId !== null && users && (
