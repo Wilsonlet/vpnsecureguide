@@ -2,13 +2,13 @@ import { createContext, ReactNode, useContext, useEffect, useState } from "react
 import {
   User as FirebaseUser,
   onAuthStateChanged,
-  signInWithPopup,
+  signInWithRedirect,
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { getFirebaseAuth, getCurrentUser } from "@/lib/firebase";
+import { getFirebaseAuth, getCurrentUser, signInWithGoogle, getGoogleRedirectResult } from "@/lib/firebase";
 import { useToast } from "./use-toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -44,16 +44,40 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const signInWithGoogle = async () => {
+  // Check for redirect result on component mount
+  useEffect(() => {
+    const checkRedirectResult = async () => {
+      try {
+        const user = await getGoogleRedirectResult();
+        if (user) {
+          toast({
+            title: "Success!",
+            description: "You have successfully signed in with Google.",
+          });
+        }
+      } catch (error: any) {
+        console.error("Error processing redirect result:", error);
+        toast({
+          title: "Authentication Error",
+          description: error.message || "Failed to complete Google authentication.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkRedirectResult();
+  }, [toast]);
+
+  const handleSignInWithGoogle = async (): Promise<void> => {
     try {
       setIsLoading(true);
-      const auth = getFirebaseAuth();
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      toast({
-        title: "Success!",
-        description: "You have successfully signed in with Google.",
-      });
+      // This will redirect to Google login page
+      await signInWithGoogle();
+      // The code below won't execute immediately due to redirect
+      // Just to satisfy TypeScript, but this code won't run due to redirect
+      return;
     } catch (error: any) {
       console.error("Error signing in with Google:", error);
       toast({
@@ -61,7 +85,6 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
         description: error.message || "Failed to sign in with Google.",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -138,7 +161,7 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
       value={{
         firebaseUser,
         isLoading,
-        signInWithGoogle,
+        signInWithGoogle: handleSignInWithGoogle,
         signInWithEmail,
         signUpWithEmail,
         logout,

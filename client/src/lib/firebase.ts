@@ -1,7 +1,9 @@
 import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
-  signInWithPopup, 
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   GoogleAuthProvider, 
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -26,6 +28,7 @@ const initializeFirebase = () => {
     authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
     storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.appspot.com`,
+    messagingSenderId: "", // Not required but added for completeness
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
   };
 
@@ -48,10 +51,27 @@ const initializeFirebase = () => {
 export const signInWithGoogle = async () => {
   try {
     const { auth, googleProvider } = initializeFirebase();
-    const result = await signInWithPopup(auth, googleProvider);
-    return result.user;
+    
+    // Use redirect instead of popup to avoid popup blockers and configuration issues
+    await signInWithRedirect(auth, googleProvider);
+    
+    // Note: This function will redirect away, so the code below won't execute
+    // immediately. It will run after the user is redirected back.
+    return null;
   } catch (error: any) {
     console.error("Error signing in with Google: ", error);
+    throw error;
+  }
+};
+
+// Handle redirect result when user returns from Google auth page
+export const getGoogleRedirectResult = async () => {
+  try {
+    const { auth } = initializeFirebase();
+    const result = await getRedirectResult(auth);
+    return result?.user || null;
+  } catch (error: any) {
+    console.error("Error getting redirect result: ", error);
     throw error;
   }
 };
