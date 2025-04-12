@@ -57,6 +57,26 @@ function Router() {
   );
 }
 
+// Error boundary component to catch and display auth-related errors
+function ErrorFallback({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) {
+  return (
+    <div className="p-6 flex flex-col items-center justify-center min-h-screen">
+      <div className="bg-destructive/10 p-4 rounded-lg border border-destructive max-w-lg w-full">
+        <h2 className="text-xl font-semibold mb-2">Authentication Error</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          {error.message || 'An error occurred with the authentication system'}
+        </p>
+        <button 
+          onClick={resetErrorBoundary}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+        >
+          Try Again
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -64,15 +84,18 @@ function App() {
       <ThirdPartyErrorHandler />
       <UrlErrorHandler />
       
-      <FirebaseAuthProvider>
-        <AuthProvider>
-          <VpnStateProvider>
-            <Router />
-            <Toaster />
-            <AdSenseScript />
-          </VpnStateProvider>
-        </AuthProvider>
-      </FirebaseAuthProvider>
+      {/* We're changing the provider order to improve error isolation */}
+      <Suspense fallback={<LoadingSkeleton />}>
+        <VpnStateProvider>
+          <FirebaseAuthProvider>
+            <AuthProvider>
+              <Router />
+              <Toaster />
+              <AdSenseScript />
+            </AuthProvider>
+          </FirebaseAuthProvider>
+        </VpnStateProvider>
+      </Suspense>
     </QueryClientProvider>
   );
 }
