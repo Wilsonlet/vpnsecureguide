@@ -9,6 +9,7 @@ import UsageStatsCard from '@/components/vpn/usage-stats-card';
 import SmartModeCard from '@/components/vpn/smart-mode-card';
 import { KillSwitchCard } from '@/components/vpn/kill-switch';
 import AdBanner from '@/components/ads/AdBanner';
+import { SeoHead } from '@/components/seo';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import { VpnServer, VpnUserSettings, subscriptionTiers } from '@shared/schema';
@@ -169,6 +170,14 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      {/* SEO Head */}
+      <SeoHead 
+        title="SecureVPN Dashboard - Monitor Your VPN Connection"
+        description="Manage your secure VPN connection, view real-time statistics, and configure privacy settings in your personal dashboard."
+        keywords="VPN dashboard, connection status, VPN settings, encryption settings, server selection"
+        canonicalUrl="https://securevpn.replit.app/dashboard"
+      />
+      
       {/* Sidebar for desktop */}
       <Sidebar />
       

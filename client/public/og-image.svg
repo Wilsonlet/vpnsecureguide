@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with gradient -->
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A0F2A" />
+      <stop offset="100%" stop-color="#131F4F" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg-gradient)" />
+  
+  <!-- Grid Pattern for Cyber Feel -->
+  <g opacity="0.1">
+    <path d="M0 0 L1200 0" stroke="#4F80FF" stroke-width="1" />
+    <path d="M0 100 L1200 100" stroke="#4F80FF" stroke-width="1" />
+    <path d="M0 200 L1200 200" stroke="#4F80FF" stroke-width="1" />
+    <path d="M0 300 L1200 300" stroke="#4F80FF" stroke-width="1" />
+    <path d="M0 400 L1200 400" stroke="#4F80FF" stroke-width="1" />
+    <path d="M0 500 L1200 500" stroke="#4F80FF" stroke-width="1" />
+    <path d="M0 600 L1200 600" stroke="#4F80FF" stroke-width="1" />
+    
+    <path d="M0 0 L0 630" stroke="#4F80FF" stroke-width="1" />
+    <path d="M200 0 L200 630" stroke="#4F80FF" stroke-width="1" />
+    <path d="M400 0 L400 630" stroke="#4F80FF" stroke-width="1" />
+    <path d="M600 0 L600 630" stroke="#4F80FF" stroke-width="1" />
+    <path d="M800 0 L800 630" stroke="#4F80FF" stroke-width="1" />
+    <path d="M1000 0 L1000 630" stroke="#4F80FF" stroke-width="1" />
+    <path d="M1200 0 L1200 630" stroke="#4F80FF" stroke-width="1" />
+  </g>
+  
+  <!-- Shield Logo -->
+  <g transform="translate(280, 180)">
+    <path d="M320,60 L320,250 C320,280 300,300 260,330 C220,300 200,280 200,250 L200,60 L320,60 Z" fill="#3B82F6" />
+    <path d="M320,60 L320,250 C320,280 300,300 260,350 L260,60 L320,60 Z" fill="#2563EB" />
+    <circle cx="260" cy="170" r="60" fill="#0A0F2A" />
+    <path d="M260,130 L260,210 M230,170 L290,170" stroke="#3B82F6" stroke-width="12" stroke-linecap="round" />
+  </g>
+  
+  <!-- Text Content -->
+  <g filter="url(#glow)">
+    <text x="600" y="400" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#FFFFFF" text-anchor="middle">SecureVPN</text>
+    <text x="600" y="470" font-family="Arial, sans-serif" font-size="32" fill="#6B9FFF" text-anchor="middle">Military-Grade Encryption</text>
+    <text x="600" y="520" font-family="Arial, sans-serif" font-size="28" fill="#FFFFFF" text-anchor="middle">Global Network • Secure Browsing • Total Privacy</text>
+  </g>
+</svg>

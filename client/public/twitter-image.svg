@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="600" viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with gradient -->
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#1E293B" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="600" fill="url(#bg-gradient)" />
+  
+  <!-- World Map Background (simplified) -->
+  <g opacity="0.1">
+    <circle cx="400" cy="250" r="20" fill="#4F80FF" />
+    <circle cx="480" cy="280" r="15" fill="#4F80FF" />
+    <circle cx="600" cy="220" r="18" fill="#4F80FF" />
+    <circle cx="700" cy="260" r="22" fill="#4F80FF" />
+    <circle cx="800" cy="300" r="16" fill="#4F80FF" />
+    <circle cx="500" cy="350" r="19" fill="#4F80FF" />
+    <circle cx="650" cy="380" r="17" fill="#4F80FF" />
+    
+    <line x1="400" y1="250" x2="480" y2="280" stroke="#4F80FF" stroke-width="2" />
+    <line x1="480" y1="280" x2="600" y2="220" stroke="#4F80FF" stroke-width="2" />
+    <line x1="600" y1="220" x2="700" y2="260" stroke="#4F80FF" stroke-width="2" />
+    <line x1="700" y1="260" x2="800" y2="300" stroke="#4F80FF" stroke-width="2" />
+    <line x1="500" y1="350" x2="650" y2="380" stroke="#4F80FF" stroke-width="2" />
+    <line x1="600" y1="220" x2="500" y2="350" stroke="#4F80FF" stroke-width="2" />
+    <line x1="700" y1="260" x2="650" y2="380" stroke="#4F80FF" stroke-width="2" />
+  </g>
+  
+  <!-- Logo and Shield -->
+  <g transform="translate(250, 200)">
+    <path d="M200,20 L200,180 C200,210 180,230 140,260 C100,230 80,210 80,180 L80,20 L200,20 Z" fill="#3B82F6" />
+    <path d="M200,20 L200,180 C200,210 180,230 140,260 L140,20 L200,20 Z" fill="#2563EB" />
+    <circle cx="140" cy="140" r="40" fill="#0F172A" />
+    <path d="M140,110 L140,170 M110,140 L170,140" stroke="#3B82F6" stroke-width="10" stroke-linecap="round" />
+  </g>
+  
+  <!-- Text Content -->
+  <g filter="url(#glow)">
+    <text x="600" y="250" font-family="Arial, sans-serif" font-size="64" font-weight="bold" fill="#FFFFFF" text-anchor="middle">SecureVPN</text>
+    <text x="600" y="330" font-family="Arial, sans-serif" font-size="28" fill="#6B9FFF" text-anchor="middle">Military-Grade Protection for Your Digital Life</text>
+  </g>
+  
+  <!-- Feature Icons -->
+  <g transform="translate(380, 400)">
+    <!-- Encryption Icon -->
+    <circle cx="50" cy="50" r="40" fill="#0F172A" stroke="#3B82F6" stroke-width="3" />
+    <path d="M35,50 L65,50 M50,35 L50,65" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" />
+    <text x="50" y="110" font-family="Arial, sans-serif" font-size="16" fill="#FFFFFF" text-anchor="middle">Encryption</text>
+    
+    <!-- Global Icon -->
+    <circle cx="200" cy="50" r="40" fill="#0F172A" stroke="#3B82F6" stroke-width="3" />
+    <circle cx="200" cy="50" r="25" fill="none" stroke="#FFFFFF" stroke-width="3" />
+    <path d="M175,50 L225,50 M200,25 L200,75" stroke="#FFFFFF" stroke-width="3" />
+    <text x="200" y="110" font-family="Arial, sans-serif" font-size="16" fill="#FFFFFF" text-anchor="middle">Global Network</text>
+    
+    <!-- Security Icon -->
+    <circle cx="350" cy="50" r="40" fill="#0F172A" stroke="#3B82F6" stroke-width="3" />
+    <path d="M350,30 L375,50 L350,70 L325,50 Z" fill="none" stroke="#FFFFFF" stroke-width="3" />
+    <text x="350" y="110" font-family="Arial, sans-serif" font-size="16" fill="#FFFFFF" text-anchor="middle">Privacy</text>
+  </g>
+</svg>

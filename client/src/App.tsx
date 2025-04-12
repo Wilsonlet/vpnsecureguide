@@ -9,6 +9,7 @@ import { FirebaseAuthProvider } from "./hooks/use-firebase-auth";
 import { VpnStateProvider } from "./lib/vpn-service";
 import { AdSenseScript } from "./components/ads/adsense-script";
 import { ThirdPartyErrorHandler, UrlErrorHandler } from "./components/analytics/error-handlers";
+import { SeoHead } from "@/components/seo";
 
 // Lazy load all pages to improve initial load time
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -84,6 +85,9 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error, resetError
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Default SEO component for the entire app */}
+      <SeoHead />
+      
       {/* Error handlers - must be at the top level */}
       <ThirdPartyErrorHandler />
       <UrlErrorHandler />
