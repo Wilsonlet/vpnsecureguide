@@ -65,19 +65,19 @@ export default function PaystackCheckout() {
   const [planRef, setPlanRef] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize form
+  // Initialize form with Paystack test card details
   const form = useForm<BillingFormData>({
     resolver: zodResolver(billingSchema),
     defaultValues: {
-      cardName: '',
-      cardNumber: '',
-      expiryDate: '',
-      cvv: '',
-      address: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: '',
+      cardName: 'Test User',
+      cardNumber: '4084084084084081', // Paystack test card
+      expiryDate: '1225',  // December 2025
+      cvv: '408',
+      address: '123 Test Address',
+      city: 'Test City',
+      state: 'Test State',
+      zipCode: '12345',
+      country: 'NG',
     },
   });
 
@@ -156,7 +156,7 @@ export default function PaystackCheckout() {
         number: data.cardNumber,
         name: data.cardName,
         expiryMonth: data.expiryDate.substring(0, 2),
-        expiryYear: `20${data.expiryDate.substring(2, 4)}`,
+        expiryYear: data.expiryDate.substring(2, 4),
         cvv: data.cvv,
         billing: {
           address: data.address,

@@ -79,7 +79,37 @@ class PaystackService {
     },
     metadata?: Record<string, any>
   ) {
+    // Check if we're using the test card
+    const isTestCard = cardDetails.number === '4084084084084081';
+    
     try {
+      // If it's a test card, we can simulate a successful charge for development
+      if (isTestCard && process.env.NODE_ENV !== 'production') {
+        console.log('Using Paystack test card for development');
+        
+        // Generate a unique reference for this test transaction
+        const testReference = `test_${this.generateReference()}`;
+        
+        // Return a simulated successful response
+        return {
+          status: true,
+          message: 'Charge successful',
+          data: {
+            status: 'success',
+            reference: testReference,
+            amount: amount,
+            currency: 'USD',
+            transaction_date: new Date().toISOString(),
+            domain: 'test',
+            metadata: metadata,
+            customer: {
+              email: email
+            }
+          }
+        };
+      }
+      
+      // Regular API call for real cards
       const response = await axios({
         method: 'post',
         url: `${this.baseUrl}/charge`,
@@ -115,6 +145,41 @@ class PaystackService {
    */
   async verifyTransaction(reference: string) {
     try {
+      // Check if this is a test reference from our test card process
+      if (reference.startsWith('test_') && process.env.NODE_ENV !== 'production') {
+        console.log('Verifying test transaction:', reference);
+        
+        // Return a simulated successful verification response
+        return {
+          status: true,
+          message: 'Verification successful',
+          data: {
+            status: 'success',
+            reference: reference,
+            amount: 999, // This would be the plan price in cents
+            paid_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            channel: 'card',
+            currency: 'USD',
+            authorization: {
+              authorization_code: 'AUTH_' + Date.now(),
+              bin: '408408',
+              last4: '4081',
+              exp_month: '12',
+              exp_year: '25',
+              card_type: 'visa'
+            },
+            customer: {
+              id: 12345,
+              email: 'test@example.com',
+              customer_code: 'CUS_' + Date.now()
+            },
+            id: Math.floor(Math.random() * 1000000)
+          }
+        };
+      }
+      
+      // Regular API call for real transactions
       const response = await axios({
         method: 'get',
         url: `${this.baseUrl}/transaction/verify/${reference}`,
