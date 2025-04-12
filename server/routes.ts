@@ -13,6 +13,7 @@ import { setupKillSwitchRoutes, killSwitchManager } from "./kill-switch";
 import { updateSubscriptionPlans } from "./update-subscription-plans";
 import { migrate } from "./migrate";
 import { paystackService } from "./paystack-service";
+import { obfuscationService, OBFUSCATION_METHODS, ANTI_CENSORSHIP_STRATEGIES } from "./obfuscation-service";
 
 // Initialize Stripe if the secret key is available
 let stripe: Stripe | undefined;
