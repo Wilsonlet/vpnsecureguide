@@ -158,13 +158,13 @@ export function AdFallbackHandler() {
         }
       } catch (e) {
         // If we can't determine the URL, just proceed with original fetch
-        return originalFetch.apply(window, arguments);
+        return originalFetch(input, init);
       }
       
       // Check if this is an ad-related request
       if (url && (url.includes('ads') || url.includes('adservice') || url.includes('pagead'))) {
         // Return a silent promise for ad-related fetches that might fail
-        return originalFetch.apply(window, arguments)
+        return originalFetch(input, init)
           .catch(error => {
             // Silently catch ad loading errors
             console.log('Ad resource failed to load:', url);
@@ -175,8 +175,8 @@ export function AdFallbackHandler() {
           });
       }
       
-      // Normal fetch for everything else - use arguments directly to prevent issues
-      return originalFetch.apply(window, arguments);
+      // Normal fetch for everything else
+      return originalFetch(input, init);
     };
     
     // Clean up

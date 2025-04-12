@@ -18,20 +18,31 @@ let app: FirebaseApp | undefined;
 let auth: ReturnType<typeof getAuth>;
 let googleProvider: GoogleAuthProvider;
 
-// Get Replit dev URL or localhost by default
+// Get the proper authentication domain based on environment
 const getAuthDomain = () => {
-  // In development, try to get the Replit domain, fallback to localhost
-  const currentUrl = typeof window !== 'undefined' ? window.location.hostname : '';
-  const isReplit = currentUrl.includes('.replit.dev');
+  if (typeof window === 'undefined') {
+    return import.meta.env.VITE_FIREBASE_PROJECT_ID
+      ? `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`
+      : 'localhost';
+  }
+
+  // Get the current hostname
+  const currentHostname = window.location.hostname;
   
-  if (isReplit) {
-    return currentUrl;
+  // Check for different environments
+  if (currentHostname.includes('.replit.dev') || 
+      currentHostname.includes('.replit.app') ||
+      currentHostname.endsWith('.repl.co')) {
+    // In Replit environments, use the current URL as the auth domain
+    return currentHostname;
+  } else if (currentHostname === 'localhost' || currentHostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+    // For localhost or IP addresses in development
+    return 'localhost';
   }
   
-  // Use configured Firebase project domain or localhost as fallback
-  return import.meta.env.VITE_FIREBASE_PROJECT_ID
-    ? `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`
-    : 'localhost';
+  // For custom domains or any other case, use the current hostname
+  // This allows it to work with any domain where the app is deployed
+  return currentHostname;
 };
 
 // Firebase configuration using environment variables

@@ -13,6 +13,7 @@ import { useFirebaseAuth } from "@/hooks/use-firebase-auth";
 import { useLocation } from "wouter";
 import { Shield, ShieldCheck, Lock, Globe, Zap, Mail, LucideGithub } from "lucide-react";
 import { SeoHead } from "@/components/seo";
+import { FirebaseConfigHelper } from "@/components/firebase-config-helper";
 
 // Extended schema with validation rules
 const authSchema = insertUserSchema.extend({
