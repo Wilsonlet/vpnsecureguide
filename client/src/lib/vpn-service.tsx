@@ -53,7 +53,7 @@ export type VpnStateContextType = VpnConnectionState & {
   selectServer: (server: VpnServer | null) => void;
   setAvailableServers: (servers: VpnServer[]) => void;
   verifyTunnelStatus: () => Promise<boolean>;
-  attemptConnectionRecovery: (serverId: number) => Promise<void>;
+  attemptConnectionRecovery: (serverId: number) => Promise<boolean | undefined>;
 };
 
 // Generate a random IP for the virtual IP - this is for UI display only
@@ -103,7 +103,7 @@ export const VpnStateContext = createContext<VpnStateContextType>({
   selectServer: () => {},
   setAvailableServers: () => {},
   verifyTunnelStatus: async () => Promise.resolve(false),
-  attemptConnectionRecovery: async () => {},
+  attemptConnectionRecovery: async (serverId: number) => false,
 });
 
 // Create a provider component to manage VPN state
@@ -375,11 +375,14 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         }
         
         // Update state with tunnel status and data
+        // Also reset recovery attempt counter when tunnel is working properly
         setState((currentState) => ({
           ...currentState,
           tunnelActive: tunnelData.tunnelActive,
           tunnelVerified: true,
           lastTunnelCheck: new Date(),
+          // Reset recovery count if tunnel is working
+          recoveryAttemptCount: tunnelData.tunnelActive ? 0 : currentState.recoveryAttemptCount,
           dataTransferred: tunnelData.dataTransferred || {
             upload: 0,
             download: 0
@@ -597,19 +600,40 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
    */
   const attemptConnectionRecovery = async (serverId: number) => {
     try {
-      console.log(`Attempting automatic connection recovery for server ${serverId}...`);
+      const recoveryAttempt = (state.recoveryAttemptCount || 0) + 1;
+      console.log(`Attempting automatic connection recovery for server ${serverId} (Attempt #${recoveryAttempt})...`);
       
       // First try to get current session details including protocol and encryption
       let protocol = state.protocol || 'wireguard';
       let encryption = state.encryption || 'chacha20_poly1305';
       let server: VpnServer | null = null;
 
+      // Update state to show recovery in progress
+      setState(currentState => ({
+        ...currentState,
+        recoveryInProgress: true,
+        recoveryAttemptCount: recoveryAttempt
+      }));
+
       // Get server details
       try {
-        const serversResponse = await fetch('/api/servers');
-        if (serversResponse.ok) {
-          const servers = await serversResponse.json();
-          server = servers.find((s: VpnServer) => s.id === serverId);
+        // First try using servers we already have
+        if (state.availableServers && state.availableServers.length > 0) {
+          server = state.availableServers.find((s: VpnServer) => s.id === serverId);
+        }
+        
+        // If not found, fetch fresh server list
+        if (!server) {
+          const serversResponse = await fetch('/api/servers');
+          if (serversResponse.ok) {
+            const servers = await serversResponse.json();
+            server = servers.find((s: VpnServer) => s.id === serverId);
+            
+            // Update available servers while we're at it
+            if (servers && servers.length > 0) {
+              setAvailableServers(servers);
+            }
+          }
         }
       } catch (error) {
         console.error("Error fetching server details for recovery:", error);
@@ -623,10 +647,16 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
           description: "Could not find VPN server details for automatic recovery.",
           variant: "destructive"
         });
+        
+        setState(currentState => ({
+          ...currentState,
+          recoveryInProgress: false
+        }));
+        
         return;
       }
 
-      // Step 1: Force disconnect (multiple attempts to ensure it works)
+      // Step 1: Force disconnect with progressive backoff
       console.log("Recovery step 1: Force disconnect");
       try {
         // First call the normal disconnect
@@ -644,44 +674,101 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
           })
         });
 
-        // Short delay to ensure disconnection is complete
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Exponential backoff based on attempt count (500ms, 750ms, 1125ms, etc.)
+        // but max of 3 seconds
+        const backoffTime = Math.min(500 * Math.pow(1.5, recoveryAttempt - 1), 3000);
+        console.log(`Using backoff time of ${backoffTime}ms for recovery attempt #${recoveryAttempt}`);
+        await new Promise(resolve => setTimeout(resolve, backoffTime));
         
       } catch (error) {
         console.error("Error during recovery disconnect:", error);
         // Continue anyway to try reconnection
       }
 
-      // Step 2: Reconnect
-      console.log("Recovery step 2: Reconnect to server", server);
-      
-      setState(currentState => ({
-        ...currentState,
-        recoveryInProgress: true
-      }));
+      // Step 2: Apply recovery strategy based on attempt number
+      // For consecutive failures, we'll try different approaches
+      if (recoveryAttempt > 1) {
+        console.log(`Applying recovery strategy for attempt #${recoveryAttempt}`);
+        
+        // On 2nd attempt, try a different protocol
+        if (recoveryAttempt === 2) {
+          if (protocol === 'wireguard') {
+            protocol = 'openvpn_tcp'; // More reliable for unstable connections
+            console.log('Recovery strategy: Switching from WireGuard to OpenVPN TCP');
+          } else if (protocol === 'openvpn_udp') {
+            protocol = 'openvpn_tcp'; // TCP is more reliable than UDP
+            console.log('Recovery strategy: Switching from OpenVPN UDP to TCP');
+          } else if (protocol === 'shadowsocks') {
+            protocol = 'wireguard'; // Try WireGuard instead
+            console.log('Recovery strategy: Switching from Shadowsocks to WireGuard');
+          }
+        }
+        
+        // On 3rd attempt, try a different server in the same region if available
+        if (recoveryAttempt === 3 && state.availableServers && state.availableServers.length > 1) {
+          const alternateServer = state.availableServers.find(s => 
+            s.id !== serverId && 
+            s.region === server?.region && 
+            s.online
+          );
+          
+          if (alternateServer) {
+            console.log(`Recovery strategy: Switching to alternate server ${alternateServer.name}`);
+            server = alternateServer;
+            serverId = alternateServer.id;
+          }
+        }
+        
+        // On 4th attempt, try different encryption
+        if (recoveryAttempt >= 4) {
+          if (encryption === 'chacha20_poly1305') {
+            encryption = 'aes_256_gcm'; // Try standard encryption
+            console.log('Recovery strategy: Switching to AES-256-GCM encryption');
+          } else if (encryption === 'aes_256_gcm') {
+            encryption = 'aes_256_cbc'; // Try older encryption
+            console.log('Recovery strategy: Switching to AES-256-CBC encryption');
+          }
+        }
+      }
 
-      // Reconnect using saved server details
-      await connect({
+      // Step 3: Reconnect with potentially modified parameters
+      console.log(`Recovery step 3: Reconnect to server ${server.name} using ${protocol} with ${encryption}`);
+
+      // Reconnect using potentially updated parameters
+      const result = await connect({
         serverId,
         protocol,
         encryption,
         server
       });
 
-      console.log("VPN connection recovery completed");
-      
-      // Update state to clear recovery status
-      setState(currentState => ({
-        ...currentState,
-        recoveryInProgress: false,
-        recoveryAttemptCount: 0 // Reset counter on successful recovery
-      }));
+      // Check if reconnection succeeded
+      if (result && !result.error) {
+        console.log("VPN connection recovery completed successfully");
+        
+        // Update state to clear recovery status and update protocol/encryption if changed
+        setState(currentState => ({
+          ...currentState,
+          recoveryInProgress: false,
+          recoveryAttemptCount: 0, // Reset counter on successful recovery
+          protocol, // Update if changed during recovery
+          encryption // Update if changed during recovery
+        }));
 
-      toast({
-        title: "Connection Recovered",
-        description: "VPN connection has been automatically restored.",
-        variant: "default"
-      });
+        toast({
+          title: "Connection Recovered",
+          description: `VPN connection has been automatically restored${
+            protocol !== state.protocol ? ' using ' + protocol.toUpperCase() : ''
+          }.`,
+          variant: "default"
+        });
+        
+        return true;
+      } else {
+        // Reconnection failed
+        console.error("Recovery reconnection failed:", result?.error || "Unknown error");
+        throw new Error(result?.error || "Reconnection failed");
+      }
       
     } catch (error) {
       console.error("VPN recovery error:", error);
@@ -691,11 +778,16 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         recoveryInProgress: false
       }));
       
-      toast({
-        title: "Recovery Failed",
-        description: "Automatic VPN connection recovery failed. Please try reconnecting manually.",
-        variant: "destructive"
-      });
+      // Only show toast on final failure after multiple attempts
+      if ((state.recoveryAttemptCount || 0) >= 3) {
+        toast({
+          title: "Recovery Failed",
+          description: "Automatic VPN connection recovery failed after multiple attempts. Please try reconnecting manually.",
+          variant: "destructive"
+        });
+      }
+      
+      return false;
     }
   };
 
