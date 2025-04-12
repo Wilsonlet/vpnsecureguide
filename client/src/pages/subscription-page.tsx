@@ -7,6 +7,7 @@ import { Loader2, AlertCircle, CheckCircle, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import PlanCard from '@/components/subscription/plan-card';
+import { PaymentMethodSelector, PaymentMethod } from '@/components/subscription/payment-method-selector';
 import { SubscriptionPlan } from '@shared/schema';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 
@@ -14,6 +15,7 @@ export default function SubscriptionPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [processingPlanId, setProcessingPlanId] = useState<number | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('stripe');
   
   const { data: plans, isLoading: plansLoading, error: plansError } = useQuery({
     queryKey: ['/api/subscription-plans'],
@@ -28,13 +30,19 @@ export default function SubscriptionPage() {
   
   const subscriptionMutation = useMutation({
     mutationFn: async (plan: SubscriptionPlan) => {
-      const response = await apiRequest('POST', '/api/create-subscription', { planName: plan.name });
+      const response = await apiRequest('POST', '/api/create-subscription', { 
+        planName: plan.name,
+        paymentMethod
+      });
       return response.json();
     },
     onSuccess: (data) => {
-      if (data.clientSecret) {
-        // Redirect to checkout with Stripe for paid plans
+      if (data.paymentMethod === 'stripe' && data.clientSecret) {
+        // Redirect to Stripe checkout for paid plans
         window.location.href = `/checkout?client_secret=${data.clientSecret}&subscription_id=${data.subscriptionId}`;
+      } else if (data.paymentMethod === 'paystack' && data.authorizationUrl) {
+        // Redirect to Paystack checkout
+        window.location.href = data.authorizationUrl;
       } else {
         // Free plan or other non-payment scenario
         toast({
@@ -148,11 +156,25 @@ export default function SubscriptionPage() {
             />
           ))}
         </div>
+
+        {/* Payment Method Selection Section - only show for paid plans */}
+        <div className="mt-8">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
+            <p className="text-muted-foreground mb-4">
+              Choose your preferred payment method for your subscription
+            </p>
+            <PaymentMethodSelector
+              selectedMethod={paymentMethod}
+              onChange={setPaymentMethod}
+            />
+          </div>
+        </div>
         
         <div className="text-center mt-10">
           <div className="inline-flex items-center justify-center rounded-full border bg-muted px-4 py-1.5 text-sm font-medium transition-colors">
             <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-            <span>Secure payment processing with Stripe</span>
+            <span>Secure payment processing with multiple options</span>
           </div>
           <p className="text-sm text-muted-foreground mt-2">
             All plans include our no-logs policy, military-grade encryption, and automatic kill switch.

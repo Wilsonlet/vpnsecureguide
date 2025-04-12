@@ -508,9 +508,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(503).json({ message: "Payment service not available" });
       }
 
-      const { planName } = req.body;
+      const { planName, paymentMethod = 'stripe' } = req.body;
       if (!planName) {
         return res.status(400).json({ message: "Plan name is required" });
+      }
+      
+      // Validate payment method
+      if (!['stripe', 'paystack'].includes(paymentMethod)) {
+        return res.status(400).json({ message: "Invalid payment method" });
       }
 
       // Get the subscription plan
@@ -559,27 +564,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "This plan is not available for subscription" });
       }
 
-      // Create subscription
-      const subscription = await stripe.subscriptions.create({
-        customer: customerId,
-        items: [{ price: plan.stripePriceId }],
-        payment_behavior: "default_incomplete",
-        expand: ["latest_invoice.payment_intent"],
-      });
+      // Handle payment based on selected payment method
+      if (paymentMethod === 'stripe') {
+        // Create subscription with Stripe
+        const subscription = await stripe.subscriptions.create({
+          customer: customerId,
+          items: [{ price: plan.stripePriceId }],
+          payment_behavior: "default_incomplete",
+          expand: ["latest_invoice.payment_intent"],
+        });
 
-      // Update user subscription info
-      await storage.updateStripeSubscriptionId(user.id, subscription.id);
-      
-      // Access expanded fields using type assertions
-      // The type definitions might be different than the actual API response
-      const invoice = subscription.latest_invoice as any;
-      const paymentIntent = invoice?.payment_intent as any;
-      
-      // Return client secret for the payment intent
-      res.json({
-        subscriptionId: subscription.id,
-        clientSecret: paymentIntent.client_secret,
-      });
+        // Update user subscription info
+        await storage.updateStripeSubscriptionId(user.id, subscription.id);
+        
+        // Access expanded fields using type assertions
+        // The type definitions might be different than the actual API response
+        const invoice = subscription.latest_invoice as any;
+        const paymentIntent = invoice?.payment_intent as any;
+        
+        // Return client secret for the payment intent
+        return res.json({
+          subscriptionId: subscription.id,
+          clientSecret: paymentIntent.client_secret,
+          paymentMethod: 'stripe'
+        });
+      } else if (paymentMethod === 'paystack') {
+        // TODO: Implement Paystack integration
+        // This is a placeholder for Paystack implementation
+        // In a real implementation, you would:
+        // 1. Initialize a transaction with Paystack API
+        // 2. Get the authorization URL
+        // 3. Return it to the client for redirection
+        
+        // For now, we'll just create a mock response to demonstrate the flow
+        const mockPaystackData = {
+          reference: `paystack_${Date.now()}_${user.id}`,
+          paymentMethod: 'paystack',
+          // In a real implementation, this would be the generated authorization URL
+          authorizationUrl: `/paystack-checkout?plan=${plan.name}&user=${user.id}&ref=${Date.now()}`
+        };
+        
+        // Store the reference in user metadata or a separate table
+        // await storage.storePaystackReference(user.id, mockPaystackData.reference);
+        
+        return res.json({
+          ...mockPaystackData,
+          message: "Redirecting to Paystack for payment"
+        });
+      }
     } catch (error: any) {
       console.error("Stripe subscription error:", error);
       res.status(500).json({ message: "Error creating subscription", error: error.message });
