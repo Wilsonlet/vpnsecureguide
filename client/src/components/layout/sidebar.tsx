@@ -111,8 +111,13 @@ export default function Sidebar() {
         <div className="p-4 rounded-lg bg-gray-800">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-gray-400">Your Plan</span>
-            <span className="px-2 py-1 text-xs rounded-full bg-teal-700 text-white">
-              {user?.subscription === 'premium' ? 'Premium' : 'Free'}
+            <span className={`px-2 py-1 text-xs rounded-full text-white ${
+              user?.subscription === 'ultimate' ? 'bg-purple-700' :
+              user?.subscription === 'premium' ? 'bg-indigo-700' :
+              user?.subscription === 'basic' ? 'bg-blue-700' : 
+              'bg-gray-700'
+            }`}>
+              {user?.subscription ? user.subscription.charAt(0).toUpperCase() + user.subscription.slice(1) : 'Free'}
             </span>
           </div>
           <div className="mb-2">
