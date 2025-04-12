@@ -59,10 +59,9 @@ export default function SecuritySettingsCard() {
           // Update UI state
           setProtocol(settings.preferredProtocol);
           
-          // Update VPN context with both naming conventions to ensure compatibility
+          // Update VPN context with correct protocol value
           vpnState.updateSettings({
-            protocol: settings.preferredProtocol,
-            // Don't include preferredProtocol in the context as it causes TypeScript errors
+            protocol: settings.preferredProtocol
           });
         }
         
@@ -70,10 +69,9 @@ export default function SecuritySettingsCard() {
           // Update UI state
           setEncryption(settings.preferredEncryption);
           
-          // Update VPN context with both naming conventions to ensure compatibility
+          // Update VPN context with correct encryption value
           vpnState.updateSettings({
-            encryption: settings.preferredEncryption,
-            // Don't include preferredEncryption in the context as it causes TypeScript errors
+            encryption: settings.preferredEncryption
           });
         }
         
@@ -111,9 +109,13 @@ export default function SecuritySettingsCard() {
     }
   };
   
-  // Fetch settings on component mount
+  // Fetch settings on component mount - using a ref to prevent over-rendering
+  const didFetchRef = useRef(false);
   useEffect(() => {
-    fetchSettings();
+    if (!didFetchRef.current) {
+      fetchSettings();
+      didFetchRef.current = true;
+    }
   }, []);
   
   // Update local state when vpnState changes
@@ -149,10 +151,10 @@ export default function SecuritySettingsCard() {
       // Show loading state and temporarily set UI state
       setProtocol(value);
       
-      // Use dedicated protocol-specific API endpoint with the correct parameter name
+      // Use dedicated protocol-specific API endpoint
+      // Server API expects 'protocol' as the parameter name
       const response = await apiRequest('POST', '/api/protocol', { 
-        protocol: value,
-        preferredProtocol: value // Include both names to ensure compatibility
+        protocol: value
       });
       
       if (!response.ok) {
@@ -219,10 +221,10 @@ export default function SecuritySettingsCard() {
       // Show loading state
       setEncryption(value);
       
-      // Use dedicated encryption-specific API endpoint with the correct parameter name
+      // Use dedicated encryption-specific API endpoint
+      // Server API expects 'encryption' as the parameter name
       const response = await apiRequest('POST', '/api/encryption', { 
-        encryption: value,
-        preferredEncryption: value // Include both names to ensure compatibility
+        encryption: value
       });
       
       if (!response.ok) {
@@ -297,17 +299,17 @@ export default function SecuritySettingsCard() {
   // Update settings on the server and in local state
   const updateSettings = async (settings: any) => {
     try {
-      // Handle protocol using dedicated endpoint
-      if (settings.preferredProtocol) {
+      // Handle protocol - convert from client property name to server property name
+      if (settings.protocol) {
         // Use the protocol endpoint
         try {
           const protocolRes = await apiRequest('POST', '/api/protocol', { 
-            protocol: settings.preferredProtocol 
+            protocol: settings.protocol
           });
           
           if (protocolRes.ok) {
             vpnState.updateSettings({
-              protocol: settings.preferredProtocol
+              protocol: settings.protocol
             });
           }
         } catch (protocolErr) {
@@ -315,16 +317,16 @@ export default function SecuritySettingsCard() {
         }
       }
       
-      // Handle encryption using dedicated endpoint
-      if (settings.preferredEncryption) {
+      // Handle encryption - convert from client property name to server property name
+      if (settings.encryption) {
         try {
           const encryptionRes = await apiRequest('POST', '/api/encryption', { 
-            encryption: settings.preferredEncryption 
+            encryption: settings.encryption
           });
           
           if (encryptionRes.ok) {
             vpnState.updateSettings({
-              encryption: settings.preferredEncryption
+              encryption: settings.encryption
             });
           }
         } catch (encryptionErr) {
@@ -334,8 +336,8 @@ export default function SecuritySettingsCard() {
       
       // For other settings, use the general settings endpoint
       const otherSettings = { ...settings };
-      delete otherSettings.preferredProtocol;
-      delete otherSettings.preferredEncryption;
+      delete otherSettings.protocol;
+      delete otherSettings.encryption;
       
       if (Object.keys(otherSettings).length > 0) {
         // Send the request to save other settings on the server
