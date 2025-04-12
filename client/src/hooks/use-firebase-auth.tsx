@@ -26,26 +26,80 @@ const FirebaseAuthContext = createContext<FirebaseAuthContextType | null>(null);
 export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<Error | null>(null);
   const { toast } = useToast();
 
+  // Check for Firebase configuration
   useEffect(() => {
-    // Use the lazy-loaded Firebase auth instance
-    const auth = getFirebaseAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setFirebaseUser(user);
-      setIsLoading(false);
-
-      // If user changes, refresh the backend user data
-      if (user) {
-        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+    try {
+      // Verify Firebase API key and config are available
+      if (!import.meta.env.VITE_FIREBASE_API_KEY) {
+        const error = new Error("Firebase API key is missing. Authentication might not work properly.");
+        console.error(error);
+        setAuthError(error);
+        setIsLoading(false);
+        
+        toast({
+          title: "Authentication Configuration Issue",
+          description: "Firebase API key is missing. Please contact the administrator.",
+          variant: "destructive",
+        });
       }
-    });
+    } catch (error: any) {
+      console.error("Firebase configuration error:", error);
+      setAuthError(error);
+      setIsLoading(false);
+    }
+  }, [toast]);
 
-    return () => unsubscribe();
-  }, []);
+  useEffect(() => {
+    // Skip if we already detected a configuration error
+    if (authError) return;
+    
+    try {
+      // Use the lazy-loaded Firebase auth instance
+      const auth = getFirebaseAuth();
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setFirebaseUser(user);
+        setIsLoading(false);
+  
+        // If user changes, refresh the backend user data
+        if (user) {
+          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+        }
+      }, (error) => {
+        console.error("Firebase auth state change error:", error);
+        setAuthError(error);
+        setIsLoading(false);
+        
+        toast({
+          title: "Authentication Error",
+          description: error.message || "There was a problem with the authentication service.",
+          variant: "destructive",
+        });
+      });
+  
+      return () => unsubscribe();
+    } catch (error: any) {
+      console.error("Firebase auth initialization error:", error);
+      setAuthError(error);
+      setIsLoading(false);
+      
+      toast({
+        title: "Authentication Setup Error",
+        description: error.message || "Failed to initialize authentication service.",
+        variant: "destructive",
+      });
+      
+      return () => {}; // Empty cleanup function
+    }
+  }, [authError, toast]);
 
   // Check for redirect result on component mount
   useEffect(() => {
+    // Skip if we already detected a configuration error
+    if (authError) return;
+    
     const checkRedirectResult = async () => {
       try {
         const user = await getGoogleRedirectResult();
@@ -57,18 +111,22 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
         }
       } catch (error: any) {
         console.error("Error processing redirect result:", error);
-        toast({
-          title: "Authentication Error",
-          description: error.message || "Failed to complete Google authentication.",
-          variant: "destructive",
-        });
+        
+        // Don't show errors for missing configuration - already handled above
+        if (error.code !== 'auth/configuration-not-found') {
+          toast({
+            title: "Authentication Error",
+            description: error.message || "Failed to complete Google authentication.",
+            variant: "destructive",
+          });
+        }
       } finally {
         setIsLoading(false);
       }
     };
     
     checkRedirectResult();
-  }, [toast]);
+  }, [authError, toast]);
 
   const handleSignInWithGoogle = async (): Promise<void> => {
     try {

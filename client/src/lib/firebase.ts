@@ -38,13 +38,32 @@ const getAuthDomain = () => {
 const getFirebaseConfig = () => {
   const authDomain = getAuthDomain();
   
+  // Check for missing required Firebase config
+  const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+  const appId = import.meta.env.VITE_FIREBASE_APP_ID;
+  
+  // Provide helpful error messages if configuration is missing
+  if (!apiKey) {
+    console.error('Missing required Firebase config: VITE_FIREBASE_API_KEY');
+  }
+  
+  if (!projectId) {
+    console.error('Missing required Firebase config: VITE_FIREBASE_PROJECT_ID');
+  }
+  
+  if (!appId) {
+    console.error('Missing required Firebase config: VITE_FIREBASE_APP_ID');
+  }
+  
+  // Continue with available config
   return {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    apiKey: apiKey,
     authDomain: authDomain,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.appspot.com`,
+    projectId: projectId,
+    storageBucket: projectId ? `${projectId}.appspot.com` : undefined,
     messagingSenderId: "000000000000", // Placeholder, required by Firebase
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    appId: appId,
   };
 };
 
