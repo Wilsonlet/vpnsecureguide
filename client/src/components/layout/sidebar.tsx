@@ -61,6 +61,16 @@ export default function Sidebar() {
             <span>Settings</span>
           </div>
         </Link>
+        <Link to="/settings-standalone">
+          <div className={`flex items-center px-4 py-3 rounded-lg ${
+            isActive('/settings-standalone') 
+              ? 'bg-primary-900 text-white' 
+              : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+          } transition-colors cursor-pointer`}>
+            <Settings className="mr-3 h-5 w-5" />
+            <span>Simple Settings</span>
+          </div>
+        </Link>
         <Link to="/account">
           <div className={`flex items-center px-4 py-3 rounded-lg ${
             isActive('/account') 
