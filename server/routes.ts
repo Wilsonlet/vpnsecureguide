@@ -143,6 +143,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Feature access check endpoint
+  app.get("/api/feature-access/:feature", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      const feature = req.params.feature;
+      const hasAccess = await storage.checkUserFeatureAccess(req.user.id, feature);
+      
+      res.json({ hasAccess });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // VPN Settings endpoints with caching
   app.get("/api/settings", async (req, res, next) => {
     try {

@@ -134,6 +134,36 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     try {
       console.log("VPN Connect called with options:", options);
       
+      // Check if Shadowsocks protocol is selected and verify access
+      if (options.protocol === 'shadowsocks') {
+        try {
+          const featureAccessResponse = await fetch('/api/feature-access/shadowsocks');
+          
+          if (!featureAccessResponse.ok) {
+            console.error("Failed to check Shadowsocks access");
+            throw new Error("Failed to verify feature access");
+          }
+          
+          const featureAccessData = await featureAccessResponse.json();
+          
+          if (!featureAccessData.hasAccess) {
+            toast({
+              title: "Premium Feature Required",
+              description: "Shadowsocks protocol is only available with Premium or Ultimate plans",
+              variant: "destructive",
+            });
+            return Promise.resolve({ 
+              success: false, 
+              error: "Upgrade to Premium or Ultimate plan to use Shadowsocks protocol",
+              requiresUpgrade: true
+            });
+          }
+        } catch (error) {
+          console.error("Error checking Shadowsocks access:", error);
+          // If we can't check access, don't block the connection
+        }
+      }
+      
       // Check if we're already attempting to connect (bypassed in development)
       if (!isDevelopment && isConnectingRef.current) {
         console.warn("Connection already in progress, ignoring request");
