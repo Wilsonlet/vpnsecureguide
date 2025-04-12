@@ -45,6 +45,7 @@ interface TunnelStatus {
     upload: number;
     download: number;
   };
+  isRealTunnel?: boolean;
 }
 
 // Interface for tunnel creation result
@@ -79,8 +80,74 @@ class VpnTunnelService {
         throw new Error(`Server ${session.serverId} not found`);
       }
       
+      try {
+        // Start a real proxy connection using our proxy VPN service
+        console.log(`Starting real proxy connection for user ${session.userId}`);
+        const proxyResult = await proxyVpnService.startProxyConnection(session, sourceIp);
+        
+        // If we successfully connected to a real proxy, use that
+        if (proxyResult && proxyResult.success) {
+          console.log(`Real proxy tunnel established successfully for user ${session.userId}`);
+          
+          // Create the tunnel entry with proxy info
+          const tunnel: VpnTunnel = {
+            userId: session.userId,
+            sessionId: session.id,
+            tunnelIp: proxyResult.tunnelIp,
+            sourceIp,
+            serverId: session.serverId,
+            serverInfo: {
+              ...server,
+              realIp: proxyResult.serverIp,
+              country: proxyResult.serverCountry
+            },
+            protocol: session.protocol,
+            encryption: session.encryption,
+            established: new Date(),
+            config: proxyResult.connectionDetails,
+            lastActive: new Date(),
+            connectivityVerified: true,
+            trafficStats: {
+              upload: 0,
+              download: 0,
+              lastUpdated: new Date()
+            }
+          };
+          
+          // Store the tunnel
+          this.activeTunnels.set(session.userId, tunnel);
+          this.sessionTunnels.set(session.id, session.userId);
+          
+          // Track source IP to user mapping for IP-based lookups
+          if (!this.userConnections.has(sourceIp)) {
+            this.userConnections.set(sourceIp, new Set());
+          }
+          this.userConnections.get(sourceIp)?.add(session.userId);
+          
+          console.log(`Real VPN tunnel created for user ${session.userId} with IP ${proxyResult.tunnelIp}`);
+          
+          return {
+            tunnelIp: proxyResult.tunnelIp,
+            config: proxyResult.connectionDetails,
+            connectionDetails: {
+              server: proxyResult.serverIp,
+              port: proxyResult.port,
+              protocol: session.protocol,
+              encryption: session.encryption,
+              tunnelType: this.getTunnelType(session.protocol),
+              encryptionLibrary: this.getEncryptionLibrary(session.encryption),
+              isRealTunnel: true
+            }
+          };
+        }
+      } catch (proxyError) {
+        console.error(`Error setting up real proxy for user ${session.userId}:`, proxyError);
+        console.log(`Falling back to simulated VPN for user ${session.userId}`);
+        // If real proxy fails, fall back to the simulated version
+      }
+      
+      // Fall back to the simulated implementation if the real proxy connection failed
       // Generate a virtual IP for the user's tunnel
-      // In a real implementation, this would be assigned by the VPN server
       const octet1 = 10; // Use private IP range
       const octet2 = Math.floor((session.id * 13) % 255);
       const octet3 = Math.floor((session.id * 17) % 255);
@@ -121,28 +188,22 @@ class VpnTunnelService {
       }
       this.userConnections.get(sourceIp)?.add(session.userId);
       
-      console.log(`Tunnel created for user ${session.userId} with IP ${tunnelIp}`);
+      console.log(`Simulated tunnel created for user ${session.userId} with IP ${tunnelIp}`);
       
-      // In a real implementation, this would:
-      // 1. Contact the VPN server to establish a tunnel
-      // 2. Set up routing tables on the server
-      // 3. Establish an encrypted connection
-      // 4. Return actual connection details
-      
-      // For our implementation, we'll return the virtual IP and configuration
       return {
         tunnelIp,
         config: tunnelConfig,
         connectionDetails: {
-          server: server.ip, // Use IP address instead of host
+          server: server.ip,
           port: this.getPortForProtocol(session.protocol),
           protocol: session.protocol,
           encryption: session.encryption,
           tunnelType: this.getTunnelType(session.protocol),
-          encryptionLibrary: this.getEncryptionLibrary(session.encryption)
+          encryptionLibrary: this.getEncryptionLibrary(session.encryption),
+          isRealTunnel: false
         }
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error creating tunnel for user ${session.userId}:`, error);
       throw new Error(`Failed to create VPN tunnel: ${error.message}`);
     }
@@ -163,10 +224,24 @@ class VpnTunnelService {
       
       console.log(`Closing tunnel for user ${userId}`);
       
-      // In a real implementation, this would:
-      // 1. Signal the VPN server to close the tunnel
-      // 2. Clean up routing tables
-      // 3. Release IP addresses
+      // First try to close the real proxy connection if one exists
+      try {
+        // Close the proxy connection using our proxy VPN service
+        console.log(`Closing real proxy connection for user ${userId}`);
+        proxyVpnService.stopProxyConnection(userId)
+          .then(result => {
+            if (result) {
+              console.log(`Real proxy connection closed successfully for user ${userId}`);
+            } else {
+              console.log(`No real proxy connection found for user ${userId}`);
+            }
+          })
+          .catch(proxyError => {
+            console.error(`Error closing proxy connection for user ${userId}:`, proxyError);
+          });
+      } catch (proxyError) {
+        console.error(`Error during proxy connection closing for user ${userId}:`, proxyError);
+      }
       
       // Remove from session mapping
       this.sessionTunnels.delete(tunnel.sessionId);
@@ -184,7 +259,7 @@ class VpnTunnelService {
       this.activeTunnels.delete(userId);
       
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error closing tunnel for user ${userId}:`, error);
       return false;
     }
@@ -238,6 +313,28 @@ class VpnTunnelService {
       };
     }
     
+    // First check if there's a real proxy connection and get its status
+    const proxyStatus = proxyVpnService.getConnectionStatus(userId);
+    if (proxyStatus && proxyStatus.tunnelActive) {
+      console.log(`Using real proxy connection status for user ${userId}`);
+      
+      // Calculate uptime
+      const uptime = proxyStatus.uptime;
+      
+      return {
+        active: true,
+        uptime,
+        dataTransferred: {
+          upload: proxyStatus.dataTransferred.upload,
+          download: proxyStatus.dataTransferred.download
+        },
+        isRealTunnel: true
+      };
+    }
+    
+    // Fall back to simulated status if no real proxy connection is active
+    console.log(`Using simulated connection status for user ${userId}`);
+    
     // Calculate uptime
     const now = new Date();
     const uptime = now.getTime() - tunnel.established.getTime();
@@ -251,7 +348,8 @@ class VpnTunnelService {
       dataTransferred: {
         upload: tunnel.trafficStats.upload,
         download: tunnel.trafficStats.download
-      }
+      },
+      isRealTunnel: false
     };
   }
   
@@ -273,11 +371,26 @@ class VpnTunnelService {
    * @param userId The user ID to verify
    * @returns Whether the tunnel is working properly
    */
-  verifyTunnelConnectivity(userId: number): boolean {
+  async verifyTunnelConnectivity(userId: number): Promise<boolean> {
     const tunnel = this.activeTunnels.get(userId);
     if (!tunnel) {
       return false;
     }
+    
+    // First attempt to verify a real proxy connection if it exists
+    try {
+      const isProxyVerified = await proxyVpnService.verifyProxyConnection(userId);
+      if (isProxyVerified) {
+        console.log(`Real proxy connection verified for user ${userId}`);
+        tunnel.connectivityVerified = true;
+        return true;
+      }
+    } catch (error) {
+      console.error(`Error verifying real proxy connection for user ${userId}:`, error);
+    }
+    
+    // If no real proxy or verification failed, use the simulated approach
+    console.log(`Using simulated verification for user ${userId}`);
     
     // In a real implementation, this would:
     // 1. Send a probe packet through the tunnel

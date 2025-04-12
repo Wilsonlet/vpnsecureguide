@@ -463,7 +463,10 @@ class ProxyVpnService {
    * Monitor active connections for health
    */
   private async monitorActiveConnections(): Promise<void> {
-    for (const [userId, connection] of this.activeProxies.entries()) {
+    // Convert entries iterator to array to avoid downlevelIteration issues
+    const connections = Array.from(this.activeProxies.entries());
+    
+    for (const [userId, connection] of connections) {
       try {
         // Check if the process is still running
         if (connection.process) {
@@ -480,7 +483,7 @@ class ProxyVpnService {
             await this.startProxyProcess(connection);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Error monitoring connection for user ${userId}:`, error);
       }
     }
@@ -493,13 +496,14 @@ class ProxyVpnService {
     const now = new Date();
     const inactivityThreshold = 30 * 60 * 1000; // 30 minutes
     
-    for (const [userId, connection] of this.activeProxies.entries()) {
+    // Convert entries iterator to array to avoid downlevelIteration issues
+    Array.from(this.activeProxies.entries()).forEach(([userId, connection]) => {
       const inactiveTime = now.getTime() - connection.lastActive.getTime();
       if (inactiveTime > inactivityThreshold) {
         console.log(`Cleaning up inactive proxy for user ${userId}`);
         this.stopProxyConnection(userId);
       }
-    }
+    });
   }
 }
 
