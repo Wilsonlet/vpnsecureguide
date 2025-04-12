@@ -1,0 +1,228 @@
+Failed to load resource: the server responded with a status of 404 (Not Found)Understand this errorAI
+/api/app-settings/app_name:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)Understand this errorAI
+/api/app-settings/contact_email:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)Understand this errorAI
+/api/app-settings/company_info:1 
+            
+            
+           Failed to load resource: the server responded with a status of 404 (Not Found)Understand this errorAI
+ads:1 
+            
+            
+           Failed to load resource: the server responded with a status of 400 ()Understand this errorAI
+ads:1 
+            
+            
+           Failed to load resource: the server responded with a status of 400 ()Understand this errorAI
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:711 Encryption synced with server: Object
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65Understand this warningAI
+vpn-service.tsx:746 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:790 VpnService: State updated to: Object
+vpn-service.tsx:617 VpnService: Updating settings with: Object
+vpn-service.tsx:621 VpnService: Protoco

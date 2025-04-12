@@ -41,7 +41,7 @@ export interface IStorage {
   createUserSettings(settings: InsertVpnUserSettings): Promise<VpnUserSettings>;
   updateUserSettings(settings: InsertVpnUserSettings): Promise<VpnUserSettings>;
   
-  // App settings methods
+  // App settings methods - Used for application-wide configuration
   getAppSetting(key: string): Promise<AppSetting | undefined>;
   getAllAppSettings(): Promise<AppSetting[]>;
   setAppSetting(key: string, value: string, description?: string): Promise<AppSetting>;

@@ -382,6 +382,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+  
+  // App settings endpoints
+  // These endpoints provide application-wide settings
+  // Cache key - app settings don't change often, so we use a long TTL
+  const APP_SETTINGS_CACHE_TTL = 3600000; // 1 hour
+  const appSettingsCache = new Map<string, { value: string, timestamp: number }>();
+  
+  // Default app settings values
+  const APP_SETTINGS_DEFAULTS = {
+    app_name: "SecureShield VPN",
+    contact_email: "support@secureshield-vpn.com",
+    company_info: "SecureShield VPN - Military-grade encryption for maximum privacy",
+    privacy_policy_url: "https://secureshield-vpn.com/privacy",
+    terms_url: "https://secureshield-vpn.com/terms",
+    support_url: "https://secureshield-vpn.com/support"
+  };
+  
+  // Helper function to get app setting
+  const getAppSetting = async (key: string): Promise<string> => {
+    // Check cache first
+    const cacheEntry = appSettingsCache.get(key);
+    const now = Date.now();
+    
+    if (cacheEntry && (now - cacheEntry.timestamp < APP_SETTINGS_CACHE_TTL)) {
+      return cacheEntry.value;
+    }
+    
+    // Try to get from database
+    try {
+      const setting = await storage.getAppSetting(key);
+      
+      if (setting) {
+        // Update cache
+        appSettingsCache.set(key, { value: setting.value, timestamp: now });
+        return setting.value;
+      }
+    } catch (error) {
+      console.log(`Error fetching app setting ${key}, using default`);
+    }
+    
+    // Return default value if not found
+    const defaultValue = APP_SETTINGS_DEFAULTS[key as keyof typeof APP_SETTINGS_DEFAULTS] || '';
+    
+    // Cache the default value too
+    appSettingsCache.set(key, { value: defaultValue, timestamp: now });
+    
+    return defaultValue;
+  };
+  
+  // Generic endpoint for app settings
+  app.get("/api/app-settings/:key", async (req, res) => {
+    const key = req.params.key;
+    
+    if (!key) {
+      return res.status(400).json({ message: "Setting key is required" });
+    }
+    
+    try {
+      const value = await getAppSetting(key);
+      res.json({ key, value });
+    } catch (error) {
+      console.error(`Error fetching app setting ${key}:`, error);
+      res.status(500).json({ message: "Error fetching setting" });
+    }
+  });
+  
+  // Update app setting (admin only)
+  app.post("/api/app-settings/:key", async (req, res) => {
+    // Check if admin
+    if (!req.isAuthenticated() || !req.user.isAdmin) {
+      return res.status(403).json({ message: "Admin privileges required" });
+    }
+    
+    const key = req.params.key;
+    const { value } = req.body;
+    
+    if (!key || value === undefined) {
+      return res.status(400).json({ message: "Key and value are required" });
+    }
+    
+    try {
+      // Create or update the setting
+      const updatedSetting = await storage.setAppSetting(key, value);
+      
+      // Clear cache
+      appSettingsCache.delete(key);
+      
+      res.json(updatedSetting);
+    } catch (error) {
+      console.error(`Error updating app setting ${key}:`, error);
+      res.status(500).json({ message: "Error updating setting" });
+    }
+  });
 
   // VPN Session endpoints
   app.get("/api/sessions", async (req, res, next) => {
