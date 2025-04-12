@@ -5,6 +5,48 @@ import { CheckCircle2, ShieldCheck, Zap, Globe } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { SubscriptionPlan } from '@shared/schema';
 
+// Helper function to get a consistent value badge for each plan
+const getPlanValueBadge = (planName: string): string => {
+  switch (planName) {
+    case 'free':
+      return 'Basic Security';
+    case 'basic':
+      return 'Popular Choice';
+    case 'premium':
+      return 'Best Value';
+    case 'ultimate':
+      return 'Maximum Protection';
+    default:
+      return 'Security & Privacy';
+  }
+};
+
+// Helper function to get descriptive text for each plan
+const getPlanDescription = (planName: string): string => {
+  switch (planName) {
+    case 'free':
+      return 'Essential protection for casual browsing';
+    case 'basic':
+      return 'Solid protection with improved speeds';
+    case 'premium':
+      return 'Advanced features for serious privacy needs';
+    case 'ultimate':
+      return 'Complete privacy and security solution';
+    default:
+      return 'VPN protection plan';
+  }
+};
+
+// Format data limit for display
+const formatDataLimit = (bytes: number): string => {
+  if (bytes < 0) return 'Unlimited';
+  if (bytes === 0) return '0 MB';
+  
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(0)} ${sizes[i]}`;
+};
+
 interface PlanCardProps {
   plan: SubscriptionPlan;
   isCurrentPlan: boolean;
@@ -15,16 +57,6 @@ interface PlanCardProps {
 export default function PlanCard({ plan, isCurrentPlan, onSelect, className = '' }: PlanCardProps) {
   // Format price for display
   const formattedPrice = (plan.price / 100).toFixed(2);
-  
-  // Format data limit for display
-  const formatDataLimit = (bytes: number) => {
-    if (bytes < 0) return 'Unlimited';
-    if (bytes === 0) return '0 MB';
-    
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return `${(bytes / Math.pow(1024, i)).toFixed(0)} ${sizes[i]}`;
-  };
 
   // Get feature list from the plan features string or build it
   const getFeatureList = () => {
@@ -32,19 +64,48 @@ export default function PlanCard({ plan, isCurrentPlan, onSelect, className = ''
       return plan.features.split(',').map(f => f.trim());
     }
     
+    // Core features always displayed first with value proposition
     const features = [
-      plan.dataLimit < 0 ? 'Unlimited data' : `${formatDataLimit(plan.dataLimit)}/month`,
-      `${plan.maxDevices} device${plan.maxDevices !== 1 ? 's' : ''}`,
+      plan.dataLimit < 0 
+        ? 'Unlimited data transfer' 
+        : `${formatDataLimit(plan.dataLimit)}/month data transfer`,
+      
+      `Connect up to ${plan.maxDevices} device${plan.maxDevices !== 1 ? 's' : ''} simultaneously`,
+      
       plan.serverAccess === 'all' 
-        ? 'All server types' 
+        ? 'Full access to all server types worldwide' 
         : plan.serverAccess === 'premium' 
-          ? 'Premium Servers' 
-          : 'Standard Servers',
+          ? 'Premium Servers with higher speeds' 
+          : 'Standard Servers with stable connection',
     ];
     
-    if (plan.obfuscationAccess) features.push('Obfuscation');
-    if (plan.doubleVpnAccess) features.push('Double VPN');
-    if (plan.adFree) features.push('Ad-Free');
+    // Add additional value features based on plan capabilities
+    if (plan.obfuscationAccess) features.push('Obfuscation technology to bypass restrictions');
+    if (plan.doubleVpnAccess) features.push('Double VPN routing for enhanced privacy');
+    if (plan.adFree) features.push('Ad-Free experience across all platforms');
+    
+    // Add plan-specific value propositions
+    switch(plan.name) {
+      case 'free':
+        features.push('Basic protection for everyday browsing');
+        features.push('Access to essential VPN features');
+        break;
+      case 'basic':
+        features.push('Great for streaming and general use');
+        features.push('No speed throttling');
+        break;
+      case 'premium':
+        features.push('Optimized for streaming services');
+        features.push('Priority customer support');
+        features.push('Connect from restricted locations');
+        break;
+      case 'ultimate':
+        features.push('Highest level of security and privacy');
+        features.push('Priority bandwidth on all servers');
+        features.push('Advanced features for power users');
+        features.push('24/7 dedicated support');
+        break;
+    }
     
     return features;
   };
@@ -126,20 +187,50 @@ export default function PlanCard({ plan, isCurrentPlan, onSelect, className = ''
           <span className="text-3xl font-bold">${formattedPrice}</span>
           <span className="text-gray-400">/month</span>
         </div>
-        <CardDescription className="text-center text-gray-400 mt-1">
-          {plan.description}
+        <CardDescription className="text-center text-gray-400 mt-2 pb-2">
+          {plan.description || getPlanDescription(plan.name)}
         </CardDescription>
+        
+        {/* Value Badge - highlight the main value proposition */}
+        <div className="flex justify-center mt-2">
+          <Badge className={`${variant.badge} px-3 py-1`}>
+            {getPlanValueBadge(plan.name)}
+          </Badge>
+        </div>
       </CardHeader>
 
       <CardContent className="pb-4">
-        <ul className="space-y-2">
-          {features.map((feature, index) => (
-            <li key={index} className="flex items-start">
-              <CheckCircle2 className="h-5 w-5 mr-2 text-green-500 flex-shrink-0 mt-0.5" />
-              <span className="text-sm text-gray-300">{feature}</span>
-            </li>
-          ))}
-        </ul>
+        {/* Category: Core Features */}
+        <div className="mb-3">
+          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+            Included Features
+          </h4>
+          <ul className="space-y-2">
+            {features.slice(0, 3).map((feature, index) => (
+              <li key={index} className="flex items-start">
+                <CheckCircle2 className="h-5 w-5 mr-2 text-green-500 flex-shrink-0 mt-0.5" />
+                <span className="text-sm text-gray-300">{feature}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        
+        {/* Category: Additional Benefits */}
+        {features.length > 3 && (
+          <div>
+            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              Additional Benefits
+            </h4>
+            <ul className="space-y-2">
+              {features.slice(3).map((feature, index) => (
+                <li key={index} className="flex items-start">
+                  <CheckCircle2 className="h-5 w-5 mr-2 text-green-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-300">{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </CardContent>
 
       <CardFooter>
