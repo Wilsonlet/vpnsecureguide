@@ -92,6 +92,7 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   maxDevices: integer("max_devices").default(1).notNull(),
   doubleVpnAccess: boolean("double_vpn_access").default(false),
   obfuscationAccess: boolean("obfuscation_access").default(false),
+  shadowsocksAccess: boolean("shadowsocks_access").default(false), // Add Shadowsocks protocol access
   adFree: boolean("ad_free").default(false),
   priority: integer("priority").default(0).notNull(), // For display order
   description: text("description"), // Description of the plan

@@ -409,6 +409,27 @@ export class DatabaseStorage implements IStorage {
     };
   }
   
+  async checkUserFeatureAccess(userId: number, feature: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+    if (!user) return false;
+    
+    const plan = await this.getSubscriptionPlanByName(user.subscription);
+    if (!plan) return false;
+    
+    switch (feature) {
+      case 'double_vpn':
+        return !!plan.doubleVpnAccess;
+      case 'obfuscation':
+        return !!plan.obfuscationAccess;
+      case 'shadowsocks':
+        return !!plan.shadowsocksAccess;
+      case 'ad_free':
+        return !!plan.adFree;
+      default:
+        return false;
+    }
+  }
+  
   async checkUserLimits(userId: number): Promise<{
     dataUsed: number;
     dataLimit: number;
