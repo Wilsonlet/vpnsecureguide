@@ -21,7 +21,12 @@ export function ThirdPartyErrorHandler() {
       'Invalid href',
       'stallwart:',
       'Failed to load resource: the server responded with a status of 400',
-      'adsbygoogle'
+      'adsbygoogle',
+      // VPN related errors
+      'Failed to sync protocol with server',
+      'Failed to sync encryption with server',
+      'Network error fetching',
+      'Error checking current session'
     ];
     
     // Replace console.error
@@ -30,6 +35,19 @@ export function ThirdPartyErrorHandler() {
       const shouldFilter = errorPatternsToFilter.some(pattern => 
         args.some(arg => typeof arg === 'string' && arg.includes(pattern))
       );
+      
+      // Special handling for VPN error with undefined status
+      if (args && args.length >= 2 && 
+          typeof args[0] === 'string' && 
+          args[0].includes('Failed to sync') && 
+          args[1] === undefined) {
+        // Replace undefined with null in the arguments
+        const newArgs = [...args];
+        newArgs[1] = null;
+        // Still log a modified version with the null value
+        originalConsoleError.apply(console, newArgs);
+        return;
+      }
       
       if (!shouldFilter) {
         originalConsoleError.apply(console, args);
@@ -49,6 +67,15 @@ export function ThirdPartyErrorHandler() {
     };
     
     window.onerror = function(message, source, lineno, colno, error) {
+      // VPN error handling
+      if (typeof message === 'string' && 
+          (message.includes('Failed to sync') || 
+           message.includes('Network error') ||
+           message.includes('Error checking'))) {
+        console.warn('VPN error suppressed:', message);
+        return true; // Prevent the error from propagating
+      }
+      
       // TikTok Pixel error handling
       if (typeof message === 'string' && message.includes('TikTok Pixel')) {
         console.warn('TikTok Pixel error suppressed:', message);
