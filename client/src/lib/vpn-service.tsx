@@ -704,51 +704,75 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         }
       };
       
-      // Main execution wrapped in try/catch
+      // Main execution wrapped in try/catch with window.onerror backup
       try {
-        // Use a safer async IIFE (Immediately Invoked Function Expression)
-        // This ensures all async code is properly awaited and errors are caught
-        (async () => {
+        // Global unhandled promise rejection handler - only add once
+        if (!window._vpnServiceErrorHandlerAdded) {
+          window.addEventListener('unhandledrejection', (event) => {
+            // Suppress unhandled rejections from our service
+            if (
+              event.reason && 
+              (event.reason.message?.includes?.('api/protocol') || 
+               event.reason.message?.includes?.('api/encryption') ||
+               event.reason.message?.includes?.('api/user') ||
+               event.reason.message?.includes?.('api/settings'))
+            ) {
+              console.warn('Suppressed unhandled rejection:', event.reason);
+              event.preventDefault();
+              event.stopPropagation();
+            }
+          });
+          window._vpnServiceErrorHandlerAdded = true;
+        }
+        
+        // Create a synchronous Promise handler for safety
+        Promise.resolve().then(async () => {
           try {
-            // First check if user is authenticated
-            const userRes = await safeFetch('/api/user', { credentials: 'include' });
+            // First check if user is authenticated - use a very robust approach
+            let isAuthenticated = false;
+            try {
+              const userRes = await safeFetch('/api/user', { credentials: 'include' });
+              isAuthenticated = !!(userRes && userRes.ok);
+            } catch (authError) {
+              console.log('VpnService: Error checking authentication, assuming not authenticated');
+              isAuthenticated = false;
+            }
             
-            if (!userRes || !userRes.ok) {
+            if (!isAuthenticated) {
               console.log('VpnService: User not authenticated, skipping server sync');
               return; // Exit early if not authenticated
             }
             
-            // Process protocol updates if needed
+            // Protocol sync with dedicated error handling
             if (settings.protocol && now - lastUpdateTimes.protocol > UPDATE_DEBOUNCE_MS) {
               lastUpdateTimes.protocol = now;
-              // We await this but don't block UI, allowing it to complete in background
-              syncProtocol(settings.protocol).catch(err => {
-                console.error('Error in protocol sync (captured):', err);
-              });
+              try {
+                await syncProtocol(settings.protocol);
+              } catch (protocolError) {
+                console.error('Caught protocol sync error:', protocolError);
+              }
             } else if (settings.protocol) {
               console.log(`VpnService: Skipping protocol server sync (within debounce period)`, settings.protocol);
             }
             
-            // Process encryption updates if needed
+            // Encryption sync with dedicated error handling
             if (settings.encryption && now - lastUpdateTimes.encryption > UPDATE_DEBOUNCE_MS) {
               lastUpdateTimes.encryption = now;
-              // We await this but don't block UI, allowing it to complete in background
-              syncEncryption(settings.encryption).catch(err => {
-                console.error('Error in encryption sync (captured):', err);
-              });
+              try {
+                await syncEncryption(settings.encryption);
+              } catch (encryptionError) {
+                console.error('Caught encryption sync error:', encryptionError);
+              }
             } else if (settings.encryption) {
               console.log(`VpnService: Skipping encryption server sync (within debounce period)`, settings.encryption);
             }
           } catch (innerError) {
-            // This will catch any error inside the async IIFE
             console.error('Error during settings sync execution:', innerError);
           }
-        })().catch(promiseError => {
-          // This will catch any error in the IIFE itself
+        }).catch(promiseError => {
           console.error('Promise error in settings sync:', promiseError);
         });
       } catch (outerError) {
-        // This catches any synchronous errors in the try block
         console.error('Fatal error in updateSettings:', outerError);
       }
     }
