@@ -696,6 +696,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dashboard prefetching endpoint - combines multiple API calls into one
+  // This optimizes initial load by fetching all dashboard data in a single request
+  app.get("/api/dashboard/prefetch", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      const userId = req.user.id;
+      
+      // Fetch all data in parallel for better performance
+      const [
+        currentSession,
+        servers,
+        settings,
+        subscription,
+        usageStats,
+        limits
+      ] = await Promise.all([
+        storage.getCurrentSession(userId),
+        storage.getAllServers(),
+        storage.getUserSettings(userId),
+        storage.getUser(userId),
+        storage.getUserUsageStats(userId, "7days"),
+        storage.checkUserLimits(userId)
+      ]);
+      
+      // Add virtual IP to session if it exists
+      let sessionWithIp = null;
+      if (currentSession) {
+        const octet1 = 10;
+        const octet2 = Math.floor((currentSession.id * 13) % 255);
+        const octet3 = Math.floor((currentSession.id * 17) % 255);
+        const octet4 = Math.floor((currentSession.id * 23) % 255);
+        const virtualIp = `${octet1}.${octet2}.${octet3}.${octet4}`;
+        
+        sessionWithIp = {
+          ...currentSession,
+          virtualIp
+        };
+      }
+      
+      // Create the combined response
+      const prefetchedData = {
+        currentSession: sessionWithIp,
+        servers,
+        settings: settings || {
+          userId,
+          killSwitch: true,
+          dnsLeakProtection: true,
+          doubleVpn: false,
+          obfuscation: false,
+          preferredProtocol: "openvpn_tcp",
+          preferredEncryption: "aes_256_gcm"
+        },
+        subscription: {
+          subscription: subscription?.subscription || 'free',
+          expiryDate: subscription?.subscriptionExpiryDate,
+          stripeCustomerId: subscription?.stripeCustomerId,
+          stripeSubscriptionId: subscription?.stripeSubscriptionId
+        },
+        usageStats,
+        limits,
+        killSwitchStatus: {
+          active: killSwitchManager.isActive(userId)
+        },
+        timestamp: Date.now()
+      };
+      
+      res.json(prefetchedData);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
   app.get("/api/app-settings/:key", async (req, res, next) => {
     try {
       const key = req.params.key;

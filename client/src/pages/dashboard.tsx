@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Sidebar from '@/components/layout/sidebar';
 import MobileNav from '@/components/layout/mobile-nav';
 import Header from '@/components/layout/header';
@@ -13,50 +13,85 @@ import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import { VpnServer, VpnUserSettings, subscriptionTiers } from '@shared/schema';
 import { useVpnState } from '@/lib/vpn-service';
+import { Loader2 } from 'lucide-react';
 
-export default function Dashboard() {
-  const { user } = useAuth();
-  const vpnState = useVpnState();
-
-  // Fetch VPN server list
-  const { data: servers = [] } = useQuery<VpnServer[]>({
-    queryKey: ['/api/servers'],
-  });
-
-  // Fetch user VPN settings
-  const { data: settings } = useQuery<VpnUserSettings>({
-    queryKey: ['/api/settings'],
-  });
-
-  // Define type for current session with virtual IP
-  type CurrentSessionWithVirtualIp = {
-    id: number;
-    userId: number;
-    serverId: number;
-    protocol: string;
-    encryption: string;
-    startTime: string;
-    endTime: string | null;
-    dataUploaded: number;
-    dataDownloaded: number;
-    virtualIp: string;
+// Define types for dashboard prefetch data
+interface DashboardPrefetchData {
+  currentSession: CurrentSessionWithVirtualIp | null;
+  servers: VpnServer[];
+  settings: VpnUserSettings;
+  subscription: {
+    subscription: string;
+    expiryDate: string | null;
+    stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
   };
-
-  // Fetch current VPN session
-  const { data: currentSession, isLoading: isSessionLoading } = useQuery<CurrentSessionWithVirtualIp>({
-    queryKey: ['/api/sessions/current'],
-    retry: false,
-  });
-
-  // Fetch usage statistics
-  const { data: usageStats } = useQuery<{
+  usageStats: {
     totalUploaded: number;
     totalDownloaded: number;
     totalData: number;
     dailyData: { date: string; uploaded: number; downloaded: number; }[];
-  }>({
-    queryKey: ['/api/usage', { period: '7days' }],
+  };
+  limits: {
+    dataUsed: number;
+    dataLimit: number;
+    timeUsedToday: number;
+    timeLimit: number;
+    isDataLimitReached: boolean;
+    isTimeLimitReached: boolean;
+  };
+  killSwitchStatus: {
+    active: boolean;
+  };
+  timestamp: number;
+}
+
+// Define type for current session with virtual IP
+type CurrentSessionWithVirtualIp = {
+  id: number;
+  userId: number;
+  serverId: number;
+  protocol: string;
+  encryption: string;
+  startTime: string;
+  endTime: string | null;
+  dataUploaded: number;
+  dataDownloaded: number;
+  virtualIp: string;
+};
+
+// Loading skeleton component
+const DashboardSkeleton = () => (
+  <div className="flex flex-col gap-4 p-4 md:p-6 animate-pulse">
+    <div className="h-48 bg-muted rounded-lg"></div>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="h-80 bg-muted rounded-lg lg:col-span-2"></div>
+      <div className="h-80 bg-muted rounded-lg"></div>
+    </div>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="h-60 bg-muted rounded-lg"></div>
+      <div className="h-60 bg-muted rounded-lg"></div>
+    </div>
+  </div>
+);
+
+export default function Dashboard() {
+  const { user } = useAuth();
+  const vpnState = useVpnState();
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Use prefetch endpoint to optimize loading performance by combining multiple API calls
+  const { data: dashboardData, isLoading: isDashboardLoading } = useQuery<DashboardPrefetchData>({
+    queryKey: ['/api/dashboard/prefetch'],
+    retry: false,
   });
+
+  // Extract data from the prefetch response
+  const currentSession = dashboardData?.currentSession;
+  const servers = dashboardData?.servers || [];
+  const settings = dashboardData?.settings;
+  const usageStats = dashboardData?.usageStats;
+  const isSessionLoading = isDashboardLoading;
 
   // Initialize VPN state from server data on first load
   useEffect(() => {
@@ -125,6 +160,13 @@ export default function Dashboard() {
 
 
 
+  // Update loading state when data arrives
+  useEffect(() => {
+    if (dashboardData && !isDashboardLoading) {
+      setIsLoading(false);
+    }
+  }, [dashboardData, isDashboardLoading]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar for desktop */}
@@ -135,41 +177,48 @@ export default function Dashboard() {
         {/* Top header */}
         <Header username={user?.username || ''} />
         
-        {/* Dashboard content */}
-        <div className="p-4 md:p-6 space-y-6">
-          {/* Connection Status Card */}
-          <ConnectionStatusCard />
-          
-          {/* Server Selection Map */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Server Map */}
-            <ServerMap servers={servers} className="lg:col-span-2" />
+        {/* Show loading skeleton when data is loading */}
+        {isLoading ? (
+          <DashboardSkeleton />
+        ) : (
+          /* Dashboard content */
+          <div className="p-4 md:p-6 space-y-6">
+            {/* Connection Status Card */}
+            <ConnectionStatusCard />
             
-            {/* Protocol & Security Settings */}
-            <SecuritySettingsCard />
-          </div>
-          
-          {/* Usage Stats & Apps */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Usage Statistics */}
-            <UsageStatsCard usageStats={usageStats} />
+            {/* Server Selection Map */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Server Map */}
+              <ServerMap servers={servers} className="lg:col-span-2" />
+              
+              {/* Protocol & Security Settings */}
+              <SecuritySettingsCard />
+            </div>
             
-            {/* Smart Mode & Split Tunneling */}
-            <SmartModeCard />
+            {/* Usage Stats & Apps */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Usage Statistics */}
+              <UsageStatsCard usageStats={usageStats} />
+              
+              {/* Smart Mode & Split Tunneling */}
+              <SmartModeCard />
+            </div>
+            
+            {/* Kill Switch */}
+            <div className="mt-6">
+              <KillSwitchCard />
+            </div>
+            
+            {/* AdSense Banner for Free Users */}
+            {dashboardData?.subscription.subscription === 'free' && (
+              <AdBanner 
+                adSlot="1234567890" 
+                format="horizontal" 
+                className="mt-6" 
+              />
+            )}
           </div>
-          
-          {/* Kill Switch */}
-          <div className="mt-6">
-            <KillSwitchCard />
-          </div>
-          
-          {/* AdSense Banner for Free Users */}
-          <AdBanner 
-            adSlot="1234567890" 
-            format="horizontal" 
-            className="mt-6" 
-          />
-        </div>
+        )}
       </main>
       
       {/* Mobile navigation */}
