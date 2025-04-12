@@ -86,7 +86,7 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
   const [state, setState] = useState<VpnConnectionState>({
     connected: false,
     connectTime: null,
-    protocol: 'openvpn_tcp',
+    protocol: 'wireguard', // Changed to match the default protocol in the selection dropdown
     encryption: 'aes_256_gcm',
     killSwitch: true,
     dnsLeakProtection: true,

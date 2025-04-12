@@ -35,32 +35,67 @@ export default function SimpleSettingsForm() {
     setSaving(true);
     
     try {
-      const response = await fetch('/api/settings', {
+      // Use the dedicated protocol endpoint first
+      const protocolResponse = await fetch('/api/protocol', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          preferredProtocol: protocol,
-          preferredEncryption: encryption,
+          protocol: protocol, // Use the field name expected by the server
         }),
         credentials: 'include',
       });
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Settings saved successfully, server response:', data);
+      if (!protocolResponse.ok) {
+        const errorText = await protocolResponse.text();
+        setError(`Failed to save protocol: ${errorText}`);
+        return;
+      }
+      
+      // Next, use the dedicated encryption endpoint
+      const encryptionResponse = await fetch('/api/encryption', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          encryption: encryption, // Use the field name expected by the server
+        }),
+        credentials: 'include',
+      });
+      
+      if (!encryptionResponse.ok) {
+        const errorText = await encryptionResponse.text();
+        setError(`Failed to save encryption: ${errorText}`);
+        return;
+      }
+      
+      // If both requests are successful, get the settings to ensure we have the latest values
+      const settingsResponse = await fetch('/api/settings', {
+        credentials: 'include',
+      });
+      
+      if (settingsResponse.ok) {
+        const settings = await settingsResponse.json();
+        console.log('Settings retrieved successfully:', settings);
         
         setMessage(`Settings saved successfully at ${new Date().toLocaleTimeString()}`);
         
         // Update the global VPN state with server response data
         vpnState.updateSettings({
-          protocol: data.preferredProtocol,
-          encryption: data.preferredEncryption
+          protocol: settings.preferredProtocol,
+          encryption: settings.preferredEncryption
         });
+        
+        // Also explicitly update the local state variables
+        setProtocol(settings.preferredProtocol);
+        setEncryption(settings.preferredEncryption);
+        
+        console.log('Updated protocol to:', settings.preferredProtocol, 'and encryption to:', settings.preferredEncryption);
       } else {
-        const errorText = await response.text();
-        setError(`Failed to save settings: ${errorText}`);
+        // Still consider this a success since the individual updates worked
+        setMessage(`Settings saved successfully at ${new Date().toLocaleTimeString()}`);
       }
     } catch (err) {
       setError(`Network error: ${err instanceof Error ? err.message : String(err)}`);
