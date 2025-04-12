@@ -111,6 +111,8 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
   useEffect(() => {
     const fetchUserDataAndSettings = async () => {
       try {
+        console.log('VpnService: Fetching initial user data and settings');
+        
         // Fetch user subscription
         const userResponse = await fetch('/api/user');
         if (userResponse.ok) {
@@ -132,9 +134,9 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
           
           if (settingsResponse.ok) {
             const settings = await settingsResponse.json();
-            setState(currentState => ({
-              ...currentState,
-              // Update connection settings - use server values exactly as they are
+            
+            // Map server field names to client field names
+            const mappedSettings = {
               protocol: settings.preferredProtocol,
               encryption: settings.preferredEncryption,
               killSwitch: settings.killSwitch,
@@ -142,8 +144,15 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
               doubleVpn: settings.doubleVpn,
               obfuscation: settings.obfuscation,
               antiCensorship: settings.antiCensorship,
+            };
+            
+            console.log('VpnService: Server settings loaded:', settings);
+            console.log('VpnService: Mapped to client settings:', mappedSettings);
+            
+            setState(currentState => ({
+              ...currentState,
+              ...mappedSettings
             }));
-            console.log('VPN settings loaded from server:', settings);
           }
         } catch (settingsError) {
           console.error('Error loading VPN settings:', settingsError);
@@ -154,6 +163,36 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     };
     
     fetchUserDataAndSettings();
+    
+    // Set up a periodic refresh of settings to keep in sync with server
+    const refreshInterval = setInterval(() => {
+      fetch('/api/settings', { credentials: 'include' })
+        .then(res => {
+          if (res.ok) return res.json();
+          throw new Error('Failed to refresh settings');
+        })
+        .then(settings => {
+          console.log('VpnService: Refreshed settings from server:', settings);
+          setState(currentState => ({
+            ...currentState,
+            protocol: settings.preferredProtocol,
+            encryption: settings.preferredEncryption,
+            killSwitch: settings.killSwitch,
+            dnsLeakProtection: settings.dnsLeakProtection,
+            doubleVpn: settings.doubleVpn,
+            obfuscation: settings.obfuscation,
+            antiCensorship: settings.antiCensorship,
+          }));
+        })
+        .catch(err => {
+          // Only log if it's not an auth error (which happens when not logged in)
+          if (!err.message.includes('401')) {
+            console.error('Error refreshing settings:', err);
+          }
+        });
+    }, 10000); // Refresh every 10 seconds
+    
+    return () => clearInterval(refreshInterval);
   }, []);
 
   // Initialize kill switch service
@@ -534,6 +573,11 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
+  // Track the last protocol and encryption update times to prevent duplicate updates
+  const lastProtocolUpdate = useRef<number>(0);
+  const lastEncryptionUpdate = useRef<number>(0);
+  const UPDATE_DEBOUNCE_MS = 2000; // 2 seconds debounce
+
   const updateSettings = (settings: Partial<VpnConnectionState>) => {
     console.log('VpnService: Updating settings with:', settings);
     
@@ -541,8 +585,13 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     if (settings.protocol !== undefined || settings.encryption !== undefined) {
       console.log('VpnService: Protocol/Encryption update detected');
       
-      // Sync protocol and encryption with server if we're updating them
-      if (settings.protocol) {
+      const now = Date.now();
+      
+      // Sync protocol with server if we're updating it - with debounce
+      if (settings.protocol && now - lastProtocolUpdate.current > UPDATE_DEBOUNCE_MS) {
+        lastProtocolUpdate.current = now;
+        console.log(`VpnService: Syncing protocol to server: ${settings.protocol} (debounced)`);
+        
         // Immediately try to persist protocol to server
         fetch('/api/protocol', {
           method: 'POST',
@@ -550,16 +599,35 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
           body: JSON.stringify({ protocol: settings.protocol }),
           credentials: 'include'
         }).then(res => {
-          if (!res.ok) console.error('Failed to sync protocol with server');
+          if (!res.ok) {
+            console.error('Failed to sync protocol with server');
+            return res.text().then(text => {
+              throw new Error(`Failed to sync protocol: ${text}`);
+            });
+          }
           return res.json();
         }).then(data => {
           console.log('Protocol synced with server:', data);
+          
+          // Update state again with server's confirmed protocol
+          if (data && data.protocol) {
+            setState(currentState => ({
+              ...currentState,
+              protocol: data.protocol
+            }));
+          }
         }).catch(err => {
           console.error('Error syncing protocol with server:', err);
         });
+      } else if (settings.protocol) {
+        console.log(`VpnService: Skipping protocol server sync (within debounce period)`, settings.protocol);
       }
       
-      if (settings.encryption) {
+      // Sync encryption with server if we're updating it - with debounce
+      if (settings.encryption && now - lastEncryptionUpdate.current > UPDATE_DEBOUNCE_MS) {
+        lastEncryptionUpdate.current = now;
+        console.log(`VpnService: Syncing encryption to server: ${settings.encryption} (debounced)`);
+        
         // Immediately try to persist encryption to server
         fetch('/api/encryption', {
           method: 'POST',
@@ -567,16 +635,32 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
           body: JSON.stringify({ encryption: settings.encryption }),
           credentials: 'include'
         }).then(res => {
-          if (!res.ok) console.error('Failed to sync encryption with server');
+          if (!res.ok) {
+            console.error('Failed to sync encryption with server');
+            return res.text().then(text => {
+              throw new Error(`Failed to sync encryption: ${text}`);
+            });
+          }
           return res.json();
         }).then(data => {
           console.log('Encryption synced with server:', data);
+          
+          // Update state again with server's confirmed encryption
+          if (data && data.encryption) {
+            setState(currentState => ({
+              ...currentState,
+              encryption: data.encryption
+            }));
+          }
         }).catch(err => {
           console.error('Error syncing encryption with server:', err);
         });
+      } else if (settings.encryption) {
+        console.log(`VpnService: Skipping encryption server sync (within debounce period)`, settings.encryption);
       }
     }
     
+    // Always update local state
     setState(currentState => {
       const updatedState = {
         ...currentState,

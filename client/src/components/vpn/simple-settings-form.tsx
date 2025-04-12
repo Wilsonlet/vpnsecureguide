@@ -40,62 +40,20 @@ export default function SimpleSettingsForm() {
         encryption
       });
       
-      // Update the VPN state directly first for immediate UI feedback
+      // We use a single vpnState update to set both values at once
+      // This is more efficient than separate calls and avoids race conditions
       vpnState.updateSettings({
         protocol,
         encryption
       });
       
-      // Now handle the server-side updates with dedicated endpoints
+      // The updateSettings function in vpnService will handle the server synchronization
+      // with proper debouncing and error handling
       
-      // First try protocol update
-      console.log('SimpleSetting: Sending protocol update to API', protocol);
-      const protocolResponse = await fetch('/api/protocol', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          protocol, // Use the field name expected by the server
-        }),
-        credentials: 'include',
-      });
+      // Wait a bit for the server sync to complete via the vpnState service
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      if (!protocolResponse.ok) {
-        const errorText = await protocolResponse.text();
-        console.error('Protocol update failed:', errorText);
-        setError(`Failed to save protocol: ${errorText}`);
-        return;
-      }
-      
-      const protocolData = await protocolResponse.json();
-      console.log('Protocol update successful:', protocolData);
-      
-      // Then try encryption update
-      console.log('SimpleSetting: Sending encryption update to API', encryption);
-      const encryptionResponse = await fetch('/api/encryption', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          encryption, // Use the field name expected by the server
-        }),
-        credentials: 'include',
-      });
-      
-      if (!encryptionResponse.ok) {
-        const errorText = await encryptionResponse.text();
-        console.error('Encryption update failed:', errorText);
-        setError(`Failed to save encryption: ${errorText}`);
-        return;
-      }
-      
-      const encryptionData = await encryptionResponse.json();
-      console.log('Encryption update successful:', encryptionData);
-      
-      // If we reach here, both updates succeeded, so we fetch the latest settings
-      // to ensure we have all server-side values synchronized
+      // Fetch the latest settings from server to confirm changes were applied
       console.log('SimpleSetting: Fetching updated settings from server');
       const settingsResponse = await fetch('/api/settings', {
         credentials: 'include',
@@ -103,34 +61,33 @@ export default function SimpleSettingsForm() {
       
       if (settingsResponse.ok) {
         const settings = await settingsResponse.json();
-        console.log('Settings retrieved successfully:', settings);
+        console.log('SimpleSetting: Server settings after update:', settings);
         
+        // Show success message
         setMessage(`Settings saved successfully at ${new Date().toLocaleTimeString()}`);
         
-        // Make sure both protocol and encryption are updated in vpnState again based on server response
+        // Ensure local state matches the server state
         if (settings.preferredProtocol && settings.preferredEncryption) {
-          // Update global state
-          vpnState.updateSettings({
-            protocol: settings.preferredProtocol,
-            encryption: settings.preferredEncryption
-          });
-          
-          // Also explicitly update local state
+          // Update local form state to match server
           setProtocol(settings.preferredProtocol);
           setEncryption(settings.preferredEncryption);
           
-          console.log('Final synchronized values -', 
+          console.log('SimpleSetting: Final synchronized values -', 
             'Protocol:', settings.preferredProtocol,
             'Encryption:', settings.preferredEncryption
           );
         }
       } else {
-        // Still consider this a success since the individual updates worked
-        setMessage(`Settings saved successfully at ${new Date().toLocaleTimeString()}`);
+        // Still consider this a success since we already updated via vpnState
+        setMessage(`Settings updated at ${new Date().toLocaleTimeString()}`);
       }
     } catch (err) {
-      console.error('Error saving protocol/encryption settings:', err);
+      console.error('SimpleSetting: Error saving protocol/encryption settings:', err);
       setError(`Network error: ${err instanceof Error ? err.message : String(err)}`);
+      
+      // On error, reset form values to match vpnState (which might have changed)
+      setProtocol(vpnState.protocol);
+      setEncryption(vpnState.encryption);
     } finally {
       setSaving(false);
     }
