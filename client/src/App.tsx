@@ -52,7 +52,7 @@ function Router() {
         <ProtectedRoute path="/settings" component={SettingsPage} />
         <ProtectedRoute path="/support" component={SupportPage} />
         <Route path="/auth" component={AuthPage} />
-        <Route path="/firebase-setup" component={FirebaseSetupGuide} />
+        <Route path="/firebase-setup-guide" component={FirebaseSetupGuide} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>

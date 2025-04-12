@@ -143,7 +143,7 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
   // Redirect to setup guide if Firebase is not configured properly
   useEffect(() => {
     if (redirectToSetup) {
-      window.location.href = '/firebase-setup';
+      window.location.href = '/firebase-setup-guide';
     }
   }, [redirectToSetup]);
 

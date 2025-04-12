@@ -312,7 +312,7 @@ export default function AuthPage() {
               </p>
               <div className="text-center text-xs text-muted-foreground mt-2 border-t pt-2 border-gray-800">
                 <span>Having trouble with Google Sign-in? </span>
-                <a href="/firebase-setup" className="text-primary hover:underline">
+                <a href="/firebase-setup-guide" className="text-primary hover:underline">
                   View Firebase Setup Guide
                 </a>
               </div>
