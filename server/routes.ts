@@ -25,6 +25,7 @@ if (process.env.STRIPE_SECRET_KEY) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // The tunnel status endpoint is defined later in the file
   // Enable development mode bypassing of rate limits for testing
   process.env.DEBUG_BYPASS_RATELIMIT = 'true';
   // Set up authentication routes

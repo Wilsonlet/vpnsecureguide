@@ -6,7 +6,7 @@ import { useVpnState } from '@/lib/vpn-service.tsx';
 import { apiRequest } from '@/lib/queryClient';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, ShieldCheck } from 'lucide-react';
 import DisconnectButton from './disconnect-button';
 
 export default function ConnectionStatusCard() {
@@ -869,7 +869,47 @@ export default function ConnectionStatusCard() {
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-blue-500/0 blur opacity-30"></div>
               
               <div className="relative z-10">
-                <div className="text-sm font-medium mb-3 text-blue-300">ACTIVE CONNECTION</div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-sm font-medium text-blue-300">ACTIVE CONNECTION</div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        // Show checking toast
+                        toast({
+                          title: "Checking Connection",
+                          description: "Verifying your VPN tunnel is properly secure...",
+                          variant: "default",
+                        });
+
+                        // Call the verify tunnel function
+                        const tunnelActive = await vpnState.verifyTunnelStatus();
+                        
+                        // Display result
+                        toast({
+                          title: tunnelActive ? "Tunnel Verified" : "Security Issue",
+                          description: tunnelActive 
+                            ? "Your VPN connection is secure and working properly"
+                            : "Your connection appears active but the tunnel is not working. Your traffic may not be secure!",
+                          variant: tunnelActive ? "default" : "destructive",
+                        });
+                      } catch (error) {
+                        console.error("Error verifying tunnel:", error);
+                        toast({
+                          title: "Verification Failed",
+                          description: "Could not verify VPN tunnel status",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    disabled={!vpnState.connected}
+                    className="bg-black/30 border border-blue-500/50 hover:bg-blue-900/30 hover:border-blue-400 transition-all text-xs"
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5 mr-1.5 text-blue-300" />
+                    <span className="text-blue-300">Verify Security</span>
+                  </Button>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <div className="text-xs text-gray-400">Location</div>

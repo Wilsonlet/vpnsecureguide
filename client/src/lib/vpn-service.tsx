@@ -95,6 +95,7 @@ export const VpnStateContext = createContext<VpnStateContextType>({
   updateSettings: () => {},
   selectServer: () => {},
   setAvailableServers: () => {},
+  verifyTunnelStatus: async () => Promise.resolve(false),
 });
 
 // Create a provider component to manage VPN state
@@ -125,7 +126,7 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     // Tunnel verification
     tunnelActive: false,
     tunnelVerified: false,
-    lastTunnelCheck: null,
+    lastTunnelCheck: undefined,
     dataTransferred: {
       upload: 0,
       download: 0
