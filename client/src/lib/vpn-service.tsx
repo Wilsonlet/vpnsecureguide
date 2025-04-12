@@ -619,7 +619,7 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       try {
         // First try using servers we already have
         if (state.availableServers && state.availableServers.length > 0) {
-          server = state.availableServers.find((s: VpnServer) => s.id === serverId);
+          server = state.availableServers.find((s: VpnServer) => s.id === serverId) || null;
         }
         
         // If not found, fetch fresh server list
@@ -627,7 +627,7 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
           const serversResponse = await fetch('/api/servers');
           if (serversResponse.ok) {
             const servers = await serversResponse.json();
-            server = servers.find((s: VpnServer) => s.id === serverId);
+            server = servers.find((s: VpnServer) => s.id === serverId) || null;
             
             // Update available servers while we're at it
             if (servers && servers.length > 0) {
