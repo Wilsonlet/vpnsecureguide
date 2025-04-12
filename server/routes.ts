@@ -13,6 +13,7 @@ import { setupKillSwitchRoutes, killSwitchManager } from "./kill-switch";
 import { updateSubscriptionPlans } from "./update-subscription-plans";
 import { migrate } from "./migrate";
 import { paystackService } from "./paystack-service";
+import { vpnTunnelService } from "./vpn-tunnel";
 import { obfuscationService, OBFUSCATION_METHODS, ANTI_CENSORSHIP_STRATEGIES } from "./obfuscation-service";
 
 // Initialize Stripe if the secret key is available
@@ -487,6 +488,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+  
+  // VPN Tunnel status endpoint
+  app.get("/api/tunnel/status", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // Get the current session
+      const session = await storage.getCurrentSession(req.user.id);
+      if (!session) {
+        return res.json({ tunnelActive: false, message: "No active VPN session" });
+      }
+      
+      // Get the tunnel details
+      const tunnelDetails = vpnTunnelService.getUserTunnelDetails(req.user.id);
+      if (!tunnelDetails) {
+        return res.json({ 
+          tunnelActive: false, 
+          sessionActive: true,
+          virtualIp: null,
+          message: "Session exists but VPN tunnel is not active" 
+        });
+      }
+      
+      // Get detailed tunnel status
+      const tunnelStatus = vpnTunnelService.getTunnelStatus(session.id);
+      
+      res.json({
+        tunnelActive: true,
+        sessionActive: true,
+        sessionId: session.id,
+        virtualIp: tunnelDetails.tunnelIp,
+        serverId: session.serverId,
+        serverInfo: tunnelDetails.serverInfo,
+        protocol: session.protocol,
+        encryption: session.encryption,
+        startTime: session.startTime,
+        uptime: tunnelStatus.uptime,
+        dataTransferred: tunnelStatus.dataTransferred
+      });
+    } catch (error) {
+      console.error("Error checking tunnel status:", error);
+      next(error);
+    }
+  });
 
   app.get("/api/sessions/current", async (req, res, next) => {
     try {
@@ -579,16 +624,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         (req.session as any).vpnDisconnected = false;
       }
       
-      // Generate a virtual IP for the session
-      const octet1 = 10; // Use private IP range
-      const octet2 = Math.floor((session.id * 13) % 255);
-      const octet3 = Math.floor((session.id * 17) % 255);
-      const octet4 = Math.floor((session.id * 23) % 255);
-      const virtualIp = `${octet1}.${octet2}.${octet3}.${octet4}`;
+      // Get the user's IP address
+      const userIp = req.headers['x-forwarded-for'] || 
+                     req.socket.remoteAddress || 
+                     req.ip || 
+                     '127.0.0.1';
       
+      // Create an actual VPN tunnel with proper traffic routing
+      const tunnelResult = await vpnTunnelService.createTunnel(
+        session,
+        typeof userIp === 'string' ? userIp : userIp[0]
+      );
+      
+      // Return the session with tunnel details
       res.status(201).json({
         ...session,
-        virtualIp
+        virtualIp: tunnelResult.tunnelIp,
+        tunnelConfig: tunnelResult.config,
+        connectionDetails: tunnelResult.connectionDetails
       });
     } catch (error) {
       next(error);
@@ -639,6 +692,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (currentSession?.serverId) {
         connectionStatistics.recordDisconnection(currentSession.serverId);
       }
+      
+      // Close the VPN tunnel if one exists
+      const tunnelClosed = vpnTunnelService.closeTunnel(userId);
+      console.log(`VPN tunnel ${tunnelClosed ? 'closed' : 'not found'} for user ${userId}`);
       
       // Return success even if there was no specific session information
       if (!session && !currentSession) {
