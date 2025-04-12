@@ -146,11 +146,25 @@ export function AdFallbackHandler() {
     // Handle failed ad loading errors specifically
     const originalFetch = window.fetch;
     window.fetch = function(input, init) {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : '';
+      // Safely handle various input types to extract URL
+      let url = '';
+      try {
+        if (typeof input === 'string') {
+          url = input;
+        } else if (input instanceof URL) {
+          url = input.toString();
+        } else if (input instanceof Request) {
+          url = input.url;
+        }
+      } catch (e) {
+        // If we can't determine the URL, just proceed with original fetch
+        return originalFetch.apply(window, arguments);
+      }
       
-      if (url.includes('ads') || url.includes('adservice') || url.includes('pagead')) {
+      // Check if this is an ad-related request
+      if (url && (url.includes('ads') || url.includes('adservice') || url.includes('pagead'))) {
         // Return a silent promise for ad-related fetches that might fail
-        return originalFetch.apply(this, [input, init])
+        return originalFetch.apply(window, arguments)
           .catch(error => {
             // Silently catch ad loading errors
             console.log('Ad resource failed to load:', url);
@@ -161,8 +175,8 @@ export function AdFallbackHandler() {
           });
       }
       
-      // Normal fetch for everything else
-      return originalFetch.apply(this, [input, init]);
+      // Normal fetch for everything else - use arguments directly to prevent issues
+      return originalFetch.apply(window, arguments);
     };
     
     // Clean up
