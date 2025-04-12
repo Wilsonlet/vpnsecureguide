@@ -265,7 +265,7 @@ export default function SecuritySettingsCard() {
             <ToggleSwitch 
               checked={doubleVpn} 
               onChange={handleDoubleVpnChange} 
-              disabled={vpnState.connected || pendingUpdates['doubleVpn'] || activeRequests.current['doubleVpn']} 
+              disabled={pendingUpdates['doubleVpn'] || activeRequests.current['doubleVpn']} 
             />
           </div>
           
@@ -277,7 +277,7 @@ export default function SecuritySettingsCard() {
             <ToggleSwitch 
               checked={obfuscation} 
               onChange={handleObfuscationChange} 
-              disabled={vpnState.connected || pendingUpdates['obfuscation'] || activeRequests.current['obfuscation']} 
+              disabled={pendingUpdates['obfuscation'] || activeRequests.current['obfuscation']} 
             />
           </div>
           
@@ -289,7 +289,7 @@ export default function SecuritySettingsCard() {
             <ToggleSwitch 
               checked={antiCensorship} 
               onChange={handleAntiCensorshipChange} 
-              disabled={vpnState.connected || !obfuscation || pendingUpdates['antiCensorship'] || activeRequests.current['antiCensorship']} 
+              disabled={!obfuscation || pendingUpdates['antiCensorship'] || activeRequests.current['antiCensorship']} 
             />
           </div>
         </CardContent>
