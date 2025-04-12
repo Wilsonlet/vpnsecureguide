@@ -347,10 +347,6 @@ export default function SecuritySettingsCard() {
             obfuscation: settings.obfuscation !== undefined ? settings.obfuscation : vpnState.obfuscation
           });
           
-          // Force refresh settings from server to ensure everything is in sync
-          setTimeout(() => {
-            fetchSettings();
-          }, 500);
         }
       }
     } catch (error) {
