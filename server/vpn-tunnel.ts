@@ -14,6 +14,7 @@ import { VpnSession } from '@shared/schema';
 import { db } from './db';
 import { eq } from 'drizzle-orm';
 import { storage } from './storage';
+import { proxyVpnService } from './proxy-vpn';
 
 // Interface for tracking VPN tunnels
 interface VpnTunnel {
