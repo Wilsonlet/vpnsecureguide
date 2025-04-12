@@ -197,6 +197,9 @@ export default function SettingsStandalone() {
           case 'obfuscation':
             vpnState.updateSettings({ obfuscation: value });
             break;
+          case 'antiCensorship':
+            vpnState.updateSettings({ antiCensorship: value });
+            break;
         }
       } else {
         // Revert on error
@@ -212,6 +215,9 @@ export default function SettingsStandalone() {
             break;
           case 'obfuscation':
             setObfuscation(!value);
+            break;
+          case 'antiCensorship':
+            setAntiCensorship(!value);
             break;
         }
         setErrorMessage('Failed to update setting');
@@ -233,6 +239,9 @@ export default function SettingsStandalone() {
           break;
         case 'obfuscation':
           setObfuscation(!value);
+          break;
+        case 'antiCensorship':
+          setAntiCensorship(!value);
           break;
       }
     }
