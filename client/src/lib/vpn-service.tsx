@@ -27,6 +27,14 @@ export type VpnConnectionState = {
   splitTunneling?: boolean;
   customDns?: boolean;
   customDnsServer?: string;
+  // Tunnel verification
+  tunnelActive?: boolean;
+  tunnelVerified?: boolean;
+  lastTunnelCheck?: Date;
+  dataTransferred?: {
+    upload: number;
+    download: number;
+  };
 };
 
 export type VpnStateContextType = VpnConnectionState & {
@@ -71,6 +79,14 @@ export const VpnStateContext = createContext<VpnStateContextType>({
   splitTunneling: false,
   customDns: false,
   customDnsServer: '1.1.1.1',
+  // Tunnel verification
+  tunnelActive: false,
+  tunnelVerified: false,
+  lastTunnelCheck: null,
+  dataTransferred: {
+    upload: 0,
+    download: 0
+  },
   // Functions
   connect: async () => Promise.resolve({}),
   disconnect: async () => Promise.resolve(true),
@@ -105,6 +121,14 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     splitTunneling: false,
     customDns: false,
     customDnsServer: '1.1.1.1',
+    // Tunnel verification
+    tunnelActive: false,
+    tunnelVerified: false,
+    lastTunnelCheck: null,
+    dataTransferred: {
+      upload: 0,
+      download: 0
+    }
   });
   
   // Fetch user data and settings on mount
@@ -247,6 +271,114 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       killSwitchService.stopConnectionMonitoring();
     };
   }, [state.killSwitch, state.connected]);
+  
+  // VPN tunnel verification
+  useEffect(() => {
+    // Only verify tunnel when connected
+    if (!state.connected) {
+      setState((currentState) => ({
+        ...currentState,
+        tunnelActive: false,
+        tunnelVerified: false
+      }));
+      return;
+    }
+    
+    let tunnelCheckInterval: ReturnType<typeof setInterval>;
+    
+    // Function to verify the tunnel is actually working
+    const verifyTunnelStatus = async () => {
+      try {
+        console.log('Verifying VPN tunnel status...');
+        
+        // Call the tunnel status endpoint
+        const res = await fetch('/api/tunnel/status', {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
+        
+        if (!res.ok) {
+          console.error('Tunnel status check failed:', res.status);
+          
+          // Update state to show tunnel is not active
+          setState((currentState) => ({
+            ...currentState,
+            tunnelActive: false,
+            tunnelVerified: true,
+            lastTunnelCheck: new Date()
+          }));
+          
+          // Show warning toast if it's a real failure (not just auth)
+          if (res.status !== 401) {
+            toast({
+              title: "VPN Protection Issue",
+              description: "Your connection shows as active but the VPN tunnel is not working. Your traffic may not be protected.",
+              variant: "destructive"
+            });
+          }
+          return;
+        }
+        
+        // Get the tunnel status data
+        const tunnelData = await res.json();
+        console.log('Tunnel status:', tunnelData);
+        
+        // If tunnel is not active but session is, there's a problem
+        if (tunnelData.sessionActive && !tunnelData.tunnelActive) {
+          console.error('VPN session is active but tunnel is not working!');
+          
+          setState((currentState) => ({
+            ...currentState,
+            tunnelActive: false,
+            tunnelVerified: true,
+            lastTunnelCheck: new Date()
+          }));
+          
+          toast({
+            title: "VPN Connection Error",
+            description: "Your connection appears active but your traffic is not protected! Please disconnect and try again.",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        // Update state with tunnel status and data
+        setState((currentState) => ({
+          ...currentState,
+          tunnelActive: tunnelData.tunnelActive,
+          tunnelVerified: true,
+          lastTunnelCheck: new Date(),
+          dataTransferred: tunnelData.dataTransferred || {
+            upload: 0,
+            download: 0
+          }
+        }));
+      } catch (error) {
+        console.error('Error verifying tunnel status:', error);
+        
+        // Set tunnel as unverified on error
+        setState((currentState) => ({
+          ...currentState,
+          tunnelVerified: false,
+          lastTunnelCheck: new Date()
+        }));
+      }
+    };
+    
+    // Verify tunnel immediately
+    verifyTunnelStatus();
+    
+    // Then check periodically (every 10 seconds)
+    tunnelCheckInterval = setInterval(verifyTunnelStatus, 10000);
+    
+    return () => {
+      clearInterval(tunnelCheckInterval);
+    };
+  }, [state.connected, toast]);
 
   // Connection state management
   const isConnectingRef = useRef(false);
