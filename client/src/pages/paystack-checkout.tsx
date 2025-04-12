@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, ArrowLeft, CheckCircle, CreditCard, Lock } from 'lucide-react';
+import { Loader2, ArrowLeft, CheckCircle, CreditCard, Lock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { useForm } from 'react-hook-form';
@@ -13,11 +15,22 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { apiRequest } from '@/lib/queryClient';
+import { countries } from '@/lib/countries';
+import { formatCardNumber, formatExpiryDate, validateCard, getCardType, CardType } from '@/lib/card-validator';
 
 // Form validation schema
 const billingSchema = z.object({
   cardName: z.string().min(3, "Cardholder name is required"),
-  cardNumber: z.string().regex(/^\d{16}$/, "Card number must be 16 digits"),
+  cardNumber: z.string()
+    .min(13, "Card number must be between 13-19 digits")
+    .max(19, "Card number must be between 13-19 digits")
+    .refine(
+      (val) => {
+        const result = validateCard(val);
+        return result.valid;
+      },
+      "Invalid card number. Please check and try again."
+    ),
   expiryDate: z.string()
     .min(4, "Expiry date is required")
     .refine(
@@ -45,12 +58,18 @@ const billingSchema = z.object({
       },
       "Invalid expiry date. Use a future date in MM/YY format"
     ),
-  cvv: z.string().regex(/^\d{3,4}$/, "CVV must be 3 or 4 digits"),
+  cvv: z.string()
+    .min(3, "CVV must be 3 or 4 digits")
+    .max(4, "CVV must be 3 or 4 digits")
+    .refine(
+      (val) => /^\d{3,4}$/.test(val),
+      "CVV must be 3 or 4 digits"
+    ),
   address: z.string().min(5, "Address is required"),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State/Province is required"),
   zipCode: z.string().min(3, "ZIP/Postal code is required"),
-  country: z.string().min(2, "Country is required"),
+  country: z.string().min(2, "Country code is required"),
 });
 
 type BillingFormData = z.infer<typeof billingSchema>;
@@ -64,6 +83,7 @@ export default function PaystackCheckout() {
   const [planName, setPlanName] = useState<string>('');
   const [planRef, setPlanRef] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [detectedCardType, setDetectedCardType] = useState<CardType | undefined>();
 
   // Initialize form with Paystack test card details
   const form = useForm<BillingFormData>({
