@@ -34,12 +34,6 @@ async function migrate() {
 
 export { migrate };
 
-// If this script is run directly
-if (import.meta.url === import.meta.main) {
-  migrate()
-    .then(() => process.exit(0))
-    .catch((error) => {
-      console.error('Migration failed:', error);
-      process.exit(1);
-    });
-}
+// This script can be run directly or imported
+// When imported, we'll just export the migrate function
+// Direct execution is handled in routes.ts

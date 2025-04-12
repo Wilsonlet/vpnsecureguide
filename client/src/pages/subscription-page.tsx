@@ -1,85 +1,196 @@
-import PlansGrid from "@/components/subscription/plans-grid";
-import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { CalendarClock, Zap } from "lucide-react";
-import { formatBytes } from "@/lib/utils";
-
-// Define types for API responses
-interface SubscriptionResponse {
-  subscription: string;
-  expiryDate: string | null;
-  stripeCustomerId: string | null;
-  stripeSubscriptionId: string | null;
-}
-
-interface LimitsResponse {
-  dataUsed: number;
-  dataLimit: number;
-  timeUsedToday: number;
-  timeLimit: number;
-  isDataLimitReached: boolean;
-  isTimeLimitReached: boolean;
-}
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Loader2, AlertCircle, CheckCircle, Shield } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import PlanCard from '@/components/subscription/plan-card';
+import { SubscriptionPlan } from '@shared/schema';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 export default function SubscriptionPage() {
+  const { toast } = useToast();
   const { user } = useAuth();
-
-  const { data: subscription } = useQuery<SubscriptionResponse>({
-    queryKey: ["/api/subscription"],
+  const [processingPlanId, setProcessingPlanId] = useState<number | null>(null);
+  
+  const { data: plans, isLoading: plansLoading, error: plansError } = useQuery({
+    queryKey: ['/api/subscription-plans'],
+    queryFn: () => fetch('/api/subscription-plans').then(res => res.json()),
+  });
+  
+  const { data: currentSubscription, isLoading: subscriptionLoading } = useQuery({
+    queryKey: ['/api/subscription'],
+    queryFn: () => fetch('/api/subscription').then(res => res.json()),
     enabled: !!user,
   });
-
-  const { data: limits } = useQuery<LimitsResponse>({
-    queryKey: ["/api/limits"],
-    enabled: !!user,
+  
+  const subscriptionMutation = useMutation({
+    mutationFn: async (plan: SubscriptionPlan) => {
+      const response = await apiRequest('POST', '/api/create-subscription', { planName: plan.name });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.clientSecret) {
+        // Redirect to checkout with Stripe
+        window.location.href = `/checkout?client_secret=${data.clientSecret}&subscription_id=${data.subscriptionId}`;
+      } else {
+        // Free plan or other non-payment scenario
+        toast({
+          title: 'Subscription Updated',
+          description: 'Your subscription has been updated successfully.',
+          variant: 'default',
+        });
+        
+        // Refresh the subscription data
+        queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      }
+      setProcessingPlanId(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Subscription Error',
+        description: `Failed to update subscription: ${error.message}`,
+        variant: 'destructive',
+      });
+      setProcessingPlanId(null);
+    },
   });
-
+  
+  const handleSelectPlan = (plan: SubscriptionPlan) => {
+    if (!user) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please log in to subscribe to a plan.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Don't select if it's the current plan
+    if (currentSubscription && currentSubscription.subscription === plan.name) {
+      toast({
+        title: 'Already Subscribed',
+        description: 'You are already subscribed to this plan.',
+        variant: 'default',
+      });
+      return;
+    }
+    
+    setProcessingPlanId(plan.id);
+    subscriptionMutation.mutate(plan);
+  };
+  
+  if (plansLoading || subscriptionLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
+  if (plansError) {
+    return (
+      <div className="container py-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Failed to load subscription plans. Please try again later.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+  
+  // Sort plans by priority
+  const sortedPlans = [...plans].sort((a, b) => a.priority - b.priority);
+  
   return (
     <div className="container py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">Subscription Plans</h1>
-        <p className="text-muted-foreground mb-6">
-          Choose the plan that works best for your needs. All plans include military-grade encryption (AES-256-GCM/ChaCha20-Poly1305) and our strict no-logs policy with diskless servers for enhanced privacy.
-        </p>
-
-        {user && subscription && (
-          <div className="bg-muted p-4 rounded-lg mb-8">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h3 className="text-lg font-medium flex items-center gap-2">
-                  Current Plan: 
-                  <Badge variant="outline" className="ml-2 text-sm font-normal">
-                    {subscription.subscription}
-                  </Badge>
-                </h3>
-                {subscription.expiryDate && (
-                  <p className="text-sm text-muted-foreground flex items-center mt-1">
-                    <CalendarClock className="mr-1 h-4 w-4" /> 
-                    Expires: {new Date(subscription.expiryDate).toLocaleDateString()}
-                  </p>
+      <div className="space-y-6">
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+            Select Your VPN Plan
+          </h1>
+          <p className="text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+            Choose the perfect plan to protect your online privacy and security
+          </p>
+        </div>
+        
+        {currentSubscription && (
+          <div className="mb-6">
+            <Alert className="bg-muted">
+              <Shield className="h-4 w-4" />
+              <AlertTitle>Current Subscription</AlertTitle>
+              <AlertDescription>
+                You are currently on the <strong className="capitalize">{currentSubscription.subscription}</strong> plan
+                {currentSubscription.expiryDate && (
+                  <> until {new Date(currentSubscription.expiryDate).toLocaleDateString()}</>
                 )}
-              </div>
-
-              {limits && (
-                <div className="flex items-center gap-4">
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Data Used</p>
-                    <p className="font-medium flex items-center">
-                      <Zap className="mr-1 h-4 w-4 text-primary" />
-                      {formatBytes(limits.dataUsed)} / {formatBytes(limits.dataLimit)}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
+              </AlertDescription>
+            </Alert>
           </div>
         )}
-
-        <Separator className="my-6" />
-
-        <PlansGrid />
+        
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {sortedPlans.map((plan) => (
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              isCurrentPlan={currentSubscription?.subscription === plan.name}
+              onSelect={handleSelectPlan}
+              className={processingPlanId === plan.id ? 'opacity-70 pointer-events-none' : ''}
+            />
+          ))}
+        </div>
+        
+        <div className="text-center mt-10">
+          <div className="inline-flex items-center justify-center rounded-full border bg-muted px-4 py-1.5 text-sm font-medium transition-colors">
+            <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+            <span>Secure payment processing with Stripe</span>
+          </div>
+          <p className="text-sm text-muted-foreground mt-2">
+            All plans include our no-logs policy, military-grade encryption, and automatic kill switch.
+          </p>
+        </div>
+        
+        <div className="bg-muted rounded-lg p-6 mt-10">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Global Network</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Access to servers in 90+ countries with unlimited server switching
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>Device Compatibility</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Works on all major platforms including Windows, macOS, iOS, Android, and Linux
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle>24/7 Support</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Live chat and email support available around the clock
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

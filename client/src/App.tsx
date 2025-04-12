@@ -15,6 +15,7 @@ const NotFound = lazy(() => import("@/pages/not-found"));
 const AuthPage = lazy(() => import("@/pages/auth-page"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 const SubscriptionPage = lazy(() => import("@/pages/subscription-page"));
+const CheckoutPage = lazy(() => import("@/pages/checkout"));
 const AccountPage = lazy(() => import("@/pages/account-page"));
 const AdminPage = lazy(() => import("@/pages/admin-page"));
 const ServersPage = lazy(() => import("@/pages/servers-page"));
@@ -39,6 +40,7 @@ function Router() {
         <ProtectedRoute path="/" component={Dashboard} />
         <ProtectedRoute path="/dashboard" component={Dashboard} />
         <ProtectedRoute path="/subscription" component={SubscriptionPage} />
+        <ProtectedRoute path="/checkout" component={CheckoutPage} />
         <ProtectedRoute path="/account" component={AccountPage} />
         <ProtectedRoute path="/admin" component={AdminPage} />
         <ProtectedRoute path="/servers" component={ServersPage} />
