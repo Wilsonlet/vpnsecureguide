@@ -48,11 +48,15 @@ export default function SimpleSettingsForm() {
       });
       
       if (response.ok) {
+        const data = await response.json();
+        console.log('Settings saved successfully, server response:', data);
+        
         setMessage(`Settings saved successfully at ${new Date().toLocaleTimeString()}`);
-        // Update the global VPN state with new settings
+        
+        // Update the global VPN state with server response data
         vpnState.updateSettings({
-          protocol: protocol,
-          encryption: encryption
+          protocol: data.preferredProtocol,
+          encryption: data.preferredEncryption
         });
       } else {
         const errorText = await response.text();

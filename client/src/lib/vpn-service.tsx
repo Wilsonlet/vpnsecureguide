@@ -134,16 +134,16 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
             const settings = await settingsResponse.json();
             setState(currentState => ({
               ...currentState,
-              // Update connection settings
-              protocol: settings.preferredProtocol || currentState.protocol,
-              encryption: settings.preferredEncryption || currentState.encryption,
-              killSwitch: settings.killSwitch || currentState.killSwitch,
-              dnsLeakProtection: settings.dnsLeakProtection || currentState.dnsLeakProtection,
-              doubleVpn: settings.doubleVpn || currentState.doubleVpn,
-              obfuscation: settings.obfuscation || currentState.obfuscation,
-              antiCensorship: settings.antiCensorship || currentState.antiCensorship,
+              // Update connection settings - use server values exactly as they are
+              protocol: settings.preferredProtocol,
+              encryption: settings.preferredEncryption,
+              killSwitch: settings.killSwitch,
+              dnsLeakProtection: settings.dnsLeakProtection,
+              doubleVpn: settings.doubleVpn,
+              obfuscation: settings.obfuscation,
+              antiCensorship: settings.antiCensorship,
             }));
-            console.log('VPN settings loaded from server');
+            console.log('VPN settings loaded from server:', settings);
           }
         } catch (settingsError) {
           console.error('Error loading VPN settings:', settingsError);

@@ -76,8 +76,9 @@ export default function SecuritySettingsCard() {
         const data = await response.json();
         console.log('Setting updated successfully, response:', data);
         
-        // Update global VPN state
-        vpnState.updateSettings(setting);
+        // Update global VPN state with server response data instead of request data
+        // This ensures we're using the values actually saved by the server
+        vpnState.updateSettings(data);
         
         toast({
           title: 'Setting Updated',
