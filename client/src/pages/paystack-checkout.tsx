@@ -1,18 +1,59 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, ArrowLeft, CheckCircle, CreditCard } from 'lucide-react';
+import { Loader2, ArrowLeft, CheckCircle, CreditCard, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { apiRequest } from '@/lib/queryClient';
+
+// Form validation schema
+const billingSchema = z.object({
+  cardName: z.string().min(3, "Cardholder name is required"),
+  cardNumber: z.string().regex(/^\d{16}$/, "Card number must be 16 digits"),
+  expiryDate: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Expiry date must be in format MM/YY"),
+  cvv: z.string().regex(/^\d{3,4}$/, "CVV must be 3 or 4 digits"),
+  address: z.string().min(5, "Address is required"),
+  city: z.string().min(2, "City is required"),
+  state: z.string().min(2, "State/Province is required"),
+  zipCode: z.string().min(3, "ZIP/Postal code is required"),
+  country: z.string().min(2, "Country is required"),
+});
+
+type BillingFormData = z.infer<typeof billingSchema>;
 
 export default function PaystackCheckout() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [planName, setPlanName] = useState<string>('');
+  const [planRef, setPlanRef] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+
+  // Initialize form
+  const form = useForm<BillingFormData>({
+    resolver: zodResolver(billingSchema),
+    defaultValues: {
+      cardName: '',
+      cardNumber: '',
+      expiryDate: '',
+      cvv: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: '',
+    },
+  });
 
   // Parse URL parameters
   useEffect(() => {
@@ -22,33 +63,97 @@ export default function PaystackCheckout() {
     
     if (!plan || !ref) {
       setError('Invalid payment information. Please try again.');
-      setIsLoading(false);
       return;
     }
     
     setPlanName(plan);
-    
-    // Simulate Paystack payment process
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setIsCompleted(true);
-      
-      // After "successful" payment, refresh subscription data
-      queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-      
-      toast({
-        title: 'Payment Successful',
-        description: `Your ${plan} subscription is now active!`,
-        variant: 'default',
-      });
-    }, 2000);
-    
-    return () => clearTimeout(timer);
-  }, [toast]);
+    setPlanRef(ref);
+  }, []);
+
+  const handleBackToSubscription = () => {
+    setLocation('/subscription');
+  };
 
   const handleBackToDashboard = () => {
     setLocation('/dashboard');
+  };
+
+  const handleSubmitBilling = async (data: BillingFormData) => {
+    setIsProcessing(true);
+    
+    try {
+      // In a real implementation, this would send data to Paystack API
+      // For demo purposes, we'll simulate the API call
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Mock API response (in real implementation, this would call Paystack API)
+      const mockResponse = {
+        success: true,
+        reference: planRef,
+        message: "Payment successful",
+        plan: planName
+      };
+      
+      // After "successful" payment, update subscription status
+      // In a real implementation, this would verify payment status with Paystack
+      await apiRequest('POST', '/api/confirm-subscription', {
+        reference: planRef,
+        plan: planName
+      });
+      
+      // Update subscription data in UI
+      queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      
+      // Show success message
+      toast({
+        title: 'Payment Successful',
+        description: `Your ${planName} subscription is now active!`,
+        variant: 'default',
+      });
+      
+      setIsCompleted(true);
+      setIsProcessing(false);
+    } catch (err: any) {
+      console.error('Payment error:', err);
+      toast({
+        title: 'Payment Failed',
+        description: err.message || 'There was a problem processing your payment.',
+        variant: 'destructive',
+      });
+      setIsProcessing(false);
+    }
+  };
+
+  // Format card number with spaces
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    const matches = v.match(/\d{4,16}/g);
+    const match = matches && matches[0] || '';
+    const parts = [];
+
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+
+    if (parts.length) {
+      return parts.join(' ');
+    } else {
+      return value;
+    }
+  };
+
+  // Format expiry date
+  const formatExpiryDate = (value: string) => {
+    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    
+    if (v.length > 2) {
+      return `${v.substring(0, 2)}/${v.substring(2, 4)}`;
+    }
+    
+    return v;
   };
 
   if (error) {
@@ -63,7 +168,7 @@ export default function PaystackCheckout() {
             <p className="text-destructive">{error}</p>
           </CardContent>
           <CardFooter>
-            <Button onClick={() => setLocation('/subscription')}>
+            <Button onClick={handleBackToSubscription}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Return to Subscription Page
             </Button>
@@ -73,26 +178,15 @@ export default function PaystackCheckout() {
     );
   }
 
-  return (
-    <div className="container py-10">
-      <Card className="max-w-md mx-auto">
-        <CardHeader>
-          <CardTitle>
-            {isLoading ? 'Processing Payment' : 'Payment Complete'}
-          </CardTitle>
-          <CardDescription>
-            {isLoading 
-              ? 'Please wait while we process your payment' 
-              : `Your ${planName} subscription is now active`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center py-10">
-          {isLoading ? (
-            <div className="text-center">
-              <Loader2 className="h-16 w-16 animate-spin text-primary mx-auto mb-4" />
-              <p>Connecting to payment gateway...</p>
-            </div>
-          ) : (
+  if (isCompleted) {
+    return (
+      <div className="container py-10">
+        <Card className="max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle>Payment Complete</CardTitle>
+            <CardDescription>Your {planName} subscription is now active</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center py-10">
             <div className="text-center">
               <div className="bg-primary/10 p-3 rounded-full inline-block mb-4">
                 <CheckCircle className="h-16 w-16 text-primary" />
@@ -106,15 +200,282 @@ export default function PaystackCheckout() {
                 <span>Secured by Paystack</span>
               </div>
             </div>
-          )}
-        </CardContent>
-        {!isLoading && (
+          </CardContent>
           <CardFooter>
             <Button onClick={handleBackToDashboard} className="w-full">
               Go to Dashboard
             </Button>
           </CardFooter>
-        )}
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container py-10">
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Lock className="mr-2 h-5 w-5" />
+            Secure Payment via Paystack
+          </CardTitle>
+          <CardDescription>
+            Complete your {planName} subscription payment
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmitBilling)} className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium mb-4">Card Information</h3>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="cardName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cardholder Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="John Smith"
+                            {...field}
+                            disabled={isProcessing}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="cardNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Card Number</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="4111 1111 1111 1111"
+                            {...field}
+                            value={formatCardNumber(field.value)}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\s/g, '');
+                              field.onChange(value);
+                            }}
+                            maxLength={19}
+                            disabled={isProcessing}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="expiryDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Expiry Date</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="MM/YY"
+                              {...field}
+                              value={formatExpiryDate(field.value)}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\//g, '');
+                                field.onChange(value);
+                              }}
+                              maxLength={5}
+                              disabled={isProcessing}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="cvv"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>CVV</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="123"
+                              type="password"
+                              {...field}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/[^0-9]/g, '');
+                                field.onChange(value);
+                              }}
+                              maxLength={4}
+                              disabled={isProcessing}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h3 className="text-lg font-medium mb-4">Billing Address</h3>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="123 Main St"
+                            {...field}
+                            disabled={isProcessing}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>City</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="New York"
+                              {...field}
+                              disabled={isProcessing}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>State/Province</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="NY"
+                              {...field}
+                              disabled={isProcessing}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="zipCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>ZIP/Postal Code</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="10001"
+                              {...field}
+                              disabled={isProcessing}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="country"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Country</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="United States"
+                              {...field}
+                              disabled={isProcessing}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <div className="rounded-md bg-muted p-4 mb-4">
+                  <div className="flex justify-between mb-2">
+                    <span>Plan</span>
+                    <span className="font-medium capitalize">{planName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Reference</span>
+                    <span className="font-mono text-xs">{planRef}</span>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleBackToSubscription}
+                    disabled={isProcessing}
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
+                  </Button>
+                  
+                  <Button 
+                    type="submit" 
+                    disabled={isProcessing}
+                    className="min-w-[150px]"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      'Complete Payment'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+        <CardFooter className="flex-col space-y-4">
+          <div className="w-full flex items-center justify-center space-x-2 text-xs text-muted-foreground border-t pt-4">
+            <Lock className="h-3 w-3" />
+            <span>All transactions are secure and encrypted</span>
+          </div>
+          <div className="flex items-center justify-center">
+            <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Secured by Paystack</span>
+          </div>
+        </CardFooter>
       </Card>
     </div>
   );

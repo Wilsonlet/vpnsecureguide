@@ -704,6 +704,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Handle Paystack payment confirmation
+  app.post("/api/confirm-subscription", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      const { reference, plan } = req.body;
+      if (!reference || !plan) {
+        return res.status(400).json({ message: "Reference and plan are required" });
+      }
+      
+      // In a real implementation, you would verify the payment with Paystack API
+      // using the reference to confirm the transaction status
+      
+      // For demo purposes, we'll assume the payment was successful
+      
+      // Get the subscription plan
+      const subscriptionPlan = await storage.getSubscriptionPlanByName(plan);
+      if (!subscriptionPlan) {
+        return res.status(404).json({ message: "Subscription plan not found" });
+      }
+      
+      // Update user's subscription in the database
+      await storage.updateUserSubscription(req.user.id, plan);
+      
+      // Return success response
+      res.json({
+        success: true,
+        message: `Subscription to ${plan} plan confirmed`,
+        plan
+      });
+    } catch (error: any) {
+      console.error("Confirm subscription error:", error);
+      res.status(500).json({ message: "Error confirming subscription", error: error.message });
+    }
+  });
+
   // Update to free subscription endpoint (no payment required)
   app.post("/api/update-free-subscription", async (req, res, next) => {
     try {
