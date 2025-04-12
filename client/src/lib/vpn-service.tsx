@@ -113,62 +113,67 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       try {
         console.log('VpnService: Fetching initial user data and settings');
         
-        // Fetch user subscription
-        const userResponse = await fetch('/api/user', {
-          credentials: 'include',
-        });
-        
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          if (userData.subscription) {
-            setState(currentState => ({
-              ...currentState,
-              subscription: userData.subscription
-            }));
-            console.log('User subscription loaded:', userData.subscription);
-          }
-        } else {
-          // If the user isn't authenticated, we'll gracefully handle it
-          console.log('VpnService: User not authenticated or API error', userResponse.status);
-          // Don't try to fetch settings if user isn't authenticated
-          return;
-        }
-        
-        // Fetch user settings only if user is authenticated
+        // Check if we're on a network
         try {
-          const settingsResponse = await fetch('/api/settings', {
+          // Fetch user subscription
+          const userResponse = await fetch('/api/user', {
             credentials: 'include',
           });
           
-          if (settingsResponse.ok) {
-            const settings = await settingsResponse.json();
-            
-            // Map server field names to client field names
-            const mappedSettings = {
-              protocol: settings.preferredProtocol,
-              encryption: settings.preferredEncryption,
-              killSwitch: settings.killSwitch,
-              dnsLeakProtection: settings.dnsLeakProtection,
-              doubleVpn: settings.doubleVpn,
-              obfuscation: settings.obfuscation,
-              antiCensorship: settings.antiCensorship,
-            };
-            
-            console.log('VpnService: Server settings loaded:', settings);
-            console.log('VpnService: Mapped to client settings:', mappedSettings);
-            
-            setState(currentState => ({
-              ...currentState,
-              ...mappedSettings
-            }));
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            if (userData.subscription) {
+              setState(currentState => ({
+                ...currentState,
+                subscription: userData.subscription
+              }));
+              console.log('User subscription loaded:', userData.subscription);
+            }
           } else {
-            console.log('VpnService: Unable to fetch settings, status:', settingsResponse.status);
+            // If the user isn't authenticated, we'll gracefully handle it
+            console.log('VpnService: User not authenticated or API error', userResponse.status);
+            // Don't try to fetch settings if user isn't authenticated
+            return;
           }
-        } catch (settingsError) {
-          console.error('Error loading VPN settings:', settingsError);
+          
+          // Fetch user settings only if user is authenticated
+          try {
+            const settingsResponse = await fetch('/api/settings', {
+              credentials: 'include',
+            });
+            
+            if (settingsResponse.ok) {
+              const settings = await settingsResponse.json();
+              
+              // Map server field names to client field names
+              const mappedSettings = {
+                protocol: settings.preferredProtocol,
+                encryption: settings.preferredEncryption,
+                killSwitch: settings.killSwitch,
+                dnsLeakProtection: settings.dnsLeakProtection,
+                doubleVpn: settings.doubleVpn,
+                obfuscation: settings.obfuscation,
+                antiCensorship: settings.antiCensorship,
+              };
+              
+              console.log('VpnService: Server settings loaded:', settings);
+              console.log('VpnService: Mapped to client settings:', mappedSettings);
+              
+              setState(currentState => ({
+                ...currentState,
+                ...mappedSettings
+              }));
+            } else {
+              console.log('VpnService: Unable to fetch settings, status:', settingsResponse.status);
+            }
+          } catch (settingsError) {
+            console.error('Error loading VPN settings:', settingsError);
+          }
+        } catch (networkError) {
+          console.error('Network error during initial data fetch:', networkError);
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Error in fetchUserDataAndSettings:', error);
       }
     };
     
@@ -176,29 +181,46 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     
     // Set up a periodic refresh of settings to keep in sync with server
     const refreshInterval = setInterval(() => {
-      fetch('/api/settings', { credentials: 'include' })
+      // First check if the user is authenticated
+      fetch('/api/user', { credentials: 'include' })
         .then(res => {
-          if (res.ok) return res.json();
-          throw new Error('Failed to refresh settings');
-        })
-        .then(settings => {
-          console.log('VpnService: Refreshed settings from server:', settings);
-          setState(currentState => ({
-            ...currentState,
-            protocol: settings.preferredProtocol,
-            encryption: settings.preferredEncryption,
-            killSwitch: settings.killSwitch,
-            dnsLeakProtection: settings.dnsLeakProtection,
-            doubleVpn: settings.doubleVpn,
-            obfuscation: settings.obfuscation,
-            antiCensorship: settings.antiCensorship,
-          }));
+          // Don't proceed with settings refresh if not authenticated
+          if (!res.ok) {
+            return;
+          }
+          
+          // User is authenticated, safe to refresh settings
+          return fetch('/api/settings', { credentials: 'include' })
+            .then(res => {
+              if (res.ok) return res.json();
+              
+              if (res.status === 401) {
+                console.log('VpnService: Not authenticated for settings refresh');
+                return null;
+              }
+              
+              throw new Error(`Failed to refresh settings: ${res.status}`);
+            })
+            .then(settings => {
+              // Skip update if we didn't get valid settings
+              if (!settings) return;
+              
+              console.log('VpnService: Refreshed settings from server:', settings);
+              setState(currentState => ({
+                ...currentState,
+                protocol: settings.preferredProtocol,
+                encryption: settings.preferredEncryption,
+                killSwitch: settings.killSwitch,
+                dnsLeakProtection: settings.dnsLeakProtection,
+                doubleVpn: settings.doubleVpn,
+                obfuscation: settings.obfuscation,
+                antiCensorship: settings.antiCensorship,
+              }));
+            });
         })
         .catch(err => {
-          // Only log if it's not an auth error (which happens when not logged in)
-          if (!err.message.includes('401')) {
-            console.error('Error refreshing settings:', err);
-          }
+          // Safely handle any network/fetch errors
+          console.error('Error during settings refresh cycle:', err);
         });
     }, 10000); // Refresh every 10 seconds
     
