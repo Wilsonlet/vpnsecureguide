@@ -1,0 +1,353 @@
+
+SecureVPN
+Free Plan
+
+
+WI
+STATUS
+Disconnected
+00:00:00
+
+Your IP:
+198.51.100.0
+Connect
+Disconnect
+NETWORK NODES
+View All
+
+Netherlands
+Amsterdam #1
+42 ms
+18%
+
+UK
+London #1
+58 ms
+25%
+
+Germany
+Frankfurt #1
+48 ms
+12%
+
+US
+New York #1
+120 ms
+35%
+
+Singapore
+Singapore #1
+160 ms
+22%
+
+Nigeria
+Lagos #1
+145 ms
+10%
+
+South Africa
+Cape Town #1
+180 ms
+5%
+
+UAE
+Dubai #1
+130 ms
+15%
+Global Server Network
+Server Region:
+
+All Regions
+Netherlands
+42 ms
+•
+18% load
+
+UK
+58 ms
+•
+25% load
+
+Germany
+48 ms
+•
+12% load
+
+US
+120 ms
+•
+35% load
+
+Singapore
+160 ms
+•
+22% load
+
+Nigeria
+145 ms
+•
+10% load
+
+South Africa
+180 ms
+•
+5% load
+
+UAE
+130 ms
+•
+15% load
+
+France
+50 ms
+•
+20% load
+
+Spain
+55 ms
+•
+15% load
+
+Sweden
+60 ms
+•
+18% load
+
+Switzerland
+45 ms
+•
+10% load
+
+US
+110 ms
+•
+40% load
+
+US
+100 ms
+•
+30% load
+
+Canada
+90 ms
+•
+25% load
+
+Mexico
+130 ms
+•
+20% load
+
+Japan
+150 ms
+•
+30% load
+
+Australia
+200 ms
+•
+15% load
+
+South Korea
+140 ms
+•
+25% load
+
+India
+170 ms
+•
+35% load
+
+Kenya
+190 ms
+•
+12% load
+
+Egypt
+160 ms
+•
+18% load
+
+Turkey
+140 ms
+•
+22% load
+
+Israel
+150 ms
+•
+15% load
+
+Saudi Arabia
+155 ms
+•
+10% load
+
+Netherlands
+45 ms
+•
+10% load
+
+UK
+62 ms
+•
+15% load
+
+US
+125 ms
+•
+20% load
+
+Singapore
+165 ms
+•
+12% load
+
+UK
+180 ms
+•
+15% load
+
+US
+150 ms
+•
+18% load
+
+Connection Settings
+VPN Protocol
+
+WireGuard
+Encryption Method
+
+ChaCha20-Poly1305 (Premium)
+Save Settings
+Settings saved successfully at 6:48:04 AM
+Security Features
+Kill Switch
+Block internet if VPN disconnects
+
+
+DNS Leak Protection
+Use secure DNS servers only
+
+
+Double VPN
+Route through two servers
+
+
+Obfuscation
+Hide VPN traffic pattern
+
+
+Anti-Censorship
+Additional protection for restricted regions
+
+
+Usage Statistics
+
+Last 7 Days
+11.45 TB
+Total data transferred
+
+↑ 4.61 TB Upload
+
+↓ 6.84 TB Download
+
+Sat
+Sun
+Mon
+Tue
+Wed
+Thu
+Fri
+Upload
+Download
+Premium Plan Quota
+
+11.45 TB of 250 GB used (4689%)
+
+View Details
+Smart Mode & Apps
+
+Choose which apps and websites use the VPN connection.
+
+Split Tunneling
+
+Include Mode
+Only selected applications will use the VPN connection.
+
+Google Chrome
+Web Browser
+
+
+Firefox
+Web Browser
+
+
+Terminal
+System
+
+
+Mail
+Email Client
+
+
+Spotify
+Music Streaming
+
+
+
+Add Application
+Kill Switch Ready
+Kill Switch Protection
+Enable Kill Switch
+
+Block all internet access if VPN disconnects unexpectedly
+
+
+When activated, the kill switch will prevent all internet traffic outside the VPN tunnel. This ensures your real IP address is never exposed, even if the VPN connection drops.
+Activate Now
+Dashboard
+Servers
+Plans
+Settings
+Account
+SecureVPN
+Military-grade VPN service providing secure, private internet access worldwide.
+
+Quick Links
+Dashboard
+Settings
+Servers
+Subscription
+Support
+Resources
+Security Guide
+Privacy Policy
+Terms of Service
+FAQ
+Blog
+Contact Us
+Need help with your VPN connection?
+
+
+Contact Support
+© 2025 SecureVPN. All rights reserved.
+
+Privacy Policy
+Terms of Service
+Cookie Policy
+[plugin:runtime-error-plugin] Failed to fetch
+/home/runner/workspace/client/src/lib/vpn-service.tsx:628:24
+626|        const safeFetch = async (url: string, options: RequestInit = {}): Promise<Response | null> => {
+627|          try {
+628|            return await fetch(url, options);
+   |                         ^
+629|          } catch (error) {
+630|            console.error(`Network error fetching ${url}:`, error);
+
+    at safeFetch /home/runner/workspace/client/src/lib/vpn-service.tsx:628:24
+    at Object.updateSettings /home/runner/workspace/client/src/lib/vpn-service.tsx:712:9
+    at /home/runner/workspace/client/src/pages/dashboard.tsx:93:16
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.js.

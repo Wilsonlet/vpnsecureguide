@@ -622,14 +622,35 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       
       const now = Date.now();
       
-      // Safety wrapper for fetch calls
+      // Enhanced safety wrapper for fetch calls with timeout and proper error handling
       const safeFetch = async (url: string, options: RequestInit = {}): Promise<Response | null> => {
-        try {
-          return await fetch(url, options);
-        } catch (error) {
-          console.error(`Network error fetching ${url}:`, error);
-          return null;
-        }
+        // Use a more structured try/catch with additional timeout protection
+        return new Promise((resolve) => {
+          // Create a timeout to prevent hanging requests
+          const timeoutId = setTimeout(() => {
+            console.warn(`Request to ${url} timed out after 5000ms`);
+            resolve(null);
+          }, 5000);
+          
+          // Wrap the fetch in try/catch and handle all promise states
+          try {
+            fetch(url, options)
+              .then(response => {
+                clearTimeout(timeoutId);
+                resolve(response);
+              })
+              .catch(error => {
+                clearTimeout(timeoutId);
+                console.error(`Network error fetching ${url}:`, error);
+                resolve(null); // Never reject, always resolve with null for errors
+              });
+          } catch (syncError) {
+            // Handle any synchronous errors in the fetch call itself
+            clearTimeout(timeoutId);
+            console.error(`Synchronous error in fetch for ${url}:`, syncError);
+            resolve(null); // Never reject, always resolve with null for errors
+          }
+        });
       };
       
       // Safe function to sync protocol
