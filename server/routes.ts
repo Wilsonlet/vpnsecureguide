@@ -541,7 +541,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateStripeCustomerId(user.id, customerId);
       }
       
-      // If there's no Stripe price ID, return error
+      // Special handling for free plan
+      if (plan.name === 'free' || plan.price === 0) {
+        // Free plan - just update the user's subscription without payment
+        await storage.updateUserSubscription(user.id, plan.name);
+        
+        // Return success without client secret
+        return res.json({
+          success: true,
+          message: 'Subscribed to free plan successfully',
+          plan: plan.name
+        });
+      }
+      
+      // If there's no Stripe price ID for a paid plan, return error
       if (!plan.stripePriceId) {
         return res.status(400).json({ message: "This plan is not available for subscription" });
       }

@@ -33,21 +33,23 @@ export default function SubscriptionPage() {
     },
     onSuccess: (data) => {
       if (data.clientSecret) {
-        // Redirect to checkout with Stripe
+        // Redirect to checkout with Stripe for paid plans
         window.location.href = `/checkout?client_secret=${data.clientSecret}&subscription_id=${data.subscriptionId}`;
       } else {
         // Free plan or other non-payment scenario
         toast({
           title: 'Subscription Updated',
-          description: 'Your subscription has been updated successfully.',
+          description: data.message || 'Your subscription has been updated successfully.',
           variant: 'default',
         });
         
         // Refresh the subscription data
         queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
         queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+        
+        // For free plan, stay on the subscription page
+        setProcessingPlanId(null);
       }
-      setProcessingPlanId(null);
     },
     onError: (error: Error) => {
       toast({
