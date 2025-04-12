@@ -645,6 +645,61 @@ verb 3
   /**
    * Get connection status and metrics for a user
    */
+  // Helper method to get a simulated country for a server host
+  private getSimulatedCountryForServer(host: string): string {
+    // In a real implementation, this would be determined by the actual server location
+    // For simulation, we'll assign countries based on server hostname patterns
+    
+    if (host.includes('amsterdam') || host.includes('nl')) {
+      return 'Netherlands';
+    } else if (host.includes('london') || host.includes('uk')) {
+      return 'United Kingdom';
+    } else if (host.includes('frankfurt') || host.includes('de')) {
+      return 'Germany';
+    } else if (host.includes('singapore') || host.includes('sg')) {
+      return 'Singapore';
+    } else if (host.includes('newyork') || host.includes('us')) {
+      return 'United States';
+    } else if (host.includes('lagos') || host.includes('ng')) {
+      return 'Nigeria';
+    } else if (host.includes('johannesburg') || host.includes('za')) {
+      return 'South Africa';
+    } else if (host.includes('dubai') || host.includes('ae')) {
+      return 'United Arab Emirates';
+    }
+    
+    // Default to a random country if no pattern matches
+    const countries = ['Netherlands', 'Germany', 'United States', 'Singapore', 'United Kingdom'];
+    return countries[Math.floor(Math.random() * countries.length)];
+  }
+  
+  // Helper method to generate a simulated IP for a given country
+  private getSimulatedIPForCountry(country: string): string {
+    // In a real implementation, this would be the actual IP from the VPN server
+    // For simulation, we'll generate IP ranges that look like they're from those countries
+    
+    switch (country) {
+      case 'Netherlands':
+        return `31.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 254) + 1}`;
+      case 'Germany':
+        return `46.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 254) + 1}`;
+      case 'United States':
+        return `64.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 254) + 1}`;
+      case 'Singapore':
+        return `103.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 254) + 1}`;
+      case 'United Kingdom':
+        return `51.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 254) + 1}`;
+      case 'Nigeria':
+        return `102.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 254) + 1}`;
+      case 'South Africa':
+        return `41.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 254) + 1}`;
+      case 'United Arab Emirates':
+        return `94.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 254) + 1}`;
+      default:
+        return `192.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 254) + 1}`;
+    }
+  }
+  
   getConnectionStatus(userId: number): any {
     const connection = this.activeProxies.get(userId);
     if (!connection) {
@@ -665,6 +720,27 @@ verb 3
     // Measure traffic passing through the tunnel
     this.updateTrafficStats(userId);
     
+    // For simulated VPN tunnels in Replit environment, we want to show a more complete
+    // representation of what the connection would look like in a real environment
+    let simulatedTunnelDetails = {};
+    
+    if (connection.config.type === 'wireguard' || 
+        connection.config.type === 'openvpn' || 
+        connection.config.type === 'shadowsocks') {
+      // Generate a realistic external IP for the simulation
+      // In a real VPN, this would be the actual exit IP from the VPN server
+      const simulatedCountry = this.getSimulatedCountryForServer(connection.config.host);
+      const simulatedIP = this.getSimulatedIPForCountry(simulatedCountry);
+      
+      simulatedTunnelDetails = {
+        simulatedIP,
+        simulatedCountry,
+        protocol: connection.config.protocol,
+        encryption: connection.config.encryption,
+        simulated: true  // Clearly mark that this is a simulation
+      };
+    }
+    
     return {
       tunnelActive: true,
       uptime,
@@ -674,7 +750,8 @@ verb 3
       },
       tunnelIp: connection.tunnelIp,
       tunnelPort: connection.tunnelPort,
-      lastActive: connection.lastActive
+      lastActive: connection.lastActive,
+      ...simulatedTunnelDetails
     };
   }
 
