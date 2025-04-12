@@ -14,6 +14,7 @@ export default function SecuritySettingsCard() {
   const [dnsLeakProtection, setDnsLeakProtection] = useState(vpnState.dnsLeakProtection || false);
   const [doubleVpn, setDoubleVpn] = useState(vpnState.doubleVpn || false);
   const [obfuscation, setObfuscation] = useState(vpnState.obfuscation || false);
+  const [antiCensorship, setAntiCensorship] = useState(vpnState.antiCensorship || false);
   
   // Update local state when vpnState changes
   useEffect(() => {
@@ -21,11 +22,13 @@ export default function SecuritySettingsCard() {
     setDnsLeakProtection(vpnState.dnsLeakProtection || false);
     setDoubleVpn(vpnState.doubleVpn || false);
     setObfuscation(vpnState.obfuscation || false);
+    setAntiCensorship(vpnState.antiCensorship || false);
   }, [
     vpnState.killSwitch,
     vpnState.dnsLeakProtection,
     vpnState.doubleVpn,
-    vpnState.obfuscation
+    vpnState.obfuscation,
+    vpnState.antiCensorship
   ]);
 
   // Handle toggle changes
@@ -47,6 +50,11 @@ export default function SecuritySettingsCard() {
   const handleObfuscationChange = async (checked: boolean) => {
     setObfuscation(checked);
     await updateSetting({ obfuscation: checked });
+  };
+  
+  const handleAntiCensorshipChange = async (checked: boolean) => {
+    setAntiCensorship(checked);
+    await updateSetting({ antiCensorship: checked });
   };
 
   // Update a single setting on the server
@@ -86,6 +94,7 @@ export default function SecuritySettingsCard() {
       if ('dnsLeakProtection' in setting) setDnsLeakProtection(!setting.dnsLeakProtection);
       if ('doubleVpn' in setting) setDoubleVpn(!setting.doubleVpn);
       if ('obfuscation' in setting) setObfuscation(!setting.obfuscation);
+      if ('antiCensorship' in setting) setAntiCensorship(!setting.antiCensorship);
     }
   };
 
@@ -124,12 +133,24 @@ export default function SecuritySettingsCard() {
             <ToggleSwitch checked={doubleVpn} onChange={handleDoubleVpnChange} disabled={vpnState.connected} />
           </div>
           
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h4 className="font-medium">Obfuscation</h4>
               <p className="text-sm text-gray-400 mt-1">Hide VPN traffic pattern</p>
             </div>
             <ToggleSwitch checked={obfuscation} onChange={handleObfuscationChange} disabled={vpnState.connected} />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium">Anti-Censorship</h4>
+              <p className="text-sm text-gray-400 mt-1">Additional protection for restricted regions</p>
+            </div>
+            <ToggleSwitch 
+              checked={antiCensorship} 
+              onChange={handleAntiCensorshipChange} 
+              disabled={vpnState.connected || !obfuscation} 
+            />
           </div>
         </CardContent>
       </Card>
