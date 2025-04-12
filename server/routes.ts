@@ -524,7 +524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           success: true,
           paymentProvider: 'paystack',
           reference,
-          redirectUrl: `/paystack-checkout?plan=${planName}&ref=${reference}`,
+          authorizationUrl: `/paystack-checkout?plan=${planName}&ref=${reference}`,
           planName,
           price: subscriptionPlan.price / 100 // Convert from cents to dollars for display
         });
@@ -723,12 +723,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // 2. Get the authorization URL
         // 3. Return it to the client for redirection
         
-        // For now, we'll just create a mock response to demonstrate the flow
+        // Create a reference for the transaction
+        const reference = `paystack_${Date.now()}_${user.id}`;
+        
+        // Create the response data
         const mockPaystackData = {
-          reference: `paystack_${Date.now()}_${user.id}`,
+          reference,
           paymentMethod: 'paystack',
-          // In a real implementation, this would be the generated authorization URL
-          authorizationUrl: `/paystack-checkout?plan=${plan.name}&user=${user.id}&ref=${Date.now()}`
+          // Generate actual authorization URL to our checkout page
+          authorizationUrl: `/paystack-checkout?plan=${plan.name}&user=${user.id}&ref=${reference}&price=${plan.price / 100}`
         };
         
         // Store the reference in user metadata or a separate table

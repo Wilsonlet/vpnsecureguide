@@ -43,9 +43,12 @@ export default function SubscriptionPage() {
         if (data.paymentProvider === 'stripe' && data.url) {
           // Redirect to Stripe hosted checkout
           window.location.href = data.url;
-        } else if (data.paymentProvider === 'paystack' && data.redirectUrl) {
-          // Redirect to our Paystack checkout page
-          window.location.href = data.redirectUrl;
+        } else if (data.paymentProvider === 'paystack' && data.authorizationUrl) {
+          // Redirect to our Paystack checkout page with plan price
+          const selectedPlan = plans.find((p: SubscriptionPlan) => p.name === data.planName);
+          const planPrice = selectedPlan ? (selectedPlan.price / 100) : 0; // Convert from cents to dollars
+          const checkoutUrl = `${data.authorizationUrl}&price=${planPrice}`;
+          window.location.href = checkoutUrl;
         } else if (data.redirectUrl) {
           // Free plan or other non-payment scenario with redirect
           window.location.href = data.redirectUrl;

@@ -83,12 +83,14 @@ export default function PaystackCheckout() {
 
   // State for plan price
   const [planPrice, setPlanPrice] = useState<number>(0);
+  const [planDetails, setPlanDetails] = useState<any>(null);
   
   // Parse URL parameters and fetch plan price
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const plan = urlParams.get('plan');
     const ref = urlParams.get('ref');
+    const price = urlParams.get('price');
     
     if (!plan || !ref) {
       setError('Invalid payment information. Please try again.');
@@ -98,34 +100,37 @@ export default function PaystackCheckout() {
     setPlanName(plan);
     setPlanRef(ref);
     
-    // Get the plan price from the subscription plans in the database
-    const fetchPlanPrice = async () => {
+    // Get the plan price and details
+    const fetchPlanData = async () => {
       try {
-        // In a real app, we would fetch the price from the server
-        // For demo purposes, we'll use hardcoded prices based on the plan name
-        let price = 0;
-        switch (plan) {
-          case 'basic':
-            price = 4.99;
-            break;
-          case 'premium':
-            price = 9.99;
-            break;
-          case 'ultimate':
-            price = 14.99;
-            break;
-          default:
-            price = 0;
+        // First, try to get price from URL parameter
+        if (price) {
+          setPlanPrice(parseFloat(price));
+        } else {
+          // If not in URL, fetch from API
+          const response = await fetch(`/api/subscription-plans`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch subscription plans');
+          }
+          
+          const plans = await response.json();
+          const planData = plans.find((p: any) => p.name === plan);
+          
+          if (planData) {
+            setPlanDetails(planData);
+            // Convert price from cents to dollars for display
+            setPlanPrice(planData.price / 100);
+          } else {
+            throw new Error('Plan not found');
+          }
         }
-        
-        setPlanPrice(price);
       } catch (error) {
-        console.error('Error fetching plan price:', error);
+        console.error('Error fetching plan data:', error);
         setError('Could not fetch plan price. Please try again.');
       }
     };
     
-    fetchPlanPrice();
+    fetchPlanData();
   }, []);
 
   const handleBackToSubscription = () => {
