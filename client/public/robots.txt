@@ -1,0 +1,15 @@
+# robots.txt file for SecureVPN
+
+User-agent: *
+Allow: /
+Allow: /auth
+Allow: /subscription
+Allow: /servers
+Allow: /settings
+Allow: /support
+Disallow: /admin
+Disallow: /checkout
+Disallow: /account
+
+# Sitemap location
+Sitemap: https://securevpn.replit.app/sitemap.xml

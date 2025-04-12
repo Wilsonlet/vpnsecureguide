@@ -1,0 +1,1 @@
+export { default as SeoHead } from './seo-head';
