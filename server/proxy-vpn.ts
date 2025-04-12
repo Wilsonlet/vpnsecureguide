@@ -16,7 +16,7 @@ const execAsync = promisify(exec);
 
 // Interface for VPN proxy configuration
 interface ProxyConfig {
-  type: 'socks' | 'http' | 'https';
+  type: 'socks' | 'http' | 'https' | 'wireguard' | 'openvpn' | 'shadowsocks';
   host: string;
   port: number;
   username?: string;
@@ -133,19 +133,6 @@ class ProxyVpnService {
       const serverIndex = session.serverId - 1;
       const proxyServer = this.proxyServers[serverIndex] || this.proxyServers[0];
       
-      const proxyConfig: ProxyConfig = {
-        type: proxyServer.type as 'socks' | 'http' | 'https',
-        host: proxyServer.host,
-        port: proxyServer.port,
-        protocol: session.protocol,
-        encryption: session.encryption
-      };
-
-      if (proxyServer.username && proxyServer.password) {
-        proxyConfig.username = proxyServer.username;
-        proxyConfig.password = proxyServer.password;
-      }
-      
       // Allocate a port for the local proxy tunnel endpoint
       // Use a port between 10000-19999 based on the session ID to avoid conflicts
       const tunnelPort = 10000 + (session.id % 10000);
@@ -156,6 +143,191 @@ class ProxyVpnService {
       const octet3 = Math.floor((session.id * 17) % 255);
       const octet4 = Math.floor((session.id * 23) % 255);
       const tunnelIp = `${octet1}.${octet2}.${octet3}.${octet4}`;
+
+      let proxyConfig: ProxyConfig;
+      let connectionDetails: any = {};
+      
+      // Handle different VPN protocols
+      if (session.protocol === 'wireguard') {
+        // WireGuard implementation with real tunneling
+        proxyConfig = {
+          type: 'wireguard',
+          host: proxyServer.host,
+          port: 51820, // Default WireGuard port
+          protocol: session.protocol,
+          encryption: session.encryption
+        };
+        
+        // Create WireGuard config directory
+        const wgConfigDir = path.join(this.proxyConfigPath, `wg-${session.userId}`);
+        if (!fs.existsSync(wgConfigDir)) {
+          fs.mkdirSync(wgConfigDir, { recursive: true });
+        }
+        
+        // Generate WireGuard keys if they don't exist
+        const privateKeyPath = path.join(wgConfigDir, 'privatekey');
+        const publicKeyPath = path.join(wgConfigDir, 'publickey');
+        
+        if (!fs.existsSync(privateKeyPath) || !fs.existsSync(publicKeyPath)) {
+          await execAsync(`wg genkey | tee ${privateKeyPath} | wg pubkey > ${publicKeyPath}`);
+        }
+        
+        // Read the keys
+        const privateKey = fs.readFileSync(privateKeyPath, 'utf8').trim();
+        const publicKey = fs.readFileSync(publicKeyPath, 'utf8').trim();
+        
+        // Create WireGuard configuration
+        const clientIP = `192.168.6.${session.id % 250 + 2}/24`; // Ensure client IPs are unique
+        const wgConfig = `[Interface]
+Address = ${clientIP}
+PrivateKey = ${privateKey}
+DNS = 1.1.1.1, 8.8.8.8
+
+[Peer]
+PublicKey = ${publicKey}
+AllowedIPs = 0.0.0.0/0, ::/0
+Endpoint = ${proxyServer.host}:51820
+PersistentKeepalive = 25
+`;
+        const wgConfPath = path.join(wgConfigDir, 'wg0.conf');
+        fs.writeFileSync(wgConfPath, wgConfig);
+        
+        // Add extra details for the client
+        connectionDetails = {
+          protocol: 'wireguard',
+          encryption: session.encryption,
+          publicKey,
+          clientIP,
+          endpoint: `${proxyServer.host}:51820`,
+          configPath: wgConfPath
+        };
+      } 
+      else if (session.protocol === 'openvpn_udp' || session.protocol === 'openvpn_tcp') {
+        // OpenVPN implementation
+        const protocol = session.protocol === 'openvpn_tcp' ? 'tcp' : 'udp';
+        const port = session.protocol === 'openvpn_tcp' ? 443 : 1194;
+        
+        proxyConfig = {
+          type: 'openvpn',
+          host: proxyServer.host,
+          port,
+          protocol: session.protocol,
+          encryption: session.encryption
+        };
+        
+        // Create OpenVPN config directory
+        const ovpnConfigDir = path.join(this.proxyConfigPath, `ovpn-${session.userId}`);
+        if (!fs.existsSync(ovpnConfigDir)) {
+          fs.mkdirSync(ovpnConfigDir, { recursive: true });
+        }
+        
+        // Create OpenVPN configuration
+        const cipher = session.encryption === 'chacha20_poly1305' ? 'AES-256-GCM' : 'AES-256-CBC';
+        const ovpnConfig = `client
+dev tun
+proto ${protocol}
+remote ${proxyServer.host} ${port}
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+cipher ${cipher}
+auth SHA256
+tls-client
+tls-version-min 1.2
+tls-cipher TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384
+remote-cert-tls server
+verb 3
+`;
+        const ovpnConfPath = path.join(ovpnConfigDir, 'client.ovpn');
+        fs.writeFileSync(ovpnConfPath, ovpnConfig);
+        
+        // Add extra details for the client
+        connectionDetails = {
+          protocol: session.protocol,
+          encryption: session.encryption,
+          cipher,
+          remote: `${proxyServer.host}:${port}`,
+          configPath: ovpnConfPath
+        };
+      }
+      else if (session.protocol === 'shadowsocks') {
+        // Shadowsocks implementation
+        proxyConfig = {
+          type: 'shadowsocks',
+          host: proxyServer.host,
+          port: 8388, // Default Shadowsocks port
+          protocol: session.protocol,
+          encryption: session.encryption
+        };
+        
+        // Create Shadowsocks config directory
+        const ssConfigDir = path.join(this.proxyConfigPath, `ss-${session.userId}`);
+        if (!fs.existsSync(ssConfigDir)) {
+          fs.mkdirSync(ssConfigDir, { recursive: true });
+        }
+        
+        // Generate a password for Shadowsocks
+        const password = `ss_password_${Date.now()}_${Math.floor(Math.random() * 1000000)}`;
+        
+        // Map encryption methods from our app to Shadowsocks
+        let method = 'chacha20-ietf-poly1305'; // Default
+        if (session.encryption === 'aes_256_gcm') {
+          method = 'aes-256-gcm';
+        } else if (session.encryption === 'aes_256_cbc') {
+          method = 'aes-256-cfb';
+        }
+        
+        // Create Shadowsocks configuration
+        const ssConfig = {
+          server: proxyServer.host,
+          server_port: 8388,
+          local_address: "127.0.0.1",
+          local_port: tunnelPort,
+          password: password,
+          timeout: 300,
+          method: method,
+          fast_open: true,
+          mode: "tcp_and_udp"
+        };
+        
+        const ssConfPath = path.join(ssConfigDir, 'config.json');
+        fs.writeFileSync(ssConfPath, JSON.stringify(ssConfig, null, 2));
+        
+        // Add extra details for the client
+        connectionDetails = {
+          protocol: 'shadowsocks',
+          encryption: method,
+          server: proxyServer.host,
+          port: 8388,
+          password,
+          configPath: ssConfPath
+        };
+      }
+      else {
+        // Default fallback to SOCKS proxy
+        proxyConfig = {
+          type: proxyServer.type as 'socks' | 'http' | 'https' | 'wireguard' | 'openvpn' | 'shadowsocks',
+          host: proxyServer.host,
+          port: proxyServer.port,
+          protocol: session.protocol,
+          encryption: session.encryption
+        };
+
+        if (proxyServer.username && proxyServer.password) {
+          proxyConfig.username = proxyServer.username;
+          proxyConfig.password = proxyServer.password;
+        }
+        
+        // Add basic details for the client
+        connectionDetails = {
+          protocol: session.protocol,
+          encryption: session.encryption,
+          type: proxyConfig.type,
+          proxyHost: proxyConfig.host,
+          proxyPort: proxyConfig.port
+        };
+      }
       
       // Create a connection entry
       const connection: ProxyConnection = {
@@ -173,29 +345,23 @@ class ProxyVpnService {
         }
       };
       
-      // Start the actual proxy process based on the type
+      // Start the actual proxy process based on the protocol
       await this.startProxyProcess(connection);
       
       // Store the connection
       this.activeProxies.set(session.userId, connection);
       
-      console.log(`Proxy connection established for user ${session.userId} on port ${tunnelPort}`);
+      console.log(`${proxyConfig.protocol} connection established for user ${session.userId} on port ${tunnelPort}`);
       
       // Return connection details to the client
       return {
         success: true,
         tunnelIp,
         serverIp: proxyServer.host,
-        serverCountry: proxyServer.country,
+        serverCountry: proxyServer.country || 'Unknown',
         port: tunnelPort,
         tunnelActive: true,
-        connectionDetails: {
-          protocol: session.protocol,
-          encryption: session.encryption,
-          type: proxyConfig.type,
-          proxyHost: proxyConfig.host,
-          proxyPort: proxyConfig.port
-        }
+        connectionDetails
       };
     } catch (error: any) {
       console.error(`Error starting proxy connection for user ${session.userId}:`, error);
@@ -313,8 +479,122 @@ class ProxyVpnService {
       const tunnelPort = connection.tunnelPort;
       const configPath = path.join(this.proxyConfigPath, `proxy-${connection.userId}.conf`);
       
-      // Different setup based on proxy type
-      if (config.type === 'socks') {
+      // Different setup based on VPN protocol type
+      if (config.type === 'wireguard') {
+        // Start WireGuard connection
+        const wgConfigDir = path.join(this.proxyConfigPath, `wg-${connection.userId}`);
+        const wgConfPath = path.join(wgConfigDir, 'wg0.conf');
+        
+        // Ensure WireGuard interface is down first
+        try {
+          await execAsync(`wg-quick down ${wgConfPath}`);
+        } catch (err) {
+          // It's ok if it fails, it might not be up yet
+        }
+        
+        // Bring up the WireGuard interface
+        console.log(`Starting WireGuard VPN for user ${connection.userId} using config ${wgConfPath}`);
+        const process = spawn('wg-quick', ['up', wgConfPath], {
+          detached: true,
+          stdio: 'ignore'
+        });
+        
+        // Store process handle
+        connection.process = process;
+        
+        // Detach the process so it doesn't exit when the parent does
+        process.unref();
+        
+        // Wait for the interface to come up
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Verify connection is working
+        const checkCommand = `ip addr show | grep wg0`;
+        const { stdout } = await execAsync(checkCommand);
+        
+        if (!stdout.includes('wg0')) {
+          throw new Error(`WireGuard interface failed to start for user ${connection.userId}`);
+        }
+        
+        // Setup forwarding for local applications
+        const forwarderCommand = `socat TCP-LISTEN:${tunnelPort},fork,reuseaddr EXEC:"socat STDIO SOCKS4A:127.0.0.1:0.0.0.0:0,socksport=9050"`;
+        const forwarderProcess = spawn('socat', forwarderCommand.split(' ').slice(1), {
+          detached: true,
+          stdio: 'ignore'
+        });
+        forwarderProcess.unref();
+        
+        console.log(`WireGuard VPN successfully started for user ${connection.userId}`);
+      } 
+      else if (config.type === 'openvpn') {
+        // Start OpenVPN connection
+        const ovpnConfigDir = path.join(this.proxyConfigPath, `ovpn-${connection.userId}`);
+        const ovpnConfPath = path.join(ovpnConfigDir, 'client.ovpn');
+        
+        console.log(`Starting OpenVPN for user ${connection.userId} using config ${ovpnConfPath}`);
+        const process = spawn('openvpn', ['--config', ovpnConfPath, '--daemon'], {
+          detached: true,
+          stdio: 'ignore'
+        });
+        
+        // Store process handle
+        connection.process = process;
+        
+        // Detach the process so it doesn't exit when the parent does
+        process.unref();
+        
+        // Wait for the interface to come up
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Verify connection is working
+        const checkCommand = `ip addr show | grep tun0`;
+        const { stdout } = await execAsync(checkCommand);
+        
+        if (!stdout.includes('tun0')) {
+          throw new Error(`OpenVPN interface failed to start for user ${connection.userId}`);
+        }
+        
+        // Setup forwarding for local applications
+        const forwarderCommand = `socat TCP-LISTEN:${tunnelPort},fork,reuseaddr EXEC:"socat STDIO SOCKS4A:127.0.0.1:0.0.0.0:0,socksport=9050"`;
+        const forwarderProcess = spawn('socat', forwarderCommand.split(' ').slice(1), {
+          detached: true,
+          stdio: 'ignore'
+        });
+        forwarderProcess.unref();
+        
+        console.log(`OpenVPN successfully started for user ${connection.userId}`);
+      }
+      else if (config.type === 'shadowsocks') {
+        // Start Shadowsocks connection
+        const ssConfigDir = path.join(this.proxyConfigPath, `ss-${connection.userId}`);
+        const ssConfPath = path.join(ssConfigDir, 'config.json');
+        
+        console.log(`Starting Shadowsocks for user ${connection.userId} using config ${ssConfPath}`);
+        const process = spawn('ss-local', ['-c', ssConfPath], {
+          detached: true,
+          stdio: 'ignore'
+        });
+        
+        // Store process handle
+        connection.process = process;
+        
+        // Detach the process so it doesn't exit when the parent does
+        process.unref();
+        
+        // Wait for Shadowsocks to start
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Verify the proxy is listening on the tunnel port
+        const checkCommand = `lsof -i :${tunnelPort}`;
+        const { stdout } = await execAsync(checkCommand);
+        
+        if (!stdout.includes(`TCP *:${tunnelPort}`)) {
+          throw new Error(`Shadowsocks failed to start listening on port ${tunnelPort}`);
+        }
+        
+        console.log(`Shadowsocks successfully started for user ${connection.userId} on port ${tunnelPort}`);
+      }
+      else if (config.type === 'socks') {
         // For SOCKS proxy, we'll use socat to create a tunnel
         let socatCommand = `socat TCP-LISTEN:${tunnelPort},fork,reuseaddr SOCKS4:${config.host}:0.0.0.0:0,socksport=${config.port}`;
         
@@ -329,7 +609,8 @@ class ProxyVpnService {
         
         // Detach the process so it doesn't exit when the parent does
         process.unref();
-      } else {
+      } 
+      else {
         // For HTTP proxy, create a ProxyChains config
         let proxyConfig = `strict_chain\n`;
         proxyConfig += `quiet_mode\n`;
@@ -363,20 +644,22 @@ class ProxyVpnService {
       }
       
       // Wait a moment for the proxy to start
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Verify the proxy is listening
-      const checkCommand = `lsof -i :${tunnelPort}`;
-      const { stdout } = await execAsync(checkCommand);
-      
-      if (!stdout.includes(`TCP *:${tunnelPort}`)) {
-        throw new Error(`Proxy failed to start listening on port ${tunnelPort}`);
+      // For non-VPN protocols, verify the proxy is listening
+      if (!['wireguard', 'openvpn'].includes(config.type)) {
+        const checkCommand = `lsof -i :${tunnelPort}`;
+        const { stdout } = await execAsync(checkCommand);
+        
+        if (!stdout.includes(`TCP *:${tunnelPort}`)) {
+          throw new Error(`Proxy failed to start listening on port ${tunnelPort}`);
+        }
       }
       
-      console.log(`Proxy successfully started on port ${tunnelPort} for user ${connection.userId}`);
+      console.log(`Connection successfully established for protocol ${config.protocol} for user ${connection.userId}`);
     } catch (error: any) {
-      console.error(`Error starting proxy process:`, error);
-      throw new Error(`Failed to start proxy process: ${error.message}`);
+      console.error(`Error starting VPN/proxy process:`, error);
+      throw new Error(`Failed to start connection process: ${error.message}`);
     }
   }
 
