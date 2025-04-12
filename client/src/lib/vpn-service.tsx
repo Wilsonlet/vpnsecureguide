@@ -706,34 +706,49 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       
       // Main execution wrapped in try/catch
       try {
-        // First check if user is authenticated
-        safeFetch('/api/user', { credentials: 'include' })
-          .then(res => {
-            if (!res || !res.ok) {
+        // Use a safer async IIFE (Immediately Invoked Function Expression)
+        // This ensures all async code is properly awaited and errors are caught
+        (async () => {
+          try {
+            // First check if user is authenticated
+            const userRes = await safeFetch('/api/user', { credentials: 'include' });
+            
+            if (!userRes || !userRes.ok) {
               console.log('VpnService: User not authenticated, skipping server sync');
-              return;
+              return; // Exit early if not authenticated
             }
             
-            // Sync protocol with server if we're updating it - with debounce
+            // Process protocol updates if needed
             if (settings.protocol && now - lastUpdateTimes.protocol > UPDATE_DEBOUNCE_MS) {
               lastUpdateTimes.protocol = now;
-              syncProtocol(settings.protocol);
+              // We await this but don't block UI, allowing it to complete in background
+              syncProtocol(settings.protocol).catch(err => {
+                console.error('Error in protocol sync (captured):', err);
+              });
             } else if (settings.protocol) {
               console.log(`VpnService: Skipping protocol server sync (within debounce period)`, settings.protocol);
             }
             
-            // Sync encryption with server if we're updating it - with debounce
+            // Process encryption updates if needed
             if (settings.encryption && now - lastUpdateTimes.encryption > UPDATE_DEBOUNCE_MS) {
               lastUpdateTimes.encryption = now;
-              syncEncryption(settings.encryption);
+              // We await this but don't block UI, allowing it to complete in background
+              syncEncryption(settings.encryption).catch(err => {
+                console.error('Error in encryption sync (captured):', err);
+              });
             } else if (settings.encryption) {
               console.log(`VpnService: Skipping encryption server sync (within debounce period)`, settings.encryption);
             }
-          })
-          .catch(err => {
-            console.error('Error checking authentication status:', err);
-          });
+          } catch (innerError) {
+            // This will catch any error inside the async IIFE
+            console.error('Error during settings sync execution:', innerError);
+          }
+        })().catch(promiseError => {
+          // This will catch any error in the IIFE itself
+          console.error('Promise error in settings sync:', promiseError);
+        });
       } catch (outerError) {
+        // This catches any synchronous errors in the try block
         console.error('Fatal error in updateSettings:', outerError);
       }
     }
