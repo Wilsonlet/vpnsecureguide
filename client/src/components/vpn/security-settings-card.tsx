@@ -112,7 +112,7 @@ export default function SecuritySettingsCard() {
   };
 
   // Handle encryption change
-  const handleEncryptionChange = (value: string) => {
+  const handleEncryptionChange = async (value: string) => {
     // Check if user is trying to select premium encryption without access
     if (value === 'chacha20_poly1305' && !premiumEncryptionAccess?.hasAccess) {
       toast({
@@ -123,8 +123,49 @@ export default function SecuritySettingsCard() {
       return; // Don't allow the change
     }
     
-    setEncryption(value);
-    updateSettings({ preferredEncryption: value });
+    try {
+      // Show loading state
+      setEncryption(value);
+      
+      // Try to update the setting
+      const response = await apiRequest('POST', '/api/settings', { 
+        preferredEncryption: value 
+      });
+      
+      if (!response.ok) {
+        // Check if it's a feature access error
+        if (response.status === 403) {
+          const data = await response.json();
+          toast({
+            title: 'Premium Feature Required',
+            description: 'This encryption method requires a premium subscription plan',
+            variant: 'destructive',
+          });
+          // Revert to previous value
+          setEncryption(vpnState.encryption);
+          return;
+        }
+        
+        throw new Error('Failed to update encryption setting');
+      }
+      
+      // Update local state and show success toast
+      vpnState.updateSettings({ encryption: value });
+      toast({
+        title: 'Encryption Updated',
+        description: `Your encryption method has been set to ${value.replace('_', '-').toUpperCase()}`,
+        variant: 'default',
+      });
+    } catch (error) {
+      console.error('Error updating encryption:', error);
+      // Revert to previous value
+      setEncryption(vpnState.encryption);
+      toast({
+        title: 'Update Failed',
+        description: 'Failed to update encryption setting',
+        variant: 'destructive',
+      });
+    }
   };
 
   // Handle toggle changes

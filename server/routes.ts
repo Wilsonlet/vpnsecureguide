@@ -207,14 +207,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
       
+      // Check if premium encryption is being set
+      if (req.body.preferredEncryption === 'chacha20_poly1305') {
+        const hasAccess = await storage.checkUserFeatureAccess(req.user.id, 'premium-encryption');
+        if (!hasAccess) {
+          return res.status(403).json({ 
+            message: "Premium feature access required",
+            feature: "premium-encryption"
+          });
+        }
+      }
+      
+      // Check if shadowsocks protocol is being set
+      if (req.body.preferredProtocol === 'shadowsocks') {
+        const hasAccess = await storage.checkUserFeatureAccess(req.user.id, 'shadowsocks');
+        if (!hasAccess) {
+          return res.status(403).json({ 
+            message: "Premium feature access required",
+            feature: "shadowsocks"
+          });
+        }
+      }
+      
       const parsedData = insertVpnUserSettingsSchema.parse({
         ...req.body,
         userId: req.user.id
       });
       
       const settings = await storage.updateUserSettings(parsedData);
+      
+      // Clear the cache for this user's settings by setting entry to undefined
+      const cacheKey = `user:settings:${req.user.id}`;
+      if (cache.has(cacheKey)) {
+        cache.set(cacheKey, { data: undefined, timestamp: 0 });
+      }
+      
+      console.log(`Updated settings for user ${req.user.id}`, req.body);
+      
       res.json(settings);
     } catch (error) {
+      console.error("Error updating settings:", error);
       next(error);
     }
   });
