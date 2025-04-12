@@ -127,16 +127,9 @@ class ObfuscationService {
       }
       
       // Check if user has access to obfuscation feature through subscription
-      const user = await storage.getUser(userId);
-      
-      if (!user) {
-        throw new Error('User not found');
-      }
-      
-      const subscriptionPlan = await storage.getSubscriptionPlanByName(user.subscription);
-      
-      if (!subscriptionPlan?.obfuscationAccess) {
-        return null; // User's subscription doesn't include obfuscation
+      const hasAccess = await storage.checkUserFeatureAccess(userId, 'obfuscation');
+      if (!hasAccess) {
+        return null; // User doesn't have access to obfuscation features
       }
       
       // Check if server supports obfuscation
