@@ -1,0 +1,978 @@
+ load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+5error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+9error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+2error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+2error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+6error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+8error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+7error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+6error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+user:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/user
+vpn-service.tsx:796 VpnService: User not authenticated, skipping server sync
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+7error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+/api/servers:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+user:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+error-handlers.tsx:53 Error during settings refresh cycle: TypeError: Failed to fetch
+    at window.fetch (ad-fallback-handler.tsx:165:28)
+    at vpn-service.tsx:185:7
+console.error @ error-handlers.tsx:53
+(anonymous) @ vpn-service.tsx:223Understand this errorAI
+/api/encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+/api/encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+/api/encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+/api/encryption:1 
+            
+            
+           Failed to load resource: net::ERR_INSUFFICIENT_RESOURCESUnderstand this errorAI
+vpn-service.tsx:645 Network error during fetch to /api/encryption
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+5error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+vpn-service.tsx:854 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:854 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+vpn-service.tsx:757 VpnService: Using cached authentication status: false
+vpn-service.tsx:760 VpnService: Cached status - user not authenticated, skipping server sync
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+49error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+23error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+18error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+8error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634Understand this warningAI
+error-handlers.tsx:48 Failed to sync encryption with server, status: null
+console.error @ error-handlers.tsx:48
+syncEncryption @ vpn-service.tsx:708Understand this errorAI
+35error-handlers.tsx:65 Request to /api/encryption timed out after 5000ms

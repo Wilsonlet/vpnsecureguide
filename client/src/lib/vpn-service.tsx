@@ -656,75 +656,241 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         }
       };
       
-      // Safe function to sync protocol
+      // Safe function to sync protocol with enhanced caching
       const syncProtocol = async (protocol: string) => {
         try {
+          // Check cache first to prevent redundant requests
+          const PROTOCOL_CACHE_KEY = 'vpn_protocol_cache';
+          const PROTOCOL_CACHE_DURATION = 30000; // 30 seconds
+          const now = Date.now();
+          
+          // Check if we have a cached result for this exact protocol value
+          const protocolCache = window.sessionStorage.getItem(PROTOCOL_CACHE_KEY);
+          
+          if (protocolCache) {
+            try {
+              const { timestamp, protocolValue, success } = JSON.parse(protocolCache);
+              
+              // If cache is valid and for the same protocol value, use it
+              if (now - timestamp < PROTOCOL_CACHE_DURATION && 
+                  protocolValue === protocol && 
+                  success === true) {
+                console.log(`VpnService: Using cached protocol success for ${protocol}`);
+                
+                // Skip the API call, just update state
+                setState(currentState => ({
+                  ...currentState,
+                  protocol: protocol
+                }));
+                
+                return; // Exit early
+              }
+            } catch (cacheError) {
+              // Invalid cache format, continue with API call
+              console.log('VpnService: Protocol cache invalid, refreshing');
+            }
+          }
+          
+          // Add a unique parameter to prevent browser caching issues
+          const cacheKey = Math.floor(Math.random() * 1000000);
+          
           console.log(`VpnService: Syncing protocol to server: ${protocol} (debounced)`);
           
-          const res = await safeFetch('/api/protocol', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ protocol }),
-            credentials: 'include'
-          });
+          // Implement retries with backoff for resilience
+          let retryCount = 0;
+          const MAX_RETRIES = 2;
+          let lastError = null;
           
-          if (!res || !res.ok) {
-            console.error('Failed to sync protocol with server, status:', res?.status);
-            return;
-          }
-          
-          try {
-            const data = await res.json();
-            console.log('Protocol synced with server:', data);
-            
-            // Update state again with server's confirmed protocol
-            if (data && data.protocol) {
-              setState(currentState => ({
-                ...currentState,
-                protocol: data.protocol
-              }));
+          while (retryCount <= MAX_RETRIES) {
+            try {
+              // If it's a retry, add a small delay with exponential backoff
+              if (retryCount > 0) {
+                const backoffDelay = Math.min(100 * Math.pow(2, retryCount), 1000);
+                await new Promise(resolve => setTimeout(resolve, backoffDelay));
+                console.log(`VpnService: Retry ${retryCount} for protocol sync after ${backoffDelay}ms`);
+              }
+              
+              const res = await safeFetch(`/api/protocol?cachebust=${cacheKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ protocol }),
+                credentials: 'include'
+              });
+              
+              if (!res || !res.ok) {
+                lastError = `Failed to sync protocol with server, status: ${res?.status}`;
+                retryCount++;
+                continue; // Retry on error
+              }
+              
+              try {
+                const data = await res.json();
+                console.log('Protocol synced with server:', data);
+                
+                // Cache the successful result
+                window.sessionStorage.setItem(PROTOCOL_CACHE_KEY, JSON.stringify({
+                  timestamp: now,
+                  protocolValue: protocol,
+                  success: true
+                }));
+                
+                // Update state again with server's confirmed protocol
+                if (data && data.protocol) {
+                  setState(currentState => ({
+                    ...currentState,
+                    protocol: data.protocol
+                  }));
+                }
+                
+                return; // Success, exit the function
+              } catch (parseError) {
+                console.error('Error parsing protocol sync response:', parseError);
+                lastError = 'Error parsing protocol sync response';
+                retryCount++;
+              }
+            } catch (fetchError) {
+              lastError = 'Network error during protocol sync';
+              retryCount++;
             }
-          } catch (parseError) {
-            console.error('Error parsing protocol sync response:', parseError);
           }
+          
+          // If we get here, all retries failed
+          console.error('Failed to sync protocol after retries:', lastError);
+          
+          // Cache the failure to prevent hammering the server
+          window.sessionStorage.setItem(PROTOCOL_CACHE_KEY, JSON.stringify({
+            timestamp: now,
+            protocolValue: protocol,
+            success: false
+          }));
+          
         } catch (err) {
           console.error('Error in protocol sync function:', err);
+          
+          // Still update the local state to maintain UI responsiveness
+          setState(currentState => ({
+            ...currentState,
+            protocol: protocol
+          }));
         }
       };
       
-      // Safe function to sync encryption
+      // Safe function to sync encryption with enhanced caching
       const syncEncryption = async (encryption: string) => {
         try {
+          // Check cache first to prevent redundant requests
+          const ENCRYPTION_CACHE_KEY = 'vpn_encryption_cache';
+          const ENCRYPTION_CACHE_DURATION = 30000; // 30 seconds
+          const now = Date.now();
+          
+          // Check if we have a cached result for this exact encryption value
+          const encryptionCache = window.sessionStorage.getItem(ENCRYPTION_CACHE_KEY);
+          
+          if (encryptionCache) {
+            try {
+              const { timestamp, encryptionValue, success } = JSON.parse(encryptionCache);
+              
+              // If cache is valid and for the same encryption value, use it
+              if (now - timestamp < ENCRYPTION_CACHE_DURATION && 
+                  encryptionValue === encryption && 
+                  success === true) {
+                console.log(`VpnService: Using cached encryption success for ${encryption}`);
+                
+                // Skip the API call, just update state
+                setState(currentState => ({
+                  ...currentState,
+                  encryption: encryption
+                }));
+                
+                return; // Exit early
+              }
+            } catch (cacheError) {
+              // Invalid cache format, continue with API call
+              console.log('VpnService: Encryption cache invalid, refreshing');
+            }
+          }
+          
+          // Add a unique parameter to prevent browser caching issues
+          const cacheKey = Math.floor(Math.random() * 1000000);
+          
           console.log(`VpnService: Syncing encryption to server: ${encryption} (debounced)`);
           
-          const res = await safeFetch('/api/encryption', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ encryption }),
-            credentials: 'include'
-          });
+          // Implement retries with backoff for resilience
+          let retryCount = 0;
+          const MAX_RETRIES = 2;
+          let lastError = null;
           
-          if (!res || !res.ok) {
-            console.error('Failed to sync encryption with server, status:', res?.status);
-            return;
-          }
-          
-          try {
-            const data = await res.json();
-            console.log('Encryption synced with server:', data);
-            
-            // Update state again with server's confirmed encryption
-            if (data && data.encryption) {
-              setState(currentState => ({
-                ...currentState,
-                encryption: data.encryption
-              }));
+          while (retryCount <= MAX_RETRIES) {
+            try {
+              // If it's a retry, add a small delay with exponential backoff
+              if (retryCount > 0) {
+                const backoffDelay = Math.min(100 * Math.pow(2, retryCount), 1000);
+                await new Promise(resolve => setTimeout(resolve, backoffDelay));
+                console.log(`VpnService: Retry ${retryCount} for encryption sync after ${backoffDelay}ms`);
+              }
+              
+              const res = await safeFetch(`/api/encryption?cachebust=${cacheKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ encryption }),
+                credentials: 'include'
+              });
+              
+              if (!res || !res.ok) {
+                lastError = `Failed to sync encryption with server, status: ${res?.status}`;
+                retryCount++;
+                continue; // Retry on error
+              }
+              
+              try {
+                const data = await res.json();
+                console.log('Encryption synced with server:', data);
+                
+                // Cache the successful result
+                window.sessionStorage.setItem(ENCRYPTION_CACHE_KEY, JSON.stringify({
+                  timestamp: now,
+                  encryptionValue: encryption,
+                  success: true
+                }));
+                
+                // Update state again with server's confirmed encryption
+                if (data && data.encryption) {
+                  setState(currentState => ({
+                    ...currentState,
+                    encryption: data.encryption
+                  }));
+                }
+                
+                return; // Success, exit the function
+              } catch (parseError) {
+                console.error('Error parsing encryption sync response:', parseError);
+                lastError = 'Error parsing encryption sync response';
+                retryCount++;
+              }
+            } catch (fetchError) {
+              lastError = 'Network error during encryption sync';
+              retryCount++;
             }
-          } catch (parseError) {
-            console.error('Error parsing encryption sync response:', parseError);
           }
+          
+          // If we get here, all retries failed
+          console.error('Failed to sync encryption after retries:', lastError);
+          
+          // Cache the failure to prevent hammering the server
+          window.sessionStorage.setItem(ENCRYPTION_CACHE_KEY, JSON.stringify({
+            timestamp: now,
+            encryptionValue: encryption,
+            success: false
+          }));
+          
         } catch (err) {
           console.error('Error in encryption sync function:', err);
+          
+          // Still update the local state to maintain UI responsiveness
+          setState(currentState => ({
+            ...currentState,
+            encryption: encryption
+          }));
         }
       };
       
