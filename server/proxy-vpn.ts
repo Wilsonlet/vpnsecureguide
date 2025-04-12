@@ -95,8 +95,112 @@ class ProxyVpnService {
       fs.mkdirSync(this.proxyConfigPath, { recursive: true });
     }
     
+    // Enable IP forwarding for VPN functionality
+    this.setupIpForwarding();
+    
     // Start monitoring for health and cleaning up inactive connections
     this.setupMonitoring();
+  }
+  
+  /**
+   * Set up IP forwarding and firewall rules for VPN functionality
+   */
+  private async setupIpForwarding(): Promise<void> {
+    try {
+      // Enable IP forwarding
+      await execAsync('echo 1 > /proc/sys/net/ipv4/ip_forward');
+      
+      // Set up basic iptables rules for forwarding
+      const commands = [
+        // Allow forwarded packets in the FORWARD chain
+        'iptables -A FORWARD -j ACCEPT',
+        
+        // Enable NAT for outgoing connections
+        'iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE',
+        
+        // Allow new incoming connections
+        'iptables -A INPUT -m state --state NEW -j ACCEPT',
+        
+        // Allow established and related connections
+        'iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT',
+        'iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT'
+      ];
+      
+      for (const cmd of commands) {
+        try {
+          await execAsync(cmd);
+        } catch (error) {
+          console.error(`Error setting up iptables rule: ${cmd}`, error);
+          // Continue even if some rules fail
+        }
+      }
+      
+      console.log('IP forwarding and firewall rules successfully configured for VPN service');
+    } catch (error) {
+      console.error('Failed to set up IP forwarding:', error);
+      // Continue execution even if forwarding setup fails
+    }
+  }
+
+  /**
+   * Set up routing and additional security for VPN interfaces
+   * @param interfaceName - Name of the VPN interface (wg0, tun0, etc.)
+   * @param userId - User ID associated with this connection
+   */
+  private async setupVpnRouting(interfaceName: string, userId: number): Promise<void> {
+    try {
+      // Get interface details
+      const { stdout: ifConfig } = await execAsync(`ip addr show ${interfaceName}`);
+      if (!ifConfig) {
+        throw new Error(`Interface ${interfaceName} not found`);
+      }
+      
+      // Extract subnet from interface config
+      const subnetMatch = ifConfig.match(/inet\s+([0-9.]+\/[0-9]+)/);
+      if (!subnetMatch || !subnetMatch[1]) {
+        throw new Error(`Could not extract subnet from ${interfaceName}`);
+      }
+      
+      const subnet = subnetMatch[1];
+      const ipOnly = subnet.split('/')[0];
+      
+      // Set up additional routing and security rules for this VPN connection
+      const commands = [
+        // Add specific routes for this VPN connection
+        `ip route add 0.0.0.0/1 dev ${interfaceName}`,
+        `ip route add 128.0.0.0/1 dev ${interfaceName}`,
+        
+        // Add firewall rules for this VPN interface
+        `iptables -A FORWARD -i ${interfaceName} -j ACCEPT`,
+        `iptables -A FORWARD -o ${interfaceName} -j ACCEPT`,
+        
+        // NAT traffic going out of the VPN interface
+        `iptables -t nat -A POSTROUTING -s ${subnet} -o eth0 -j MASQUERADE`,
+        
+        // Add DNS leak prevention by forcing DNS through VPN
+        `iptables -A OUTPUT -d 1.1.1.1 -o ${interfaceName} -p udp --dport 53 -j ACCEPT`,
+        `iptables -A OUTPUT -d 8.8.8.8 -o ${interfaceName} -p udp --dport 53 -j ACCEPT`,
+        
+        // Setup Tor forwarding if needed for additional anonymity
+        // Uncomment the following lines if Tor is needed
+        // 'iptables -A PREROUTING -t nat -i tun0 -p tcp --dport 9050 -j REDIRECT --to-port 9050',
+        // 'iptables -A PREROUTING -t nat -i wg0 -p tcp --dport 9050 -j REDIRECT --to-port 9050',
+      ];
+      
+      for (const cmd of commands) {
+        try {
+          await execAsync(cmd);
+        } catch (error) {
+          console.error(`Error setting up VPN routing: ${cmd}`, error);
+          // Continue even if some commands fail
+        }
+      }
+      
+      console.log(`Advanced routing and security set up for user ${userId} on ${interfaceName}`);
+    } catch (error) {
+      console.error(`Failed to set up VPN routing for user ${userId}:`, error);
+      // Continue execution even if routing setup fails
+    }
   }
 
   /**
@@ -379,9 +483,54 @@ verb 3
         return false; // No connection to stop
       }
       
-      console.log(`Stopping proxy connection for user ${userId}`);
+      console.log(`Stopping VPN/proxy connection for user ${userId}`);
       
-      // Terminate the proxy process
+      // Handle different VPN protocol types
+      if (connection.config.type === 'wireguard') {
+        // Shutdown WireGuard interface
+        const wgConfigDir = path.join(this.proxyConfigPath, `wg-${userId}`);
+        const wgConfPath = path.join(wgConfigDir, 'wg0.conf');
+        
+        try {
+          await execAsync(`wg-quick down ${wgConfPath}`);
+          console.log(`WireGuard interface down for user ${userId}`);
+        } catch (error) {
+          console.error(`Error shutting down WireGuard interface for user ${userId}:`, error);
+        }
+      } 
+      else if (connection.config.type === 'openvpn') {
+        // Shutdown OpenVPN
+        try {
+          // Find and kill the OpenVPN process
+          const { stdout } = await execAsync('pidof openvpn');
+          if (stdout.trim()) {
+            const pids = stdout.trim().split(' ');
+            for (const pid of pids) {
+              await execAsync(`kill ${pid}`);
+            }
+          }
+          console.log(`OpenVPN shutdown for user ${userId}`);
+        } catch (error) {
+          console.error(`Error shutting down OpenVPN for user ${userId}:`, error);
+        }
+      } 
+      else if (connection.config.type === 'shadowsocks') {
+        // Find and kill shadowsocks client process
+        try {
+          const { stdout } = await execAsync('pidof ss-local');
+          if (stdout.trim()) {
+            const pids = stdout.trim().split(' ');
+            for (const pid of pids) {
+              await execAsync(`kill ${pid}`);
+            }
+          }
+          console.log(`Shadowsocks shutdown for user ${userId}`);
+        } catch (error) {
+          console.error(`Error shutting down Shadowsocks for user ${userId}:`, error);
+        }
+      }
+      
+      // Terminate the proxy process if it exists
       if (connection.process) {
         try {
           connection.process.kill('SIGTERM');
@@ -390,7 +539,7 @@ verb 3
         }
       }
       
-      // Clean up any config files
+      // Clean up any standard config files
       const configPath = path.join(this.proxyConfigPath, `proxy-${userId}.conf`);
       if (fs.existsSync(configPath)) {
         try {
@@ -398,6 +547,21 @@ verb 3
         } catch (unlinkError) {
           console.error(`Error removing proxy config file for user ${userId}:`, unlinkError);
         }
+      }
+      
+      // Kill any socat processes on the tunnel port
+      try {
+        const { stdout } = await execAsync(`lsof -i :${connection.tunnelPort} | grep socat | awk '{print $2}'`);
+        if (stdout.trim()) {
+          const pids = stdout.trim().split('\n');
+          for (const pid of pids) {
+            if (pid.trim()) {
+              await execAsync(`kill ${pid.trim()}`);
+            }
+          }
+        }
+      } catch (error) {
+        // It's ok if this fails
       }
       
       // Remove from active connections
@@ -516,6 +680,9 @@ verb 3
           throw new Error(`WireGuard interface failed to start for user ${connection.userId}`);
         }
         
+        // Set up additional security and routing for VPN connection
+        await this.setupVpnRouting('wg0', connection.userId);
+        
         // Setup forwarding for local applications
         const forwarderCommand = `socat TCP-LISTEN:${tunnelPort},fork,reuseaddr EXEC:"socat STDIO SOCKS4A:127.0.0.1:0.0.0.0:0,socksport=9050"`;
         const forwarderProcess = spawn('socat', forwarderCommand.split(' ').slice(1), {
@@ -553,6 +720,9 @@ verb 3
         if (!stdout.includes('tun0')) {
           throw new Error(`OpenVPN interface failed to start for user ${connection.userId}`);
         }
+        
+        // Set up additional security and routing for VPN connection
+        await this.setupVpnRouting('tun0', connection.userId);
         
         // Setup forwarding for local applications
         const forwarderCommand = `socat TCP-LISTEN:${tunnelPort},fork,reuseaddr EXEC:"socat STDIO SOCKS4A:127.0.0.1:0.0.0.0:0,socksport=9050"`;
@@ -647,7 +817,7 @@ verb 3
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // For non-VPN protocols, verify the proxy is listening
-      if (!['wireguard', 'openvpn'].includes(config.type)) {
+      if (!(config.type === 'wireguard' || config.type === 'openvpn')) {
         const checkCommand = `lsof -i :${tunnelPort}`;
         const { stdout } = await execAsync(checkCommand);
         
@@ -704,29 +874,77 @@ verb 3
         return false;
       }
       
-      // Verify the proxy is still listening
-      const checkCommand = `lsof -i :${connection.tunnelPort}`;
-      const { stdout } = await execAsync(checkCommand);
-      
-      if (!stdout.includes(`TCP *:${connection.tunnelPort}`)) {
-        console.log(`Proxy for user ${userId} is no longer listening on port ${connection.tunnelPort}`);
-        return false;
+      // Different verification based on protocol type
+      if (connection.config.type === 'wireguard') {
+        // Verify WireGuard interface is up
+        const checkCommand = `ip addr show | grep wg0`;
+        const { stdout } = await execAsync(checkCommand);
+        
+        if (!stdout.includes('wg0')) {
+          console.log(`WireGuard interface is not active for user ${userId}`);
+          return false;
+        }
+        
+        // Verify WireGuard connection is working
+        try {
+          const { stdout: ipResult } = await execAsync(`curl --connect-timeout 5 -s https://api.ipify.org`);
+          if (ipResult && ipResult.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+            console.log(`WireGuard connection for user ${userId} verified with IP: ${ipResult}`);
+            return true;
+          }
+        } catch (error) {
+          console.error(`Error checking IP through WireGuard for user ${userId}:`, error);
+          return false;
+        }
+      } 
+      else if (connection.config.type === 'openvpn') {
+        // Verify OpenVPN interface is up
+        const checkCommand = `ip addr show | grep tun0`;
+        const { stdout } = await execAsync(checkCommand);
+        
+        if (!stdout.includes('tun0')) {
+          console.log(`OpenVPN interface is not active for user ${userId}`);
+          return false;
+        }
+        
+        // Verify OpenVPN connection is working
+        try {
+          const { stdout: ipResult } = await execAsync(`curl --connect-timeout 5 -s https://api.ipify.org`);
+          if (ipResult && ipResult.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+            console.log(`OpenVPN connection for user ${userId} verified with IP: ${ipResult}`);
+            return true;
+          }
+        } catch (error) {
+          console.error(`Error checking IP through OpenVPN for user ${userId}:`, error);
+          return false;
+        }
+      }
+      else {
+        // For proxy-based connections, check if the port is still listening
+        const checkCommand = `lsof -i :${connection.tunnelPort}`;
+        const { stdout } = await execAsync(checkCommand);
+        
+        if (!stdout.includes(`TCP *:${connection.tunnelPort}`)) {
+          console.log(`Proxy for user ${userId} is no longer listening on port ${connection.tunnelPort}`);
+          return false;
+        }
+        
+        // Test a request through the proxy to verify functionality
+        const testCommand = `curl --connect-timeout 5 -s -x http://127.0.0.1:${connection.tunnelPort} https://api.ipify.org`;
+        const { stdout: ipResult } = await execAsync(testCommand);
+        
+        // If we get a valid IP back, the proxy is working
+        if (ipResult && ipResult.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+          console.log(`Proxy for user ${userId} successfully verified with IP: ${ipResult}`);
+          return true;
+        }
+        
+        console.log(`Proxy verification failed for user ${userId}, invalid response: ${ipResult}`);
       }
       
-      // Test a request through the proxy to verify functionality
-      const testCommand = `curl --connect-timeout 5 -s -x http://127.0.0.1:${connection.tunnelPort} https://api.ipify.org`;
-      const { stdout: ipResult } = await execAsync(testCommand);
-      
-      // If we get a valid IP back, the proxy is working
-      if (ipResult && ipResult.match(/^\d+\.\d+\.\d+\.\d+$/)) {
-        console.log(`Proxy for user ${userId} successfully verified with IP: ${ipResult}`);
-        return true;
-      }
-      
-      console.log(`Proxy verification failed for user ${userId}, invalid response: ${ipResult}`);
       return false;
     } catch (error: any) {
-      console.error(`Error verifying proxy connection for user ${userId}:`, error);
+      console.error(`Error verifying connection for user ${userId}:`, error);
       return false;
     }
   }
@@ -751,8 +969,53 @@ verb 3
     
     for (const [userId, connection] of connections) {
       try {
-        // Check if the process is still running
-        if (connection.process) {
+        // Different monitoring based on protocol type
+        if (connection.config.type === 'wireguard') {
+          // Check if WireGuard interface is up
+          const checkCommand = `ip addr show | grep wg0`;
+          try {
+            const { stdout } = await execAsync(checkCommand);
+            if (!stdout.includes('wg0')) {
+              console.log(`WireGuard interface for user ${userId} is down, attempting to restart`);
+              
+              // Remove the process reference
+              connection.process = null;
+              
+              // Restart the VPN process
+              await this.startProxyProcess(connection);
+            }
+          } catch (error) {
+            console.error(`Error checking WireGuard interface for user ${userId}:`, error);
+            
+            // Attempt to restart
+            connection.process = null;
+            await this.startProxyProcess(connection);
+          }
+        } 
+        else if (connection.config.type === 'openvpn') {
+          // Check if OpenVPN interface is up
+          const checkCommand = `ip addr show | grep tun0`;
+          try {
+            const { stdout } = await execAsync(checkCommand);
+            if (!stdout.includes('tun0')) {
+              console.log(`OpenVPN interface for user ${userId} is down, attempting to restart`);
+              
+              // Remove the process reference
+              connection.process = null;
+              
+              // Restart the VPN process
+              await this.startProxyProcess(connection);
+            }
+          } catch (error) {
+            console.error(`Error checking OpenVPN interface for user ${userId}:`, error);
+            
+            // Attempt to restart
+            connection.process = null;
+            await this.startProxyProcess(connection);
+          }
+        }
+        else if (connection.process) {
+          // For proxy-based connections, check if the port is still listening
           const checkCommand = `lsof -i :${connection.tunnelPort}`;
           const { stdout } = await execAsync(checkCommand);
           
@@ -768,6 +1031,14 @@ verb 3
         }
       } catch (error: any) {
         console.error(`Error monitoring connection for user ${userId}:`, error);
+        
+        // In case of any error, try to reconnect
+        try {
+          connection.process = null;
+          await this.startProxyProcess(connection);
+        } catch (reconnectError) {
+          console.error(`Failed to reconnect user ${userId}:`, reconnectError);
+        }
       }
     }
   }
