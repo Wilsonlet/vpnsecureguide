@@ -5,6 +5,7 @@ import ToggleSwitch from '@/components/common/toggle-switch';
 import { useVpnState } from '@/lib/vpn-service.tsx';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 
 export default function SecuritySettingsCard() {
   const vpnState = useVpnState();
@@ -17,6 +18,19 @@ export default function SecuritySettingsCard() {
   const [dnsLeakProtection, setDnsLeakProtection] = useState(vpnState.dnsLeakProtection);
   const [doubleVpn, setDoubleVpn] = useState(vpnState.doubleVpn);
   const [obfuscation, setObfuscation] = useState(vpnState.obfuscation);
+  
+  // Check if user has access to Shadowsocks protocol
+  const { data: shadowsocksAccess } = useQuery({
+    queryKey: ['/api/feature-access/shadowsocks'],
+    queryFn: async () => {
+      const res = await fetch('/api/feature-access/shadowsocks');
+      if (!res.ok) throw new Error('Failed to check Shadowsocks access');
+      return res.json();
+    },
+    staleTime: 60000, // Cache for 1 minute
+    // Default to no access if there's an error
+    initialData: { hasAccess: false }
+  });
   
   // Update local state when vpnState changes
   useEffect(() => {
@@ -37,6 +51,16 @@ export default function SecuritySettingsCard() {
 
   // Handle protocol change
   const handleProtocolChange = (value: string) => {
+    // Check if user is trying to select Shadowsocks without premium access
+    if (value === 'shadowsocks' && !shadowsocksAccess?.hasAccess) {
+      toast({
+        title: 'Premium Feature',
+        description: 'Shadowsocks protocol is only available with Premium or Ultimate plans',
+        variant: 'destructive',
+      });
+      return; // Don't allow the change
+    }
+    
     setProtocol(value);
     updateSettings({ preferredProtocol: value });
   };
@@ -111,7 +135,20 @@ export default function SecuritySettingsCard() {
               <SelectItem value="openvpn_tcp">OpenVPN (TCP)</SelectItem>
               <SelectItem value="openvpn_udp">OpenVPN (UDP)</SelectItem>
               <SelectItem value="wireguard">WireGuard</SelectItem>
-              <SelectItem value="shadowsocks">Shadowsocks</SelectItem>
+              <SelectItem 
+                value="shadowsocks" 
+                disabled={!shadowsocksAccess?.hasAccess}
+                className="relative"
+              >
+                <div className="flex items-center">
+                  Shadowsocks
+                  {!shadowsocksAccess?.hasAccess && (
+                    <span className="ml-2 px-1.5 py-0.5 text-xs font-semibold bg-gradient-to-r from-amber-500 to-yellow-500 text-black rounded">
+                      Premium
+                    </span>
+                  )}
+                </div>
+              </SelectItem>
               <SelectItem value="ikev2">IKEv2/IPSec</SelectItem>
             </SelectContent>
           </Select>

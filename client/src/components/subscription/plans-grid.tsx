@@ -210,6 +210,23 @@ export default function PlansGrid() {
                 <span>Ad-Free Experience</span>
               </div>
               
+              {/* Shadowsocks access feature */}
+              <div className="flex items-center gap-2">
+                {plan.shadowsocksAccess ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <X className="h-4 w-4 text-gray-400" />
+                )}
+                <span className="flex items-center">
+                  Shadowsocks Protocol
+                  {plan.shadowsocksAccess && (
+                    <span className="ml-2 px-1.5 py-0.5 text-xs font-semibold bg-gradient-to-r from-amber-500 to-yellow-500 text-black rounded">
+                      Premium
+                    </span>
+                  )}
+                </span>
+              </div>
+              
               {/* Ultimate plan specific features */}
               {plan.name === "ultimate" && (
                 <>
