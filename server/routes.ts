@@ -156,6 +156,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+  
+  // Special dedicated endpoint for setting protocol
+  app.post("/api/protocol", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      const { protocol } = req.body;
+      if (!protocol) {
+        return res.status(400).json({ message: "Protocol is required" });
+      }
+      
+      // Check for premium protocol access if needed
+      if (protocol === 'shadowsocks') {
+        const hasAccess = await storage.checkUserFeatureAccess(req.user.id, 'shadowsocks');
+        if (!hasAccess) {
+          return res.status(403).json({ 
+            message: "Premium feature access required",
+            feature: "shadowsocks"
+          });
+        }
+      }
+      
+      // Get current settings
+      let settings = await storage.getUserSettings(req.user.id);
+      
+      // If settings don't exist, create default ones
+      if (!settings) {
+        const defaultSettings = {
+          userId: req.user.id,
+          killSwitch: true,
+          dnsLeakProtection: true,
+          doubleVpn: false,
+          obfuscation: false,
+          preferredProtocol: protocol,
+          preferredEncryption: "aes_256_gcm"
+        };
+        
+        settings = await storage.createUserSettings(defaultSettings);
+      } else {
+        // Update the protocol
+        settings = await storage.updateUserSettings({
+          ...settings,
+          preferredProtocol: protocol
+        });
+      }
+      
+      // Clear specific cache for settings
+      const settingsCacheKey = `user:settings:${req.user.id}`;
+      cache.delete(settingsCacheKey);
+      
+      console.log(`Updated protocol for user ${req.user.id} to ${protocol}`);
+      
+      res.json({
+        success: true,
+        protocol,
+        message: `Protocol updated to ${protocol.replace('_', ' ').toUpperCase()}`
+      });
+    } catch (error) {
+      console.error("Error updating protocol:", error);
+      next(error);
+    }
+  });
+  
+  // Special dedicated endpoint for setting encryption
+  app.post("/api/encryption", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      const { encryption } = req.body;
+      if (!encryption) {
+        return res.status(400).json({ message: "Encryption is required" });
+      }
+      
+      // Check for premium encryption access if needed
+      if (encryption === 'chacha20_poly1305') {
+        const hasAccess = await storage.checkUserFeatureAccess(req.user.id, 'premium-encryption');
+        if (!hasAccess) {
+          return res.status(403).json({ 
+            message: "Premium feature access required",
+            feature: "premium-encryption"
+          });
+        }
+      }
+      
+      // Get current settings
+      let settings = await storage.getUserSettings(req.user.id);
+      
+      // If settings don't exist, create default ones
+      if (!settings) {
+        const defaultSettings = {
+          userId: req.user.id,
+          killSwitch: true,
+          dnsLeakProtection: true,
+          doubleVpn: false,
+          obfuscation: false,
+          preferredProtocol: "openvpn_tcp",
+          preferredEncryption: encryption
+        };
+        
+        settings = await storage.createUserSettings(defaultSettings);
+      } else {
+        // Update the encryption
+        settings = await storage.updateUserSettings({
+          ...settings,
+          preferredEncryption: encryption
+        });
+      }
+      
+      // Clear all caches related to this user's settings
+      for (const key of [...cache.keys()]) {
+        if (key.includes(`user:${req.user.id}`) || key.includes(`:${req.user.id}:`)) {
+          cache.delete(key);
+        }
+      }
+      
+      console.log(`Updated encryption for user ${req.user.id} to ${encryption}`);
+      
+      res.json({
+        success: true,
+        encryption,
+        message: `Encryption updated to ${encryption.replace('_', '-').toUpperCase()}`
+      });
+    } catch (error) {
+      console.error("Error updating encryption:", error);
+      next(error);
+    }
+  });
 
   // VPN Settings endpoints with caching
   app.get("/api/settings", async (req, res, next) => {

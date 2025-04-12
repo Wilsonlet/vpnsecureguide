@@ -78,6 +78,11 @@ export default function SecuritySettingsCard() {
     fetchUserSettings();
   }, []);
   
+  // Create a function to explicitly fetch settings that can be called from handlers
+  const fetchSettings = () => {
+    fetchUserSettings();
+  };
+  
   // Update local state when vpnState changes
   useEffect(() => {
     setProtocol(vpnState.protocol);
@@ -108,18 +113,15 @@ export default function SecuritySettingsCard() {
     }
     
     try {
-      // Show loading state
+      // Show loading state and temporarily set UI state
       setProtocol(value);
       
-      // Try to update the setting
-      const response = await apiRequest('POST', '/api/settings', { 
-        preferredProtocol: value 
-      });
+      // Use dedicated protocol-specific API endpoint
+      const response = await apiRequest('POST', '/api/protocol', { protocol: value });
       
       if (!response.ok) {
         // Check if it's a feature access error
         if (response.status === 403) {
-          const data = await response.json();
           toast({
             title: 'Premium Feature Required',
             description: 'This protocol requires a premium subscription plan',
@@ -133,13 +135,24 @@ export default function SecuritySettingsCard() {
         throw new Error('Failed to update protocol setting');
       }
       
-      // Update local state and show success toast
+      // Get the response data
+      const result = await response.json();
+      
+      // Update local state permanently
       vpnState.updateSettings({ protocol: value });
+      
+      // Show success toast
       toast({
         title: 'Protocol Updated',
-        description: `Your VPN protocol has been set to ${value.replace('_', ' ').toUpperCase()}`,
+        description: result.message || `Protocol updated to ${value.replace('_', ' ').toUpperCase()}`,
         variant: 'default',
       });
+      
+      // Reload settings to ensure everything is in sync
+      setTimeout(() => {
+        fetchSettings();
+      }, 500);
+      
     } catch (error) {
       console.error('Error updating protocol:', error);
       // Revert to previous value
@@ -168,15 +181,12 @@ export default function SecuritySettingsCard() {
       // Show loading state
       setEncryption(value);
       
-      // Try to update the setting
-      const response = await apiRequest('POST', '/api/settings', { 
-        preferredEncryption: value 
-      });
+      // Use dedicated encryption-specific API endpoint
+      const response = await apiRequest('POST', '/api/encryption', { encryption: value });
       
       if (!response.ok) {
         // Check if it's a feature access error
         if (response.status === 403) {
-          const data = await response.json();
           toast({
             title: 'Premium Feature Required',
             description: 'This encryption method requires a premium subscription plan',
@@ -190,13 +200,24 @@ export default function SecuritySettingsCard() {
         throw new Error('Failed to update encryption setting');
       }
       
-      // Update local state and show success toast
+      // Get the response data
+      const result = await response.json();
+      
+      // Update local state permanently
       vpnState.updateSettings({ encryption: value });
+      
+      // Show success toast
       toast({
         title: 'Encryption Updated',
-        description: `Your encryption method has been set to ${value.replace('_', '-').toUpperCase()}`,
+        description: result.message || `Encryption updated to ${value.replace('_', '-').toUpperCase()}`,
         variant: 'default',
       });
+      
+      // Reload settings to ensure everything is in sync
+      setTimeout(() => {
+        fetchSettings();
+      }, 500);
+      
     } catch (error) {
       console.error('Error updating encryption:', error);
       // Revert to previous value
