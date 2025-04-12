@@ -30,36 +30,52 @@ export default function SubscriptionPage() {
   
   const subscriptionMutation = useMutation({
     mutationFn: async (plan: SubscriptionPlan) => {
-      const response = await apiRequest('POST', '/api/create-subscription', { 
+      const response = await apiRequest('POST', '/api/initialize-payment', { 
         planName: plan.name,
         paymentMethod
       });
       return response.json();
     },
     onSuccess: (data) => {
-      if (data.paymentMethod === 'stripe' && data.clientSecret) {
-        // Redirect to Stripe checkout for paid plans
-        window.location.href = `/checkout?client_secret=${data.clientSecret}&subscription_id=${data.subscriptionId}`;
-      } else if (data.paymentMethod === 'paystack' && data.authorizationUrl) {
-        // Redirect to Paystack checkout
-        window.location.href = data.authorizationUrl;
+      console.log('Payment initialization successful:', data);
+      
+      if (data.success) {
+        if (data.paymentProvider === 'stripe' && data.url) {
+          // Redirect to Stripe hosted checkout
+          window.location.href = data.url;
+        } else if (data.paymentProvider === 'paystack' && data.redirectUrl) {
+          // Redirect to our Paystack checkout page
+          window.location.href = data.redirectUrl;
+        } else if (data.redirectUrl) {
+          // Free plan or other non-payment scenario with redirect
+          window.location.href = data.redirectUrl;
+        } else {
+          // Free plan without redirect
+          toast({
+            title: 'Subscription Updated',
+            description: data.message || 'Your subscription has been updated successfully.',
+            variant: 'default',
+          });
+          
+          // Refresh the subscription data
+          queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+          
+          // For free plan, stay on the subscription page
+          setProcessingPlanId(null);
+        }
       } else {
-        // Free plan or other non-payment scenario
+        // Handle non-success response
         toast({
-          title: 'Subscription Updated',
-          description: data.message || 'Your subscription has been updated successfully.',
-          variant: 'default',
+          title: 'Subscription Error',
+          description: data.message || 'Failed to initialize payment.',
+          variant: 'destructive',
         });
-        
-        // Refresh the subscription data
-        queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-        
-        // For free plan, stay on the subscription page
         setProcessingPlanId(null);
       }
     },
     onError: (error: Error) => {
+      console.error('Payment initialization error:', error);
       toast({
         title: 'Subscription Error',
         description: `Failed to update subscription: ${error.message}`,

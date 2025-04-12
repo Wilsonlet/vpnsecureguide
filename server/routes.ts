@@ -474,6 +474,132 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stripe Payment Endpoints
+  app.post("/api/initialize-payment", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) {
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      const { planName, paymentMethod = 'paystack' } = req.body;
+      if (!planName) {
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(400).json({ message: "Plan name is required" });
+      }
+      
+      // Find subscription plan details
+      const subscriptionPlan = await storage.getSubscriptionPlanByName(planName);
+      if (!subscriptionPlan) {
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(404).json({ message: "Subscription plan not found" });
+      }
+      
+      // Skip payment for the free plan
+      if (planName === 'free') {
+        await storage.updateUserSubscription(req.user.id, planName);
+        res.setHeader('Content-Type', 'application/json');
+        return res.json({
+          success: true,
+          message: "Free plan activated",
+          subscription: planName,
+          redirectUrl: '/dashboard'
+        });
+      }
+      
+      // Make sure user has an email address
+      if (!req.user.email) {
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(400).json({ message: "Email address is required for payment processing" });
+      }
+      
+      // Handle different payment methods
+      if (paymentMethod === 'paystack') {
+        // Generate a unique reference for this transaction
+        const reference = paystackService.generateReference();
+        
+        // For Paystack, we redirect to our custom checkout page
+        res.setHeader('Content-Type', 'application/json');
+        return res.json({
+          success: true,
+          paymentProvider: 'paystack',
+          reference,
+          redirectUrl: `/paystack-checkout?plan=${planName}&ref=${reference}`,
+          planName,
+          price: subscriptionPlan.price / 100 // Convert from cents to dollars for display
+        });
+      } else if (paymentMethod === 'stripe') {
+        // Default to Stripe
+        // Make sure we have a price ID for the plan
+        if (!subscriptionPlan.stripePriceId) {
+          res.setHeader('Content-Type', 'application/json');
+          return res.status(400).json({ message: "This plan is not available for purchase yet" });
+        }
+        
+        // Create or get the customer
+        let customerId = req.user.stripeCustomerId;
+        if (!customerId && stripe) {
+          const customer = await stripe.customers.create({
+            name: req.user.username,
+            email: req.user.email,
+            metadata: {
+              userId: req.user.id.toString()
+            }
+          });
+          
+          customerId = customer.id;
+          await storage.updateStripeCustomerId(req.user.id, customerId);
+        }
+        
+        // Set up the checkout session
+        let session;
+        if (stripe) {
+          session = await stripe.checkout.sessions.create({
+            line_items: [
+              {
+                price: subscriptionPlan.stripePriceId,
+                quantity: 1,
+              },
+            ],
+            mode: 'subscription',
+            success_url: `${req.headers.origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${req.headers.origin}/subscription`,
+            customer: customerId,
+            client_reference_id: req.user.id.toString(),
+            subscription_data: {
+              metadata: {
+                userId: req.user.id.toString(),
+                planName: planName
+              }
+            }
+          });
+        } else {
+          res.setHeader('Content-Type', 'application/json');
+          return res.status(500).json({ message: "Stripe payment service is not available" });
+        }
+        
+        res.setHeader('Content-Type', 'application/json');
+        return res.json({
+          success: true,
+          paymentProvider: 'stripe',
+          url: session.url,
+          paymentSessionId: session.id,
+          planName
+        });
+      } else {
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(400).json({ message: "Invalid payment method" });
+      }
+    } catch (error: any) {
+      console.error("Initialize payment error:", error.response?.data || error);
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(500).json({ 
+        success: false, 
+        message: "Error initializing payment", 
+        error: error.response?.data?.message || error.message 
+      });
+    }
+  });
+
   app.post("/api/create-payment-intent", async (req, res, next) => {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
