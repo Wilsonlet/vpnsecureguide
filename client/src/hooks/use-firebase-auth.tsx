@@ -27,6 +27,7 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<Error | null>(null);
+  const [redirectToSetup, setRedirectToSetup] = useState(false);
   const { toast } = useToast();
 
   // Check for Firebase configuration
@@ -112,8 +113,19 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
       } catch (error: any) {
         console.error("Error processing redirect result:", error);
         
-        // Don't show errors for missing configuration - already handled above
-        if (error.code !== 'auth/configuration-not-found') {
+        // Special handling for configuration errors
+        if (error.code === 'auth/configuration-not-found') {
+          toast({
+            title: "Firebase Configuration Error",
+            description: "Firebase authentication is not properly configured. Redirecting to setup guide...",
+            variant: "destructive",
+          });
+          
+          // Set a brief timeout to let the toast appear
+          setTimeout(() => {
+            setRedirectToSetup(true);
+          }, 1500);
+        } else {
           toast({
             title: "Authentication Error",
             description: error.message || "Failed to complete Google authentication.",
@@ -128,6 +140,13 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
     checkRedirectResult();
   }, [authError, toast]);
 
+  // Redirect to setup guide if Firebase is not configured properly
+  useEffect(() => {
+    if (redirectToSetup) {
+      window.location.href = '/firebase-setup';
+    }
+  }, [redirectToSetup]);
+
   const handleSignInWithGoogle = async (): Promise<void> => {
     try {
       setIsLoading(true);
@@ -138,11 +157,27 @@ export function FirebaseAuthProvider({ children }: { children: ReactNode }) {
       return;
     } catch (error: any) {
       console.error("Error signing in with Google:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to sign in with Google.",
-        variant: "destructive",
-      });
+      
+      // Special handling for configuration errors
+      if (error.code === 'auth/configuration-not-found') {
+        toast({
+          title: "Firebase Configuration Error",
+          description: "Firebase authentication is not properly configured. Redirecting to setup guide...",
+          variant: "destructive",
+        });
+        
+        // Set a brief timeout to let the toast appear
+        setTimeout(() => {
+          setRedirectToSetup(true);
+        }, 1500);
+      } else {
+        toast({
+          title: "Authentication Error",
+          description: error.message || "Failed to sign in with Google.",
+          variant: "destructive",
+        });
+      }
+      
       setIsLoading(false);
     }
   };

@@ -23,6 +23,7 @@ const ServersPage = lazy(() => import("@/pages/servers-page"));
 const ClientsPage = lazy(() => import("@/pages/clients-page"));
 const SettingsPage = lazy(() => import("@/pages/settings-page"));
 const SupportPage = lazy(() => import("@/pages/support-page"));
+const FirebaseSetupGuide = lazy(() => import("@/pages/firebase-setup-guide"));
 
 // Loading skeleton component
 const LoadingSkeleton = () => (
@@ -51,6 +52,7 @@ function Router() {
         <ProtectedRoute path="/settings" component={SettingsPage} />
         <ProtectedRoute path="/support" component={SupportPage} />
         <Route path="/auth" component={AuthPage} />
+        <Route path="/firebase-setup" component={FirebaseSetupGuide} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>

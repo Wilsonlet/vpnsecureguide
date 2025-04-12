@@ -306,10 +306,16 @@ export default function AuthPage() {
                 </TabsContent>
               </Tabs>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex flex-col space-y-3">
               <p className="text-center text-sm text-muted-foreground w-full">
                 By continuing, you agree to SecureVPN's Terms of Service and Privacy Policy
               </p>
+              <div className="text-center text-xs text-muted-foreground mt-2 border-t pt-2 border-gray-800">
+                <span>Having trouble with Google Sign-in? </span>
+                <a href="/firebase-setup" className="text-primary hover:underline">
+                  View Firebase Setup Guide
+                </a>
+              </div>
             </CardFooter>
           </Card>
         </div>
