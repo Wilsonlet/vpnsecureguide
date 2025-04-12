@@ -45,67 +45,70 @@ export default function SecuritySettingsCard() {
     initialData: { hasAccess: false }
   });
   
+  // Flag to track if we're currently fetching settings to prevent infinite loops
+  const isFetchingRef = useRef(false);
+
   // Define a settings fetching function that can be used both on mount and after updates
   const fetchSettings = async () => {
+    // Prevent concurrent fetches or infinite loops
+    if (isFetchingRef.current) return;
+    
     try {
+      isFetchingRef.current = true;
       const res = await fetch('/api/settings');
       
       if (res.ok) {
         const settings = await res.json();
         console.log('Settings refreshed from server:', settings);
         
+        // Create a single update object for VPN state
+        const vpnStateUpdates: any = {};
+        
         // Update local state with fetched settings
         if (settings.preferredProtocol) {
           // Update UI state
           setProtocol(settings.preferredProtocol);
-          
-          // Update VPN context with correct protocol value
-          vpnState.updateSettings({
-            protocol: settings.preferredProtocol
-          });
+          vpnStateUpdates.protocol = settings.preferredProtocol;
         }
         
         if (settings.preferredEncryption) {
           // Update UI state
           setEncryption(settings.preferredEncryption);
-          
-          // Update VPN context with correct encryption value
-          vpnState.updateSettings({
-            encryption: settings.preferredEncryption
-          });
+          vpnStateUpdates.encryption = settings.preferredEncryption;
         }
         
         // Update other settings
         if (settings.killSwitch !== undefined) {
           setKillSwitch(settings.killSwitch);
-          vpnState.updateSettings({
-            killSwitch: settings.killSwitch
-          });
+          vpnStateUpdates.killSwitch = settings.killSwitch;
         }
         
         if (settings.dnsLeakProtection !== undefined) {
           setDnsLeakProtection(settings.dnsLeakProtection);
-          vpnState.updateSettings({
-            dnsLeakProtection: settings.dnsLeakProtection
-          });
+          vpnStateUpdates.dnsLeakProtection = settings.dnsLeakProtection;
         }
         
         if (settings.doubleVpn !== undefined) {
           setDoubleVpn(settings.doubleVpn);
-          vpnState.updateSettings({
-            doubleVpn: settings.doubleVpn
-          });
+          vpnStateUpdates.doubleVpn = settings.doubleVpn;
         }
         
         if (settings.obfuscation !== undefined) {
           setObfuscation(settings.obfuscation);
-          vpnState.updateSettings({
-            obfuscation: settings.obfuscation
-          });
+          vpnStateUpdates.obfuscation = settings.obfuscation;
+        }
+        
+        // Apply all VPN state updates in a single operation
+        // to reduce the number of renders and prevent maximum update depth errors
+        if (Object.keys(vpnStateUpdates).length > 0) {
+          vpnState.updateSettings(vpnStateUpdates);
         }
       }
     } catch (error) {
       console.error('Failed to refresh user settings:', error);
+    } finally {
+      // Always reset the fetching flag when done
+      isFetchingRef.current = false;
     }
   };
   
@@ -188,10 +191,6 @@ export default function SecuritySettingsCard() {
         variant: 'default',
       });
       
-      // Reload settings to ensure everything is in sync
-      setTimeout(() => {
-        fetchSettings();
-      }, 500);
       
     } catch (error) {
       console.error('Error updating protocol:', error);
@@ -258,10 +257,6 @@ export default function SecuritySettingsCard() {
         variant: 'default',
       });
       
-      // Reload settings to ensure everything is in sync
-      setTimeout(() => {
-        fetchSettings();
-      }, 500);
       
     } catch (error) {
       console.error('Error updating encryption:', error);
