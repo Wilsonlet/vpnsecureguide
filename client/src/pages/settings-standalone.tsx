@@ -27,6 +27,7 @@ export default function SettingsStandalone() {
   const [dnsLeakProtection, setDnsLeakProtection] = useState(false);
   const [doubleVpn, setDoubleVpn] = useState(false);
   const [obfuscation, setObfuscation] = useState(false);
+  const [antiCensorship, setAntiCensorship] = useState(false);
   
   // UI state
   const [loading, setLoading] = useState(true);
@@ -55,6 +56,7 @@ export default function SettingsStandalone() {
           setDnsLeakProtection(data.dnsLeakProtection || false);
           setDoubleVpn(data.doubleVpn || false);
           setObfuscation(data.obfuscation || false);
+          setAntiCensorship(data.antiCensorship || false);
         } else {
           setErrorMessage('Failed to load settings');
         }
@@ -164,6 +166,9 @@ export default function SettingsStandalone() {
           break;
         case 'obfuscation':
           setObfuscation(value);
+          break;
+        case 'antiCensorship':
+          setAntiCensorship(value);
           break;
       }
       
@@ -368,7 +373,7 @@ export default function SettingsStandalone() {
           <ObfuscationSettings 
             userSettings={{
               obfuscation: obfuscation,
-              antiCensorship: false // Add anti-censorship state if needed
+              antiCensorship: antiCensorship
             }}
             updateSettings={async (settings) => {
               try {
@@ -384,6 +389,7 @@ export default function SettingsStandalone() {
                 if (response.ok) {
                   // Update local state
                   setObfuscation(settings.obfuscation);
+                  setAntiCensorship(settings.antiCensorship);
                   
                   // Update global VPN state
                   vpnState.updateSettings({
