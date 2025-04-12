@@ -14,6 +14,8 @@ import MobileNav from '@/components/layout/mobile-nav';
 import Header from '@/components/layout/header';
 import { useAuth } from '@/hooks/use-auth';
 import { useVpnState } from '@/lib/vpn-service';
+import { ObfuscationSettings } from '@/components/vpn/obfuscation-settings';
+import { getAvailableObfuscationMethods } from '@/lib/obfuscation-utils';
 
 export default function SettingsStandalone() {
   const { user } = useAuth();
@@ -32,6 +34,7 @@ export default function SettingsStandalone() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [connected, setConnected] = useState(false); // VPN connected state
+  const [hasObfuscationAccess, setHasObfuscationAccess] = useState(false);
   
   // Load settings on mount
   useEffect(() => {
@@ -79,8 +82,27 @@ export default function SettingsStandalone() {
       }
     }
     
+    // Check if user has access to obfuscation feature
+    async function checkObfuscationAccess() {
+      try {
+        const response = await fetch('/api/feature-access/obfuscation', {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setHasObfuscationAccess(data.hasAccess);
+        }
+      } catch (error) {
+        console.error('Error checking obfuscation access:', error);
+        // Default to no access if there's an error
+        setHasObfuscationAccess(false);
+      }
+    }
+    
     loadSettings();
     checkVpnStatus();
+    checkObfuscationAccess();
   }, []);
   
   // Import the VPN context
@@ -338,21 +360,49 @@ export default function SettingsStandalone() {
                     disabled={connected}
                   />
                 </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium">Obfuscation</h3>
-                    <p className="text-sm text-gray-400 mt-1">Hide VPN traffic pattern</p>
-                  </div>
-                  <Switch 
-                    checked={obfuscation} 
-                    onCheckedChange={(checked) => handleToggle('obfuscation', checked)} 
-                    disabled={connected}
-                  />
-                </div>
               </div>
             </CardContent>
           </Card>
+          
+          {/* Advanced Obfuscation Settings Card */}
+          <ObfuscationSettings 
+            userSettings={{
+              obfuscation: obfuscation,
+              antiCensorship: false // Add anti-censorship state if needed
+            }}
+            updateSettings={async (settings) => {
+              try {
+                const response = await fetch('/api/settings', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(settings),
+                  credentials: 'include',
+                });
+                
+                if (response.ok) {
+                  // Update local state
+                  setObfuscation(settings.obfuscation);
+                  
+                  // Update global VPN state
+                  vpnState.updateSettings({
+                    obfuscation: settings.obfuscation,
+                    antiCensorship: settings.antiCensorship 
+                  });
+                  
+                  return Promise.resolve();
+                } else {
+                  return Promise.reject(new Error('Failed to update settings'));
+                }
+              } catch (error) {
+                console.error('Error updating obfuscation settings:', error);
+                return Promise.reject(error);
+              }
+            }}
+            hasAccess={hasObfuscationAccess}
+            currentProtocol={protocol}
+          />
         </div>
       </main>
     </div>

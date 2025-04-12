@@ -12,6 +12,8 @@ export type VpnConnectionState = {
   dnsLeakProtection: boolean;
   doubleVpn: boolean;
   obfuscation: boolean;
+  // Anti-censorship state for obfuscation
+  antiCensorship?: boolean;
   selectedServer: VpnServer | null;
   availableServers: VpnServer[];
   virtualIp: string;
@@ -56,6 +58,7 @@ export const VpnStateContext = createContext<VpnStateContextType>({
   dnsLeakProtection: true,
   doubleVpn: false,
   obfuscation: false,
+  antiCensorship: false,
   selectedServer: null,
   availableServers: [],
   virtualIp: generateRandomIp(),

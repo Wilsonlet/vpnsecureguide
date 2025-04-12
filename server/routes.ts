@@ -1620,6 +1620,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Feature access endpoints
+  app.get("/api/feature-access/:feature", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      const feature = req.params.feature;
+      
+      if (!feature) {
+        return res.status(400).json({ message: "Feature name is required" });
+      }
+      
+      // Check if user has access to the specified feature
+      const hasAccess = await storage.checkUserFeatureAccess(req.user.id, feature);
+      
+      res.json({
+        feature,
+        hasAccess
+      });
+    } catch (error) {
+      console.error(`Error checking access to feature ${req.params.feature}:`, error);
+      next(error);
+    }
+  });
+  
   // Obfuscation and anti-censorship endpoints
   app.get("/api/obfuscation/methods/:protocol", async (req, res, next) => {
     try {
