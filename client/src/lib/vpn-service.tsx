@@ -83,7 +83,7 @@ export const VpnStateContext = createContext<VpnStateContextType>({
   // Tunnel verification
   tunnelActive: false,
   tunnelVerified: false,
-  lastTunnelCheck: null,
+  lastTunnelCheck: undefined,
   dataTransferred: {
     upload: 0,
     download: 0
@@ -1370,16 +1370,77 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     }
   };
 
+  // Function to manually check tunnel status (in addition to automatic checking)
+  const verifyTunnelStatus = async (): Promise<boolean> => {
+    try {
+      console.log('Manually verifying VPN tunnel status...');
+      
+      // Call the tunnel status endpoint
+      const res = await fetch('/api/tunnel/status', {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
+      
+      if (!res.ok) {
+        console.error('Manual tunnel status check failed:', res.status);
+        
+        // Update state to show tunnel is not active
+        setState((currentState) => ({
+          ...currentState,
+          tunnelActive: false,
+          tunnelVerified: true,
+          lastTunnelCheck: new Date()
+        }));
+        
+        return false;
+      }
+      
+      // Get the tunnel status data
+      const tunnelData = await res.json();
+      console.log('Manual tunnel status check result:', tunnelData);
+      
+      // Update state with tunnel status and data
+      setState((currentState) => ({
+        ...currentState,
+        tunnelActive: tunnelData.tunnelActive,
+        tunnelVerified: true,
+        lastTunnelCheck: new Date(),
+        dataTransferred: tunnelData.dataTransferred || {
+          upload: 0,
+          download: 0
+        }
+      }));
+      
+      return tunnelData.tunnelActive;
+    } catch (error) {
+      console.error('Error during manual tunnel verification:', error);
+      
+      // Set tunnel as unverified on error
+      setState((currentState) => ({
+        ...currentState,
+        tunnelVerified: false,
+        lastTunnelCheck: new Date()
+      }));
+      
+      return false;
+    }
+  };
+
   return (
     <VpnStateContext.Provider
       value={{
         ...state,
         connect,
         disconnect,
-        changeIp, // Add the new function
+        changeIp,
         updateSettings,
         selectServer,
         setAvailableServers,
+        verifyTunnelStatus,
       }}
     >
       {children}

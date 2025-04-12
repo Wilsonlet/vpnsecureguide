@@ -575,6 +575,21 @@ export default function ConnectionStatusCard() {
               <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
                 {vpnState.connected || forceConnected ? 'Connected' : 'Disconnected'}
               </h2>
+              {/* Tunnel verification status indicator */}
+              {(vpnState.connected || forceConnected) && (
+                <div className="flex items-center mt-1 space-x-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    vpnState.tunnelVerified
+                      ? (vpnState.tunnelActive ? 'bg-green-500' : 'bg-red-500') 
+                      : 'bg-yellow-500'
+                  }`} />
+                  <span className="text-xs text-gray-300">
+                    {vpnState.tunnelVerified
+                      ? (vpnState.tunnelActive ? 'Tunnel Verified' : 'Tunnel Not Active') 
+                      : 'Verifying Tunnel...'}
+                  </span>
+                </div>
+              )}
               <p className="text-gray-400 mt-1 flex items-center gap-2">
                 <span className="font-mono">{connectionTime}</span>
                 {(vpnState.connected || forceConnected) && (
