@@ -34,7 +34,6 @@ export const countries: Country[] = [
   { code: 'GR', name: 'Greece' },
   { code: 'TR', name: 'Turkey' },
   { code: 'EG', name: 'Egypt' },
-  { code: 'ZA', name: 'South Africa' },
   { code: 'AU', name: 'Australia' },
   { code: 'NZ', name: 'New Zealand' },
   { code: 'JP', name: 'Japan' },

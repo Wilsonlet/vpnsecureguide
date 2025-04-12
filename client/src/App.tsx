@@ -42,7 +42,7 @@ function Router() {
         <ProtectedRoute path="/dashboard" component={Dashboard} />
         <ProtectedRoute path="/subscription" component={SubscriptionPage} />
         <ProtectedRoute path="/checkout" component={CheckoutPage} />
-        <ProtectedRoute path="/paystack-checkout" component={PaystackCheckoutPage} />
+        <Route path="/paystack-checkout" component={PaystackCheckoutPage} />
         <ProtectedRoute path="/account" component={AccountPage} />
         <ProtectedRoute path="/admin" component={AdminPage} />
         <ProtectedRoute path="/servers" component={ServersPage} />
