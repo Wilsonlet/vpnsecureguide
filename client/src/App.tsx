@@ -2,16 +2,7 @@ import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-import NotFound from "@/pages/not-found";
-import AuthPage from "@/pages/auth-page";
-import Dashboard from "@/pages/dashboard";
-import SubscriptionPage from "@/pages/subscription-page";
-import AccountPage from "@/pages/account-page";
-import AdminPage from "@/pages/admin-page";
-import ServersPage from "@/pages/servers-page";
-import ClientsPage from "@/pages/clients-page";
-import SettingsPage from "@/pages/settings-page";
-import SupportPage from "@/pages/support-page";
+import { lazy, Suspense } from "react";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AuthProvider } from "./hooks/use-auth";
 import { FirebaseAuthProvider } from "./hooks/use-firebase-auth";
@@ -19,21 +10,45 @@ import { VpnStateProvider } from "./lib/vpn-service";
 import { AdSenseScript } from "./components/ads/adsense-script";
 import { ThirdPartyErrorHandler, UrlErrorHandler } from "./components/analytics/error-handlers";
 
+// Lazy load all pages to improve initial load time
+const NotFound = lazy(() => import("@/pages/not-found"));
+const AuthPage = lazy(() => import("@/pages/auth-page"));
+const Dashboard = lazy(() => import("@/pages/dashboard"));
+const SubscriptionPage = lazy(() => import("@/pages/subscription-page"));
+const AccountPage = lazy(() => import("@/pages/account-page"));
+const AdminPage = lazy(() => import("@/pages/admin-page"));
+const ServersPage = lazy(() => import("@/pages/servers-page"));
+const ClientsPage = lazy(() => import("@/pages/clients-page"));
+const SettingsPage = lazy(() => import("@/pages/settings-page"));
+const SupportPage = lazy(() => import("@/pages/support-page"));
+
+// Loading skeleton component
+const LoadingSkeleton = () => (
+  <div className="h-screen flex items-center justify-center bg-background">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+      <p className="text-muted-foreground">Loading SecureShield VPN...</p>
+    </div>
+  </div>
+);
+
 function Router() {
   return (
-    <Switch>
-      <ProtectedRoute path="/" component={Dashboard} />
-      <ProtectedRoute path="/dashboard" component={Dashboard} />
-      <ProtectedRoute path="/subscription" component={SubscriptionPage} />
-      <ProtectedRoute path="/account" component={AccountPage} />
-      <ProtectedRoute path="/admin" component={AdminPage} />
-      <ProtectedRoute path="/servers" component={ServersPage} />
-      <ProtectedRoute path="/clients" component={ClientsPage} />
-      <ProtectedRoute path="/settings" component={SettingsPage} />
-      <ProtectedRoute path="/support" component={SupportPage} />
-      <Route path="/auth" component={AuthPage} />
-      <Route component={NotFound} />
-    </Switch>
+    <Suspense fallback={<LoadingSkeleton />}>
+      <Switch>
+        <ProtectedRoute path="/" component={Dashboard} />
+        <ProtectedRoute path="/dashboard" component={Dashboard} />
+        <ProtectedRoute path="/subscription" component={SubscriptionPage} />
+        <ProtectedRoute path="/account" component={AccountPage} />
+        <ProtectedRoute path="/admin" component={AdminPage} />
+        <ProtectedRoute path="/servers" component={ServersPage} />
+        <ProtectedRoute path="/clients" component={ClientsPage} />
+        <ProtectedRoute path="/settings" component={SettingsPage} />
+        <ProtectedRoute path="/support" component={SupportPage} />
+        <Route path="/auth" component={AuthPage} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
