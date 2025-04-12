@@ -5,15 +5,28 @@
  * Minimal dependencies, minimal state, minimal API calls.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { useVpnState } from '@/lib/vpn-service';
 
 export default function SimpleSettingsForm() {
-  const [protocol, setProtocol] = useState('wireguard');
-  const [encryption, setEncryption] = useState('aes_256_gcm');
+  const vpnState = useVpnState();
+  const [protocol, setProtocol] = useState(vpnState.protocol || 'wireguard');
+  const [encryption, setEncryption] = useState(vpnState.encryption || 'aes_256_gcm');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  
+  // Load settings from VPN state when component mounts or vpnState changes
+  useEffect(() => {
+    // Only update if the vpnState has valid values
+    if (vpnState.protocol) {
+      setProtocol(vpnState.protocol);
+    }
+    if (vpnState.encryption) {
+      setEncryption(vpnState.encryption);
+    }
+  }, [vpnState.protocol, vpnState.encryption]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +49,11 @@ export default function SimpleSettingsForm() {
       
       if (response.ok) {
         setMessage(`Settings saved successfully at ${new Date().toLocaleTimeString()}`);
+        // Update the global VPN state with new settings
+        vpnState.updateSettings({
+          protocol: protocol,
+          encryption: encryption
+        });
       } else {
         const errorText = await response.text();
         setError(`Failed to save settings: ${errorText}`);
