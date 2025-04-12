@@ -14,32 +14,40 @@ export default function SettingsForm() {
   const [savingEncryption, setSavingEncryption] = useState(false);
   const [lastSaved, setLastSaved] = useState('');
 
-  // Load settings from server on initial load
+  // Only load settings once on initial component mount
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const res = await fetch('/api/settings', { credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          if (data) {
-            // Update local state
-            setProtocol(data.preferredProtocol || 'openvpn_tcp');
-            setEncryption(data.preferredEncryption || 'aes_256_gcm');
-            
-            // Update global state
-            vpnState.updateSettings({
-              protocol: data.preferredProtocol,
-              encryption: data.preferredEncryption
-            });
+    // Only load settings if they're not already in the global state
+    if (!vpnState.protocol || !vpnState.encryption) {
+      const loadSettings = async () => {
+        try {
+          console.log("Loading settings from server");
+          const res = await fetch('/api/settings', { credentials: 'include' });
+          if (res.ok) {
+            const data = await res.json();
+            if (data) {
+              // Update local state
+              setProtocol(data.preferredProtocol || 'openvpn_tcp');
+              setEncryption(data.preferredEncryption || 'aes_256_gcm');
+              
+              // Update global state
+              vpnState.updateSettings({
+                protocol: data.preferredProtocol,
+                encryption: data.preferredEncryption
+              });
+            }
           }
+        } catch (error) {
+          console.error("Error loading settings:", error);
         }
-      } catch (error) {
-        console.error("Error loading settings:", error);
-      }
-    };
-    
-    loadSettings();
-  }, [vpnState.updateSettings]);
+      };
+      
+      loadSettings();
+    } else {
+      // Use existing values from VPN context if available
+      setProtocol(vpnState.protocol);
+      setEncryption(vpnState.encryption);
+    }
+  }, []);
   
   // Protocol and encryption options
   const protocols = [

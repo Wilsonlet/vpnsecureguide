@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import ToggleSwitch from '@/components/common/toggle-switch';
 import { useVpnState } from '@/lib/vpn-service.tsx';
 import { useToast } from '@/hooks/use-toast';
-import SettingsForm from './settings-form';
+import BasicSettingsForm from './basic-settings-form';
 
 export default function SecuritySettingsCard() {
   const vpnState = useVpnState();
@@ -92,7 +92,7 @@ export default function SecuritySettingsCard() {
   return (
     <div className="space-y-5">
       {/* Protocol and Encryption Settings */}
-      <SettingsForm />
+      <BasicSettingsForm />
     
       {/* Security Toggles */}
       <Card className="border border-gray-800 shadow-lg bg-gray-950">
