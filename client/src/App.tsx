@@ -16,6 +16,7 @@ const AuthPage = lazy(() => import("@/pages/auth-page"));
 const Dashboard = lazy(() => import("@/pages/dashboard"));
 const SubscriptionPage = lazy(() => import("@/pages/subscription-page"));
 const CheckoutPage = lazy(() => import("@/pages/checkout"));
+const PaystackCheckoutPage = lazy(() => import("@/pages/paystack-checkout"));
 const AccountPage = lazy(() => import("@/pages/account-page"));
 const AdminPage = lazy(() => import("@/pages/admin-page"));
 const ServersPage = lazy(() => import("@/pages/servers-page"));
@@ -41,6 +42,7 @@ function Router() {
         <ProtectedRoute path="/dashboard" component={Dashboard} />
         <ProtectedRoute path="/subscription" component={SubscriptionPage} />
         <ProtectedRoute path="/checkout" component={CheckoutPage} />
+        <ProtectedRoute path="/paystack-checkout" component={PaystackCheckoutPage} />
         <ProtectedRoute path="/account" component={AccountPage} />
         <ProtectedRoute path="/admin" component={AdminPage} />
         <ProtectedRoute path="/servers" component={ServersPage} />
