@@ -10,6 +10,7 @@ import { VpnStateProvider } from "./lib/vpn-service";
 import { AdSenseScript } from "./components/ads/adsense-script";
 import { ThirdPartyErrorHandler, UrlErrorHandler } from "./components/analytics/error-handlers";
 import { NetworkErrorHandler } from "./components/analytics/network-error-handler";
+import { AdFallbackHandler } from "./components/analytics/ad-fallback-handler";
 import { SeoHead } from "@/components/seo";
 import Layout from "@/components/layout/layout";
 
@@ -94,6 +95,7 @@ function App() {
       <ThirdPartyErrorHandler />
       <UrlErrorHandler />
       <NetworkErrorHandler />
+      <AdFallbackHandler />
       
       {/* We're changing the provider order to improve error isolation */}
       <Suspense fallback={<LoadingSkeleton />}>

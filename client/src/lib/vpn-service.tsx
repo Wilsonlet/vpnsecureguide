@@ -738,21 +738,64 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
           // This pattern ensures we never have unhandled rejections
           (async () => {
             try {
-              // First check if user is authenticated - use a very robust approach
+              // Check user authentication with local caching to reduce API load
               let isAuthenticated = false;
               
-              // Safely check authentication status
-              try {
-                const userRes = await safeFetch('/api/user', { credentials: 'include' });
-                isAuthenticated = !!(userRes && userRes.ok);
-              } catch (authError) {
-                // Don't log the error, just handle it gracefully
-                isAuthenticated = false;
+              // Use cached auth status if available and not expired (cache for 30 seconds)
+              const AUTH_CACHE_KEY = 'vpn_auth_cache';
+              const AUTH_CACHE_DURATION = 30000; // 30 seconds
+              
+              const authCache = window.sessionStorage.getItem(AUTH_CACHE_KEY);
+              const now = Date.now();
+              
+              if (authCache) {
+                try {
+                  const { timestamp, authenticated } = JSON.parse(authCache);
+                  // Use cached value if less than 30 seconds old
+                  if (now - timestamp < AUTH_CACHE_DURATION) {
+                    isAuthenticated = authenticated;
+                    console.log('VpnService: Using cached authentication status:', authenticated);
+                    
+                    if (!isAuthenticated) {
+                      console.log('VpnService: Cached status - user not authenticated, skipping server sync');
+                      return; // Exit early
+                    }
+                    
+                    // If we have a cached authenticated status, skip the API call entirely
+                    // and proceed with the remaining operations
+                  }
+                } catch (cacheError) {
+                  // Invalid cache format, ignore and proceed with fresh check
+                  console.log('VpnService: Auth cache invalid, refreshing');
+                }
               }
               
+              // Only check authentication via API if we don't have a valid cache entry
               if (!isAuthenticated) {
-                console.log('VpnService: User not authenticated, skipping server sync');
-                return; // Exit early if not authenticated
+                try {
+                  const userRes = await safeFetch('/api/user', { credentials: 'include' });
+                  isAuthenticated = !!(userRes && userRes.ok);
+                  
+                  // Update cache with new status
+                  window.sessionStorage.setItem(AUTH_CACHE_KEY, JSON.stringify({
+                    timestamp: now,
+                    authenticated: isAuthenticated
+                  }));
+                } catch (authError) {
+                  // Don't log the error, just handle it gracefully
+                  isAuthenticated = false;
+                  
+                  // Cache the negative result too
+                  window.sessionStorage.setItem(AUTH_CACHE_KEY, JSON.stringify({
+                    timestamp: now,
+                    authenticated: false
+                  }));
+                }
+                
+                if (!isAuthenticated) {
+                  console.log('VpnService: User not authenticated, skipping server sync');
+                  return; // Exit early if not authenticated
+                }
               }
               
               // Protocol sync with dedicated error handling

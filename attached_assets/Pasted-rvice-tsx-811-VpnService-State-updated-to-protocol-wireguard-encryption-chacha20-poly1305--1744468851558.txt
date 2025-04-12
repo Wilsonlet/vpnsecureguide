@@ -1,0 +1,641 @@
+rvice.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:208 VpnService: Refreshed settings from server: {id: 1, userId: 1, killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.tsx:617 VpnService: Updating settings with: {connected: false, connectTime: null, virtualIp: ''}
+error-handlers.tsx:65 Request to /api/user timed out after 5000ms
+console.warn @ error-handlers.tsx:65
+(anonymous) @ vpn-service.tsx:634
+setTimeout
+(anonymous) @ vpn-service.tsx:633
+safeFetch @ vpn-service.tsx:632
+(anonymous) @ vpn-service.tsx:746
+updateSettings @ vpn-service.tsx:791
+(anonymous) @ dashboard.tsx:100
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19432
+commitRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:18718
+workLoop @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:197
+flushWork @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=c77189d7:sourcemap:384Understand this warningAI
+vpn-service.tsx:754 VpnService: User not authenticated, skipping server sync
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:811 VpnService: State updated to: {protocol: 'wireguard', encryption: 'chacha20_poly1305', killSwitch: true, dnsLeakProtection: true, doubleVpn: true, …}
+vpn-service.tsx:617 VpnService: Updating settings with: {killSwitch: true, dnsLeakProtection: true, doubleVpn: true, obfuscation: false, protocol: 'wireguard', …}
+vpn-service.tsx:621 VpnService: Protocol/Encryption update detected
+dashboard.tsx:113 User previously disconnected VPN, not auto-connecting
+vpn-service.ts
