@@ -577,13 +577,14 @@ class VpnTunnelService {
     const now = new Date();
     const inactivityThreshold = 30 * 60 * 1000; // 30 minutes
     
-    for (const [userId, tunnel] of this.activeTunnels.entries()) {
+    // Convert entries iterator to array to avoid downlevelIteration issues
+    Array.from(this.activeTunnels.entries()).forEach(([userId, tunnel]) => {
       const inactiveTime = now.getTime() - tunnel.lastActive.getTime();
       if (inactiveTime > inactivityThreshold) {
         console.log(`Cleaning up inactive tunnel for user ${userId}`);
         this.closeTunnel(userId);
       }
-    }
+    });
   }
 }
 

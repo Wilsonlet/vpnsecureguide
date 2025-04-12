@@ -197,7 +197,7 @@ class ProxyVpnService {
           proxyPort: proxyConfig.port
         }
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error starting proxy connection for user ${session.userId}:`, error);
       throw new Error(`Failed to start proxy connection: ${error.message}`);
     }
@@ -238,7 +238,7 @@ class ProxyVpnService {
       this.activeProxies.delete(userId);
       
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error stopping proxy connection for user ${userId}:`, error);
       return false;
     }
@@ -374,7 +374,7 @@ class ProxyVpnService {
       }
       
       console.log(`Proxy successfully started on port ${tunnelPort} for user ${connection.userId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error starting proxy process:`, error);
       throw new Error(`Failed to start proxy process: ${error.message}`);
     }
@@ -442,7 +442,7 @@ class ProxyVpnService {
       
       console.log(`Proxy verification failed for user ${userId}, invalid response: ${ipResult}`);
       return false;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error verifying proxy connection for user ${userId}:`, error);
       return false;
     }
