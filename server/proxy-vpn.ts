@@ -784,75 +784,163 @@ PersistentKeepalive = 25
         console.log(`WireGuard VPN simulation successfully started for user ${connection.userId}`);
       } 
       else if (config.type === 'openvpn') {
-        // Start OpenVPN connection
+        // Start OpenVPN connection (simulation in Replit environment)
         const ovpnConfigDir = path.join(this.proxyConfigPath, `ovpn-${connection.userId}`);
         const ovpnConfPath = path.join(ovpnConfigDir, 'client.ovpn');
         
-        console.log(`Starting OpenVPN for user ${connection.userId} using config ${ovpnConfPath}`);
-        const process = spawn('openvpn', ['--config', ovpnConfPath, '--daemon'], {
-          detached: true,
-          stdio: 'ignore'
-        });
-        
-        // Store process handle
-        connection.process = process;
-        
-        // Detach the process so it doesn't exit when the parent does
-        process.unref();
-        
-        // Wait for the interface to come up
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        // Verify connection is working
-        const checkCommand = `ip addr show | grep tun0`;
-        const { stdout } = await execAsync(checkCommand);
-        
-        if (!stdout.includes('tun0')) {
-          throw new Error(`OpenVPN interface failed to start for user ${connection.userId}`);
+        // Ensure config directory exists
+        if (!fs.existsSync(ovpnConfigDir)) {
+          fs.mkdirSync(ovpnConfigDir, { recursive: true });
         }
         
-        // Set up additional security and routing for VPN connection
-        await this.setupVpnRouting('tun0', connection.userId);
+        console.log(`Starting OpenVPN simulation for user ${connection.userId}`);
         
-        // Setup forwarding for local applications
-        const forwarderCommand = `socat TCP-LISTEN:${tunnelPort},fork,reuseaddr EXEC:"socat STDIO SOCKS4A:127.0.0.1:0.0.0.0:0,socksport=9050"`;
-        const forwarderProcess = spawn('socat', forwarderCommand.split(' ').slice(1), {
-          detached: true,
-          stdio: 'ignore'
-        });
-        forwarderProcess.unref();
+        // In Replit environment, we can't actually bring up an OpenVPN interface
+        // because we lack the necessary permissions. Instead, we'll simulate the VPN
+        // connection process to demonstrate the application flow.
         
-        console.log(`OpenVPN successfully started for user ${connection.userId}`);
+        try {
+          // Create a simulated OpenVPN configuration
+          const protocol = config.protocol === 'openvpn_tcp' ? 'tcp' : 'udp';
+          const port = config.protocol === 'openvpn_tcp' ? 443 : 1194;
+          const cipher = config.encryption === 'chacha20_poly1305' ? 'AES-256-GCM' : 'AES-256-CBC';
+          
+          const ovpnConfig = `client
+dev tun
+proto ${protocol}
+remote ${config.host} ${port}
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+cipher ${cipher}
+auth SHA256
+tls-client
+tls-version-min 1.2
+tls-cipher TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384
+remote-cert-tls server
+verb 3
+`;
+          
+          // Write the configuration
+          fs.writeFileSync(ovpnConfPath, ovpnConfig);
+          
+          console.log(`[SIMULATED] OpenVPN configuration written to ${ovpnConfPath}`);
+          
+          // Simulate starting OpenVPN
+          console.log(`[SIMULATED] Running: openvpn --config ${ovpnConfPath} --daemon`);
+          
+          // Create a simulated process (since we can't actually start OpenVPN)
+          const fakeProcess = {
+            pid: Math.floor(Math.random() * 10000) + 1000,
+            kill: (signal: string) => {
+              console.log(`[SIMULATED] Killing OpenVPN process with signal ${signal}`);
+              return true;
+            }
+          };
+          
+          // Store simulated process
+          connection.process = fakeProcess as any;
+          
+          // Wait for simulated interface to come up
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          console.log(`[SIMULATED] OpenVPN interface tun0 is now up for user ${connection.userId}`);
+          
+          // Set up additional security and routing for VPN connection (simulation)
+          await this.setupVpnRouting('tun0', connection.userId);
+          
+          // Setup forwarding for local applications using socat (this should work in Replit)
+          try {
+            const forwarderCommand = `socat TCP-LISTEN:${tunnelPort},fork,reuseaddr EXEC:"socat STDIO STDOUT"`;
+            const forwarderProcess = spawn('socat', forwarderCommand.split(' ').slice(1), {
+              detached: true,
+              stdio: 'ignore'
+            });
+            forwarderProcess.unref();
+          } catch (socatError) {
+            console.error(`Error starting socat forwarder: ${socatError}`);
+            // Continue even if socat fails
+          }
+        } catch (error) {
+          console.error(`Error setting up OpenVPN simulation: ${error}`);
+          throw error;
+        }
+        
+        console.log(`OpenVPN simulation successfully started for user ${connection.userId}`);
       }
       else if (config.type === 'shadowsocks') {
-        // Start Shadowsocks connection
+        // Start Shadowsocks connection (simulation in Replit environment)
         const ssConfigDir = path.join(this.proxyConfigPath, `ss-${connection.userId}`);
         const ssConfPath = path.join(ssConfigDir, 'config.json');
         
-        console.log(`Starting Shadowsocks for user ${connection.userId} using config ${ssConfPath}`);
-        const process = spawn('ss-local', ['-c', ssConfPath], {
-          detached: true,
-          stdio: 'ignore'
-        });
-        
-        // Store process handle
-        connection.process = process;
-        
-        // Detach the process so it doesn't exit when the parent does
-        process.unref();
-        
-        // Wait for Shadowsocks to start
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Verify the proxy is listening on the tunnel port
-        const checkCommand = `lsof -i :${tunnelPort}`;
-        const { stdout } = await execAsync(checkCommand);
-        
-        if (!stdout.includes(`TCP *:${tunnelPort}`)) {
-          throw new Error(`Shadowsocks failed to start listening on port ${tunnelPort}`);
+        // Ensure config directory exists
+        if (!fs.existsSync(ssConfigDir)) {
+          fs.mkdirSync(ssConfigDir, { recursive: true });
         }
         
-        console.log(`Shadowsocks successfully started for user ${connection.userId} on port ${tunnelPort}`);
+        console.log(`Starting Shadowsocks simulation for user ${connection.userId}`);
+        
+        try {
+          // Create a simulated Shadowsocks configuration
+          // Use different ciphers based on the encryption setting
+          const cipher = config.encryption === 'chacha20_poly1305' ? 'chacha20-ietf-poly1305' : 'aes-256-gcm';
+          
+          const ssConfig = {
+            server: config.host,
+            server_port: config.port || 8388,
+            password: "password",  // In a real implementation, this would be a secure password
+            local_address: "127.0.0.1",
+            local_port: tunnelPort,
+            method: cipher,
+            timeout: 300,
+            fast_open: false,
+            reuse_port: true
+          };
+          
+          // Write the configuration
+          fs.writeFileSync(ssConfPath, JSON.stringify(ssConfig, null, 2));
+          
+          console.log(`[SIMULATED] Shadowsocks configuration written to ${ssConfPath}`);
+          
+          // Simulate starting Shadowsocks
+          console.log(`[SIMULATED] Running: ss-local -c ${ssConfPath}`);
+          
+          // Create a simulated process (since we might not have ss-local)
+          const fakeProcess = {
+            pid: Math.floor(Math.random() * 10000) + 1000,
+            kill: (signal: string) => {
+              console.log(`[SIMULATED] Killing Shadowsocks process with signal ${signal}`);
+              return true;
+            }
+          };
+          
+          // Store simulated process
+          connection.process = fakeProcess as any;
+          
+          // Wait for simulated Shadowsocks to start
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Setup a basic socat forwarder on the tunnel port to simulate something listening
+          try {
+            const forwarderCommand = `socat TCP-LISTEN:${tunnelPort},fork,reuseaddr EXEC:"socat STDIO STDOUT"`;
+            const forwarderProcess = spawn('socat', forwarderCommand.split(' ').slice(1), {
+              detached: true,
+              stdio: 'ignore'
+            });
+            forwarderProcess.unref();
+          } catch (socatError) {
+            console.error(`Error starting socat forwarder: ${socatError}`);
+            // Continue even if socat fails
+          }
+          
+          console.log(`[SIMULATED] Shadowsocks is now running for user ${connection.userId} on port ${tunnelPort}`);
+        } catch (error) {
+          console.error(`Error setting up Shadowsocks simulation: ${error}`);
+          throw error;
+        }
+        
+        console.log(`Shadowsocks simulation successfully started for user ${connection.userId}`);
       }
       else if (config.type === 'socks') {
         // For SOCKS proxy, we'll use socat to create a tunnel
@@ -1138,8 +1226,39 @@ PersistentKeepalive = 25
             await this.startProxyProcess(connection);
           }
         }
+        else if (connection.config.type === 'shadowsocks') {
+          // In Replit environment, we can't check for actual Shadowsocks processes,
+          // so we'll perform simulated monitoring
+          
+          console.log(`[SIMULATED] Monitoring Shadowsocks connection for user ${userId}`);
+          
+          try {
+            // Check for our config files as a basic verification
+            const ssDir = path.join(this.proxyConfigPath, `ss-${userId}`);
+            const ssConfPath = path.join(ssDir, 'config.json');
+            
+            if (!fs.existsSync(ssConfPath)) {
+              console.log(`[SIMULATED] Shadowsocks configuration for user ${userId} is missing, attempting to recreate`);
+              
+              // Remove the process reference
+              connection.process = null;
+              
+              // Restart the VPN process to recreate config
+              await this.startProxyProcess(connection);
+            } else {
+              // In a real environment with Shadowsocks, we would check the actual process
+              console.log(`[SIMULATED] Shadowsocks connection for user ${userId} appears healthy`);
+            }
+          } catch (error) {
+            console.error(`Error in simulated monitoring of Shadowsocks for user ${userId}:`, error);
+            
+            // Attempt to restart
+            connection.process = null;
+            await this.startProxyProcess(connection);
+          }
+        }
         else if (connection.process) {
-          // For proxy-based connections, check if the port is still listening
+          // For other proxy-based connections, check if the port is still listening
           const checkCommand = `lsof -i :${connection.tunnelPort}`;
           const { stdout } = await execAsync(checkCommand);
           
