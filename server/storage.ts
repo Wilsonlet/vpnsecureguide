@@ -242,6 +242,7 @@ export class DatabaseStorage implements IStorage {
         dnsLeakProtection: settings.dnsLeakProtection ?? existing.dnsLeakProtection,
         doubleVpn: settings.doubleVpn ?? existing.doubleVpn,
         obfuscation: settings.obfuscation ?? existing.obfuscation,
+        antiCensorship: settings.antiCensorship ?? existing.antiCensorship,
         preferredProtocol: settings.preferredProtocol ?? existing.preferredProtocol,
         preferredEncryption: settings.preferredEncryption ?? existing.preferredEncryption
       };
@@ -259,6 +260,7 @@ export class DatabaseStorage implements IStorage {
         dnsLeakProtection: settings.dnsLeakProtection ?? false,
         doubleVpn: settings.doubleVpn ?? false,
         obfuscation: settings.obfuscation ?? false,
+        antiCensorship: settings.antiCensorship ?? false,
         preferredProtocol: settings.preferredProtocol ?? "openvpn",
         preferredEncryption: settings.preferredEncryption ?? "aes-256-gcm"
       };

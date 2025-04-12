@@ -78,6 +78,7 @@ export const vpnUserSettings = pgTable("vpn_user_settings", {
   dnsLeakProtection: boolean("dns_leak_protection").default(true),
   doubleVpn: boolean("double_vpn").default(false),
   obfuscation: boolean("obfuscation").default(false),
+  antiCensorship: boolean("anti_censorship").default(false),
   preferredProtocol: text("preferred_protocol").default("openvpn_tcp"),
   preferredEncryption: text("preferred_encryption").default("aes_256_gcm"),
 });
