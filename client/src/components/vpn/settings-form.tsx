@@ -69,25 +69,12 @@ export default function SettingsForm() {
     }
   };
   
-  // Handle protocol change
-  const handleProtocolChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  // Handle protocol change with immediate update
+  const handleProtocolChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newProtocol = e.target.value;
-    setProtocol(newProtocol);
-  };
-  
-  // Handle encryption change
-  const handleEncryptionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newEncryption = e.target.value;
-    setEncryption(newEncryption);
-  };
-  
-  // Save settings to server
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
     
     // Check premium feature access
-    const selectedProtocolOption = protocolOptions.find(opt => opt.value === protocol);
-    const selectedEncryptionOption = encryptionOptions.find(opt => opt.value === encryption);
+    const selectedProtocolOption = protocolOptions.find(opt => opt.value === newProtocol);
     
     if (selectedProtocolOption?.premium && !isPremium) {
       toast({
@@ -98,6 +85,59 @@ export default function SettingsForm() {
       return;
     }
     
+    // Immediately update UI
+    setProtocol(newProtocol);
+    setIsSaving(true);
+    
+    try {
+      // Send directly to protocol-specific endpoint
+      const response = await fetch('/api/protocol', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          protocol: newProtocol,
+          preferredProtocol: newProtocol 
+        }),
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        // Update global state on success
+        vpnState.updateSettings({ protocol: newProtocol });
+        
+        toast({
+          title: 'Protocol Updated',
+          description: `Protocol changed to ${newProtocol.replace('_', ' ').toUpperCase()}`,
+          variant: 'default',
+        });
+        
+        setLastSaved(new Date().toLocaleTimeString());
+      } else {
+        // Revert on error
+        setProtocol(vpnState.protocol || 'openvpn_tcp');
+        throw new Error('Failed to update protocol');
+      }
+    } catch (error) {
+      console.error('Error updating protocol:', error);
+      toast({
+        title: 'Update Failed',
+        description: 'Could not update protocol. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  // Handle encryption change with immediate update
+  const handleEncryptionChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newEncryption = e.target.value;
+    
+    // Check premium feature access
+    const selectedEncryptionOption = encryptionOptions.find(opt => opt.value === newEncryption);
+    
     if (selectedEncryptionOption?.premium && !isPremium) {
       toast({
         title: 'Premium Feature',
@@ -107,55 +147,45 @@ export default function SettingsForm() {
       return;
     }
     
+    // Immediately update UI
+    setEncryption(newEncryption);
     setIsSaving(true);
     
     try {
-      // Build the payload
-      const payload = {
-        preferredProtocol: protocol,
-        preferredEncryption: encryption,
-      };
-      
-      // Send to server
-      const response = await fetch('/api/settings', {
+      // Send directly to encryption-specific endpoint
+      const response = await fetch('/api/encryption', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ 
+          encryption: newEncryption,
+          preferredEncryption: newEncryption 
+        }),
         credentials: 'include'
       });
       
       if (response.ok) {
-        const result = await response.json();
-        console.log('Settings saved:', result);
-        
-        // Update global VPN state
-        vpnState.updateSettings({
-          protocol,
-          encryption
-        });
+        // Update global state on success
+        vpnState.updateSettings({ encryption: newEncryption });
         
         toast({
-          title: 'Settings Saved',
-          description: 'Your VPN settings have been updated',
+          title: 'Encryption Updated',
+          description: `Encryption changed to ${newEncryption.replace('_', '-').toUpperCase()}`,
           variant: 'default',
         });
         
         setLastSaved(new Date().toLocaleTimeString());
       } else {
-        console.error('Failed to save settings:', response.statusText);
-        toast({
-          title: 'Save Failed',
-          description: 'Could not update settings. Please try again.',
-          variant: 'destructive',
-        });
+        // Revert on error
+        setEncryption(vpnState.encryption || 'aes_256_gcm');
+        throw new Error('Failed to update encryption');
       }
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error('Error updating encryption:', error);
       toast({
-        title: 'Error',
-        description: 'An error occurred while saving settings',
+        title: 'Update Failed',
+        description: 'Could not update encryption. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -164,7 +194,7 @@ export default function SettingsForm() {
   };
   
   return (
-    <form onSubmit={handleSave} className="space-y-6 bg-gray-900 border border-gray-800 rounded-lg p-6">
+    <form className="space-y-6 bg-gray-900 border border-gray-800 rounded-lg p-6">
       <h2 className="text-xl font-semibold mb-4">Connection Settings</h2>
       
       <div>
@@ -215,25 +245,17 @@ export default function SettingsForm() {
       
       <div className="flex justify-between items-center pt-4">
         {lastSaved && (
-          <span className="text-xs text-gray-400">Last saved: {lastSaved}</span>
+          <span className="text-xs text-gray-400">Last updated: {lastSaved}</span>
         )}
         
-        <div className="space-x-4">
+        <div>
           <button
             type="button"
             onClick={fetchSettings}
             disabled={isSaving}
             className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md"
           >
-            Refresh
-          </button>
-          
-          <button
-            type="submit"
-            disabled={vpnState.connected || isSaving}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:opacity-70 rounded-md"
-          >
-            {isSaving ? 'Saving...' : 'Save Settings'}
+            Refresh Settings
           </button>
         </div>
       </div>

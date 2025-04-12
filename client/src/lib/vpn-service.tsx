@@ -15,6 +15,8 @@ export type VpnConnectionState = {
   selectedServer: VpnServer | null;
   availableServers: VpnServer[];
   virtualIp: string;
+  // User subscription level for feature access
+  subscription?: string;
   // New settings for general tab
   autoConnect?: boolean;
   quickConnectType?: string;
@@ -57,6 +59,8 @@ export const VpnStateContext = createContext<VpnStateContextType>({
   selectedServer: null,
   availableServers: [],
   virtualIp: generateRandomIp(),
+  // User subscription level
+  subscription: 'free',
   // New settings
   autoConnect: false,
   quickConnectType: 'fastest',
@@ -88,6 +92,8 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     selectedServer: null,
     availableServers: [],
     virtualIp: generateRandomIp(),
+    // User subscription level
+    subscription: 'free',
     // New settings with defaults
     autoConnect: false,
     quickConnectType: 'fastest',
@@ -97,6 +103,29 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     customDnsServer: '1.1.1.1',
   });
   
+  // Fetch user subscription on mount
+  useEffect(() => {
+    const fetchUserSubscription = async () => {
+      try {
+        const userResponse = await fetch('/api/user');
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          if (userData.subscription) {
+            setState(currentState => ({
+              ...currentState,
+              subscription: userData.subscription
+            }));
+            console.log('User subscription loaded:', userData.subscription);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user subscription:', error);
+      }
+    };
+    
+    fetchUserSubscription();
+  }, []);
+
   // Initialize kill switch service
   useEffect(() => {
     // Start connection monitoring if kill switch is enabled
