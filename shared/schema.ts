@@ -94,6 +94,8 @@ export const subscriptionPlans = pgTable("subscription_plans", {
   obfuscationAccess: boolean("obfuscation_access").default(false),
   adFree: boolean("ad_free").default(false),
   priority: integer("priority").default(0).notNull(), // For display order
+  description: text("description"), // Description of the plan
+  features: text("features"), // Comma-separated list of features
   stripePriceId: text("stripe_price_id"), // For Stripe integration
   paystackPlanCode: text("paystack_plan_code"), // For Paystack integration
 });

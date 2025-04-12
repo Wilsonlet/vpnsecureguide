@@ -10,6 +10,8 @@ import Stripe from "stripe";
 import { vpnLoadBalancer, connectionRateLimiter, connectionStatistics } from "./scaling";
 import { verifyFirebaseToken } from "./firebase-auth";
 import { setupKillSwitchRoutes, killSwitchManager } from "./kill-switch";
+import { updateSubscriptionPlans } from "./update-subscription-plans";
+import { migrate } from "./migrate";
 
 // Initialize Stripe if the secret key is available
 let stripe: Stripe | undefined;
@@ -33,6 +35,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up kill switch routes for VPN protection
   setupKillSwitchRoutes(app);
+  
+  // Run migrations and update subscription plans on startup
+  try {
+    // Run database migrations first
+    await migrate();
+    
+    // Then update subscription plans
+    await updateSubscriptionPlans();
+    console.log("Subscription plans updated successfully");
+  } catch (error) {
+    console.error("Error updating subscription plans:", error);
+  }
   
   // Server and settings cache with TTL
   const cache = new Map<string, { data: any, timestamp: number }>();
