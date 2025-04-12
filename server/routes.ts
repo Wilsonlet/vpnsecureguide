@@ -709,30 +709,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
       
-      const { reference, plan } = req.body;
+      const { reference, plan, cardDetails } = req.body;
       if (!reference || !plan) {
         return res.status(400).json({ message: "Reference and plan are required" });
       }
       
-      // In a real implementation, you would verify the payment with Paystack API
-      // using the reference to confirm the transaction status
-      
-      // For demo purposes, we'll assume the payment was successful
-      
-      // Get the subscription plan
+      // Get the subscription plan to get the price
       const subscriptionPlan = await storage.getSubscriptionPlanByName(plan);
       if (!subscriptionPlan) {
         return res.status(404).json({ message: "Subscription plan not found" });
       }
       
-      // Update user's subscription in the database
-      await storage.updateUserSubscription(req.user.id, plan);
+      // In a real implementation, this would call the Paystack API to charge the user
+      // For example:
+      // const paystack = new Paystack(process.env.PAYSTACK_SECRET_KEY);
+      // const chargeResult = await paystack.transaction.charge({
+      //   amount: subscriptionPlan.price * 100, // Convert to kobo/cents
+      //   email: req.user.email,
+      //   card: cardDetails,
+      //   reference: reference,
+      //   plan: subscriptionPlan.paystackPlanCode,
+      // });
       
-      // Return success response
+      // For demo purposes, we'll log what would be charged
+      console.log(`[PAYMENT] Processing payment for ${plan} plan at $${subscriptionPlan.price}.`);
+      console.log(`[PAYMENT] Reference: ${reference}`);
+      console.log(`[PAYMENT] User: ${req.user.id} (${req.user.username})`);
+      
+      // Calculate when the subscription would expire (1 month from now)
+      const expiryDate = new Date();
+      expiryDate.setMonth(expiryDate.getMonth() + 1);
+      
+      // Update user's subscription in the database with expiry date
+      await storage.updateUserSubscription(req.user.id, plan, expiryDate);
+      
+      // Record the payment (in a real app, this would store the transaction details)
+      // For demo purposes, we'll simulate this with a log
+      console.log(`[PAYMENT] Transaction successful. Subscription active until ${expiryDate.toISOString()}`);
+      
+      // Return success response with price information
       res.json({
         success: true,
-        message: `Subscription to ${plan} plan confirmed`,
-        plan
+        message: `Payment of $${subscriptionPlan.price} successful. Subscription to ${plan} plan confirmed.`,
+        plan,
+        amount: subscriptionPlan.price,
+        currency: "USD",
+        expiryDate: expiryDate.toISOString()
       });
     } catch (error: any) {
       console.error("Confirm subscription error:", error);

@@ -81,7 +81,10 @@ export default function PaystackCheckout() {
     },
   });
 
-  // Parse URL parameters
+  // State for plan price
+  const [planPrice, setPlanPrice] = useState<number>(0);
+  
+  // Parse URL parameters and fetch plan price
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const plan = urlParams.get('plan');
@@ -94,6 +97,35 @@ export default function PaystackCheckout() {
     
     setPlanName(plan);
     setPlanRef(ref);
+    
+    // Get the plan price from the subscription plans in the database
+    const fetchPlanPrice = async () => {
+      try {
+        // In a real app, we would fetch the price from the server
+        // For demo purposes, we'll use hardcoded prices based on the plan name
+        let price = 0;
+        switch (plan) {
+          case 'basic':
+            price = 4.99;
+            break;
+          case 'premium':
+            price = 9.99;
+            break;
+          case 'ultimate':
+            price = 14.99;
+            break;
+          default:
+            price = 0;
+        }
+        
+        setPlanPrice(price);
+      } catch (error) {
+        console.error('Error fetching plan price:', error);
+        setError('Could not fetch plan price. Please try again.');
+      }
+    };
+    
+    fetchPlanPrice();
   }, []);
 
   const handleBackToSubscription = () => {
@@ -114,20 +146,31 @@ export default function PaystackCheckout() {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Mock API response (in real implementation, this would call Paystack API)
-      const mockResponse = {
-        success: true,
-        reference: planRef,
-        message: "Payment successful",
-        plan: planName
+      // Prepare card details for the API
+      const cardDetails = {
+        number: data.cardNumber,
+        name: data.cardName,
+        expiryMonth: data.expiryDate.substring(0, 2),
+        expiryYear: `20${data.expiryDate.substring(2, 4)}`,
+        cvv: data.cvv,
+        billing: {
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          zipCode: data.zipCode,
+          country: data.country
+        }
       };
       
       // After "successful" payment, update subscription status
       // In a real implementation, this would verify payment status with Paystack
-      await apiRequest('POST', '/api/confirm-subscription', {
+      const response = await apiRequest('POST', '/api/confirm-subscription', {
         reference: planRef,
-        plan: planName
+        plan: planName,
+        cardDetails // Send card details to the server
       });
+      
+      const result = await response.json();
       
       // Update subscription data in UI
       queryClient.invalidateQueries({ queryKey: ['/api/subscription'] });
@@ -136,7 +179,7 @@ export default function PaystackCheckout() {
       // Show success message
       toast({
         title: 'Payment Successful',
-        description: `Your ${planName} subscription is now active!`,
+        description: result.message || `Your ${planName} subscription is now active!`,
         variant: 'default',
       });
       
@@ -238,6 +281,12 @@ export default function PaystackCheckout() {
               <p className="text-muted-foreground mb-6">
                 Thank you for subscribing to our {planName} plan!
               </p>
+              <div className="bg-muted/50 p-3 rounded-md mb-4 text-left">
+                <p className="text-sm mb-1"><span className="font-semibold">Amount:</span> ${planPrice.toFixed(2)}</p>
+                <p className="text-sm mb-1"><span className="font-semibold">Plan:</span> {planName}</p>
+                <p className="text-sm mb-1"><span className="font-semibold">Reference:</span> <span className="font-mono text-xs">{planRef}</span></p>
+                <p className="text-sm"><span className="font-semibold">Next Billing Date:</span> {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
+              </div>
               <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
                 <CreditCard className="h-4 w-4" />
                 <span>Secured by Paystack</span>
@@ -475,9 +524,18 @@ export default function PaystackCheckout() {
                     <span>Plan</span>
                     <span className="font-medium capitalize">{planName}</span>
                   </div>
+                  <div className="flex justify-between mb-2">
+                    <span>Price</span>
+                    <span className="font-medium">${planPrice.toFixed(2)}/month</span>
+                  </div>
                   <div className="flex justify-between">
                     <span>Reference</span>
                     <span className="font-mono text-xs">{planRef}</span>
+                  </div>
+                  <Separator className="my-3" />
+                  <div className="flex justify-between font-semibold pt-2">
+                    <span>Total</span>
+                    <span>${planPrice.toFixed(2)}</span>
                   </div>
                 </div>
                 
