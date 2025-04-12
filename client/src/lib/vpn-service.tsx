@@ -114,7 +114,10 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         console.log('VpnService: Fetching initial user data and settings');
         
         // Fetch user subscription
-        const userResponse = await fetch('/api/user');
+        const userResponse = await fetch('/api/user', {
+          credentials: 'include',
+        });
+        
         if (userResponse.ok) {
           const userData = await userResponse.json();
           if (userData.subscription) {
@@ -124,9 +127,14 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
             }));
             console.log('User subscription loaded:', userData.subscription);
           }
+        } else {
+          // If the user isn't authenticated, we'll gracefully handle it
+          console.log('VpnService: User not authenticated or API error', userResponse.status);
+          // Don't try to fetch settings if user isn't authenticated
+          return;
         }
         
-        // Fetch user settings 
+        // Fetch user settings only if user is authenticated
         try {
           const settingsResponse = await fetch('/api/settings', {
             credentials: 'include',
@@ -153,6 +161,8 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
               ...currentState,
               ...mappedSettings
             }));
+          } else {
+            console.log('VpnService: Unable to fetch settings, status:', settingsResponse.status);
           }
         } catch (settingsError) {
           console.error('Error loading VPN settings:', settingsError);
@@ -590,77 +600,91 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       
       const now = Date.now();
       
-      // Sync protocol with server if we're updating it - with debounce
-      if (settings.protocol && now - lastUpdateTimes.protocol > UPDATE_DEBOUNCE_MS) {
-        lastUpdateTimes.protocol = now;
-        console.log(`VpnService: Syncing protocol to server: ${settings.protocol} (debounced)`);
-        
-        // Immediately try to persist protocol to server
-        fetch('/api/protocol', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ protocol: settings.protocol }),
-          credentials: 'include'
-        }).then(res => {
-          if (!res.ok) {
-            console.error('Failed to sync protocol with server');
-            return res.text().then(text => {
-              throw new Error(`Failed to sync protocol: ${text}`);
-            });
-          }
-          return res.json();
-        }).then(data => {
-          console.log('Protocol synced with server:', data);
+      // First check if user is authenticated
+      fetch('/api/user', { credentials: 'include' })
+        .then(res => {
+          const isAuthenticated = res.ok;
           
-          // Update state again with server's confirmed protocol
-          if (data && data.protocol) {
-            setState(currentState => ({
-              ...currentState,
-              protocol: data.protocol
-            }));
+          if (!isAuthenticated) {
+            console.log('VpnService: User not authenticated, skipping server sync');
+            return;
           }
-        }).catch(err => {
-          console.error('Error syncing protocol with server:', err);
-        });
-      } else if (settings.protocol) {
-        console.log(`VpnService: Skipping protocol server sync (within debounce period)`, settings.protocol);
-      }
-      
-      // Sync encryption with server if we're updating it - with debounce
-      if (settings.encryption && now - lastUpdateTimes.encryption > UPDATE_DEBOUNCE_MS) {
-        lastUpdateTimes.encryption = now;
-        console.log(`VpnService: Syncing encryption to server: ${settings.encryption} (debounced)`);
         
-        // Immediately try to persist encryption to server
-        fetch('/api/encryption', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ encryption: settings.encryption }),
-          credentials: 'include'
-        }).then(res => {
-          if (!res.ok) {
-            console.error('Failed to sync encryption with server');
-            return res.text().then(text => {
-              throw new Error(`Failed to sync encryption: ${text}`);
+          // Sync protocol with server if we're updating it - with debounce
+          if (settings.protocol && now - lastUpdateTimes.protocol > UPDATE_DEBOUNCE_MS) {
+            lastUpdateTimes.protocol = now;
+            console.log(`VpnService: Syncing protocol to server: ${settings.protocol} (debounced)`);
+            
+            // Immediately try to persist protocol to server
+            fetch('/api/protocol', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ protocol: settings.protocol }),
+              credentials: 'include'
+            }).then(res => {
+              if (!res.ok) {
+                console.error('Failed to sync protocol with server, status:', res.status);
+                return res.text().then(text => {
+                  throw new Error(`Failed to sync protocol: ${text || res.status}`);
+                });
+              }
+              return res.json();
+            }).then(data => {
+              console.log('Protocol synced with server:', data);
+              
+              // Update state again with server's confirmed protocol
+              if (data && data.protocol) {
+                setState(currentState => ({
+                  ...currentState,
+                  protocol: data.protocol
+                }));
+              }
+            }).catch(err => {
+              console.error('Error syncing protocol with server:', err);
             });
+          } else if (settings.protocol) {
+            console.log(`VpnService: Skipping protocol server sync (within debounce period)`, settings.protocol);
           }
-          return res.json();
-        }).then(data => {
-          console.log('Encryption synced with server:', data);
           
-          // Update state again with server's confirmed encryption
-          if (data && data.encryption) {
-            setState(currentState => ({
-              ...currentState,
-              encryption: data.encryption
-            }));
+          // Sync encryption with server if we're updating it - with debounce
+          if (settings.encryption && now - lastUpdateTimes.encryption > UPDATE_DEBOUNCE_MS) {
+            lastUpdateTimes.encryption = now;
+            console.log(`VpnService: Syncing encryption to server: ${settings.encryption} (debounced)`);
+            
+            // Immediately try to persist encryption to server
+            fetch('/api/encryption', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ encryption: settings.encryption }),
+              credentials: 'include'
+            }).then(res => {
+              if (!res.ok) {
+                console.error('Failed to sync encryption with server, status:', res.status);
+                return res.text().then(text => {
+                  throw new Error(`Failed to sync encryption: ${text || res.status}`);
+                });
+              }
+              return res.json();
+            }).then(data => {
+              console.log('Encryption synced with server:', data);
+              
+              // Update state again with server's confirmed encryption
+              if (data && data.encryption) {
+                setState(currentState => ({
+                  ...currentState,
+                  encryption: data.encryption
+                }));
+              }
+            }).catch(err => {
+              console.error('Error syncing encryption with server:', err);
+            });
+          } else if (settings.encryption) {
+            console.log(`VpnService: Skipping encryption server sync (within debounce period)`, settings.encryption);
           }
-        }).catch(err => {
-          console.error('Error syncing encryption with server:', err);
+        })
+        .catch(err => {
+          console.error('Error checking authentication status:', err);
         });
-      } else if (settings.encryption) {
-        console.log(`VpnService: Skipping encryption server sync (within debounce period)`, settings.encryption);
-      }
     }
     
     // Always update local state
