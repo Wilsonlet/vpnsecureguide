@@ -472,7 +472,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const setting = await storage.getAppSetting(key);
       
-      if (setting) {
+      if (setting && setting.value) {
         // Update cache
         appSettingsCache.set(key, { value: setting.value, timestamp: now });
         return setting.value;

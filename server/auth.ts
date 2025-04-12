@@ -67,7 +67,16 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
-      done(null, user);
+      if (user) {
+        // Add the isAdmin property based on the user's role
+        const userWithAdmin = {
+          ...user,
+          isAdmin: user.role === 'admin'
+        };
+        done(null, userWithAdmin);
+      } else {
+        done(null, null);
+      }
     } catch (error) {
       done(error);
     }
