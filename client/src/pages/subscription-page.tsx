@@ -169,6 +169,18 @@ export default function SubscriptionPage() {
           </div>
         )}
         
+        {/* Payment Method Selection Section - moved to top */}
+        <div className="bg-muted p-6 rounded-lg mb-4">
+          <h2 className="text-xl font-semibold mb-2">Payment Method</h2>
+          <p className="text-muted-foreground mb-4">
+            Choose your preferred payment method for your subscription
+          </p>
+          <PaymentMethodSelector
+            selectedMethod={paymentMethod}
+            onChange={setPaymentMethod}
+          />
+        </div>
+        
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {sortedPlans.map((plan) => (
             <PlanCard
@@ -179,20 +191,6 @@ export default function SubscriptionPage() {
               className={processingPlanId === plan.id ? 'opacity-70 pointer-events-none' : ''}
             />
           ))}
-        </div>
-
-        {/* Payment Method Selection Section - only show for paid plans */}
-        <div className="mt-8">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold mb-4">Payment Method</h2>
-            <p className="text-muted-foreground mb-4">
-              Choose your preferred payment method for your subscription
-            </p>
-            <PaymentMethodSelector
-              selectedMethod={paymentMethod}
-              onChange={setPaymentMethod}
-            />
-          </div>
         </div>
         
         <div className="text-center mt-10">
