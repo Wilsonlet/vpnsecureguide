@@ -48,7 +48,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get the current active session for the user
-      const activeSession = await storage.getCurrentVpnSession(req.user.id);
+      const activeSession = await storage.getCurrentSession(req.user.id);
       
       if (!activeSession) {
         return res.json({
@@ -71,10 +71,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.warn(`User ${req.user.id} has active session ${activeSession.id} but no active tunnel`);
       }
       
+      // Get the server info to verify it matches what the client selected
+      const server = await storage.getServerById(activeSession.serverId);
+      
       res.json({
         sessionActive: true,
         tunnelActive,
         sessionId: activeSession.id,
+        serverId: activeSession.serverId,
+        server: server ? {
+          id: server.id,
+          name: server.name,
+          country: server.country,
+          region: server.region
+        } : null,
         uptime: tunnelStatus.uptime,
         dataTransferred: tunnelStatus.dataTransferred,
         message: tunnelActive 

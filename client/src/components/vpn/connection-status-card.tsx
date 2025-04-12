@@ -367,11 +367,15 @@ export default function ConnectionStatusCard() {
         // Update UI state immediately for feedback
         setForceConnected(true);
         
-        // Start a new session
+        // Start a new session with explicit server selection for accuracy
+        console.log(`Explicitly sending server ID: ${serverToUse.id} (${serverToUse.name}) for connection`);
+        
         const startRes = await apiRequest('POST', '/api/sessions/start', {
           serverId: serverToUse.id,
           protocol: vpnState.protocol || 'wireguard',
-          encryption: vpnState.encryption || 'aes_256_gcm'
+          encryption: vpnState.encryption || 'aes_256_gcm',
+          serverName: serverToUse.name, // Send server name for validation
+          requestedServerRegion: serverToUse.region // For additional validation
         });
         
         if (!startRes.ok) {
@@ -383,6 +387,26 @@ export default function ConnectionStatusCard() {
         // Get the session data
         const sessionData = await startRes.json();
         console.log("Connected successfully:", sessionData);
+        
+        // Verify that we're connected to the server we selected
+        if (sessionData.serverId && sessionData.serverId !== serverToUse.id) {
+          console.warn(`Server mismatch detected! Requested: ${serverToUse.id} (${serverToUse.name}), Connected to: ${sessionData.serverId}`);
+          
+          // Try to find the actual server in our list
+          const actualServer = vpnState.availableServers.find(s => s.id === sessionData.serverId);
+          
+          if (actualServer) {
+            // Update the selected server to match reality
+            vpnState.selectServer(actualServer);
+            serverToUse = actualServer;
+            
+            toast({
+              title: 'Server Reassignment',
+              description: `Connected to ${actualServer.name} instead of requested server. UI updated to match.`,
+              variant: 'default'
+            });
+          }
+        }
         
         // Update the VPN state
         vpnState.updateSettings({

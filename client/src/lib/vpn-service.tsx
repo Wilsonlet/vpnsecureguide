@@ -1397,12 +1397,71 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
           lastTunnelCheck: new Date()
         }));
         
+        toast({
+          title: "Connection Verification Failed",
+          description: "Could not verify your VPN connection security",
+          variant: "destructive"
+        });
+        
         return false;
       }
       
       // Get the tunnel status data
       const tunnelData = await res.json();
       console.log('Manual tunnel status check result:', tunnelData);
+      
+      // Verify the server matches what we selected
+      const connectedServerId = tunnelData.sessionId ? tunnelData.serverId : null;
+      const selectedServerId = state.selectedServer?.id;
+      
+      // Check if the server mismatch needs to be fixed
+      if (connectedServerId && selectedServerId && connectedServerId !== selectedServerId) {
+        console.warn(`Server mismatch detected! Selected: ${selectedServerId}, Actually connected to: ${connectedServerId}`);
+        
+        // Try to find the actual server in our list
+        const actualServer = state.availableServers.find(s => s.id === connectedServerId);
+        
+        if (actualServer) {
+          console.log('Found actual connected server:', actualServer.name);
+          // Update the selected server to match reality
+          setState((currentState) => ({
+            ...currentState,
+            selectedServer: actualServer
+          }));
+          
+          toast({
+            title: 'Server Verification',
+            description: `You're actually connected to ${actualServer.name}. UI has been updated to match the actual server.`,
+            variant: 'default'
+          });
+        } else {
+          // If we can't find the server in our list, load servers again
+          try {
+            const serversRes = await fetch('/api/servers');
+            if (serversRes.ok) {
+              const servers = await serversRes.json();
+              if (Array.isArray(servers) && servers.length > 0) {
+                // Update available servers
+                setState(prev => ({ ...prev, availableServers: servers }));
+                
+                // Try again to find the actual server
+                const updatedActualServer = servers.find(s => s.id === connectedServerId);
+                if (updatedActualServer) {
+                  setState(prev => ({ ...prev, selectedServer: updatedActualServer }));
+                  
+                  toast({
+                    title: 'Server Updated',
+                    description: `Connected to ${updatedActualServer.name}. UI has been updated.`,
+                    variant: 'default'
+                  });
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Failed to refresh servers list:', error);
+          }
+        }
+      }
       
       // Update state with tunnel status and data
       setState((currentState) => ({
@@ -1416,6 +1475,23 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         }
       }));
       
+      // Give the user feedback based on the verification results
+      if (tunnelData.tunnelActive) {
+        toast({
+          title: "Connection Verified",
+          description: tunnelData.serverId ? 
+            `Your VPN tunnel is secure and active through ${state.selectedServer?.name || 'the selected server'}` : 
+            "Your VPN tunnel is secure and active",
+          variant: "default"
+        });
+      } else if (state.connected) {
+        toast({
+          title: "Security Warning",
+          description: "VPN session exists but tunnel is not active! Your traffic may not be protected.",
+          variant: "destructive"
+        });
+      }
+      
       return tunnelData.tunnelActive;
     } catch (error) {
       console.error('Error during manual tunnel verification:', error);
@@ -1426,6 +1502,12 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         tunnelVerified: false,
         lastTunnelCheck: new Date()
       }));
+      
+      toast({
+        title: "Verification Error",
+        description: "Could not verify VPN tunnel status due to an error",
+        variant: "destructive"
+      });
       
       return false;
     }
