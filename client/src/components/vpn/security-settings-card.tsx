@@ -53,6 +53,7 @@ export default function SecuritySettingsCard() {
   };
   
   const handleAntiCensorshipChange = async (checked: boolean) => {
+    console.log('Changing antiCensorship to:', checked);
     setAntiCensorship(checked);
     await updateSetting({ antiCensorship: checked });
   };
@@ -60,6 +61,7 @@ export default function SecuritySettingsCard() {
   // Update a single setting on the server
   const updateSetting = async (setting: any) => {
     try {
+      console.log('Sending setting update:', setting);
       const response = await fetch('/api/settings', {
         method: 'POST',
         headers: {
@@ -70,6 +72,10 @@ export default function SecuritySettingsCard() {
       });
       
       if (response.ok) {
+        // Get response data
+        const data = await response.json();
+        console.log('Setting updated successfully, response:', data);
+        
         // Update global VPN state
         vpnState.updateSettings(setting);
         
@@ -79,7 +85,9 @@ export default function SecuritySettingsCard() {
           variant: 'default',
         });
       } else {
-        throw new Error('Failed to update setting');
+        const errorText = await response.text();
+        console.error('Failed to update setting:', errorText);
+        throw new Error(`Failed to update setting: ${errorText}`);
       }
     } catch (error) {
       console.error('Setting update error:', error);
