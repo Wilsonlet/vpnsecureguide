@@ -6,7 +6,7 @@ import {
   Twitter, 
   Instagram, 
   Linkedin, 
-  GitHub, 
+  Github, 
   Mail,
   Shield,
   ExternalLink
@@ -108,7 +108,7 @@ export function Footer({ className = '' }: FooterProps) {
                   rel="noopener noreferrer"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  <GitHub className="h-5 w-5" />
+                  <Github className="h-5 w-5" />
                 </a>
               )}
             </div>

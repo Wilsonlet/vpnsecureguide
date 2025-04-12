@@ -60,6 +60,14 @@ export default function AdminPage() {
   const [planToDelete, setPlanToDelete] = useState<number | null>(null);
   const [isModifyingPermissions, setIsModifyingPermissions] = useState(false);
   const [roleAssignments, setRoleAssignments] = useState<Record<number, string>>({});
+  
+  // App settings states
+  const [appName, setAppName] = useState('SecureVPN');
+  const [companyInfo, setCompanyInfo] = useState('Military-grade VPN service providing secure, private internet access worldwide.');
+  const [contactEmail, setContactEmail] = useState('');
+  const [isEditingAppSettings, setIsEditingAppSettings] = useState(false);
+  const [logoData, setLogoData] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   // Only admins should access this page
   useEffect(() => {
@@ -297,6 +305,7 @@ export default function AdminPage() {
               <TabsTrigger value="stripe">Stripe Payment</TabsTrigger>
               <TabsTrigger value="paystack">Paystack Payment</TabsTrigger>
               <TabsTrigger value="adsense">Google AdSense</TabsTrigger>
+              <TabsTrigger value="app">App Settings</TabsTrigger>
             </TabsList>
             
             <TabsContent value="users" className="space-y-6">

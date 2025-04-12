@@ -10,6 +10,7 @@ import { VpnStateProvider } from "./lib/vpn-service";
 import { AdSenseScript } from "./components/ads/adsense-script";
 import { ThirdPartyErrorHandler, UrlErrorHandler } from "./components/analytics/error-handlers";
 import { SeoHead } from "@/components/seo";
+import Layout from "@/components/layout/layout";
 
 // Lazy load all pages to improve initial load time
 const NotFound = lazy(() => import("@/pages/not-found"));
@@ -97,7 +98,9 @@ function App() {
         <VpnStateProvider>
           <FirebaseAuthProvider>
             <AuthProvider>
-              <Router />
+              <Layout>
+                <Router />
+              </Layout>
               <Toaster />
               <AdSenseScript />
             </AuthProvider>

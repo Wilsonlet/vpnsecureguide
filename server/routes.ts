@@ -1294,6 +1294,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Batch update multiple app settings at once
+  app.post("/api/admin/app-settings/batch", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // In a real app, check for admin role
+      // For demo purposes, consider user with ID 1 as admin
+      if (req.user.id !== 1) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const { settings } = req.body;
+      
+      if (!Array.isArray(settings)) {
+        return res.status(400).json({ message: "Settings must be an array" });
+      }
+      
+      const results = [];
+      for (const setting of settings) {
+        const { key, value, description } = setting;
+        const updatedSetting = await storage.setAppSetting(key, value, description);
+        results.push(updatedSetting);
+      }
+      
+      res.status(200).json(results);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Upload app logo
+  app.post("/api/admin/app-logo", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // In a real app, check for admin role
+      // For demo purposes, consider user with ID 1 as admin
+      if (req.user.id !== 1) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const { logoData } = req.body;
+      
+      if (!logoData) {
+        return res.status(400).json({ message: "Logo data is required" });
+      }
+      
+      // Store logo as a base64 string in the app_settings
+      const setting = await storage.setAppSetting(
+        'app_logo', 
+        logoData,
+        'Base64 encoded logo image'
+      );
+      
+      res.status(200).json(setting);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
   // Admin endpoint to get all servers including disabled ones
   app.get("/api/admin/servers", async (req, res, next) => {
     try {
