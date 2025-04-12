@@ -18,7 +18,33 @@ import { apiRequest } from '@/lib/queryClient';
 const billingSchema = z.object({
   cardName: z.string().min(3, "Cardholder name is required"),
   cardNumber: z.string().regex(/^\d{16}$/, "Card number must be 16 digits"),
-  expiryDate: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Expiry date must be in format MM/YY"),
+  expiryDate: z.string()
+    .min(4, "Expiry date is required")
+    .refine(
+      (val) => {
+        // Basic pattern check
+        if (!/^\d{2}\d{2}$/.test(val.replace(/\D/g, ''))) return false;
+        
+        // Extract month and year
+        const digitsOnly = val.replace(/\D/g, '');
+        const month = parseInt(digitsOnly.substring(0, 2), 10);
+        const year = parseInt(digitsOnly.substring(2, 4), 10);
+        
+        // Check month is valid (1-12)
+        if (month < 1 || month > 12) return false;
+        
+        // Get current date for year validation
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear() % 100; // Get last 2 digits of year
+        
+        // Check if expiry date is in the future
+        if (year < currentYear) return false;
+        if (year === currentYear && month < (currentDate.getMonth() + 1)) return false;
+        
+        return true;
+      },
+      "Invalid expiry date. Use a future date in MM/YY format"
+    ),
   cvv: z.string().regex(/^\d{3,4}$/, "CVV must be 3 or 4 digits"),
   address: z.string().min(5, "Address is required"),
   city: z.string().min(2, "City is required"),
@@ -147,13 +173,30 @@ export default function PaystackCheckout() {
 
   // Format expiry date
   const formatExpiryDate = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+    // Remove any non-digits and slashes first
+    const v = value.replace(/[^\d\/]/g, '');
     
-    if (v.length > 2) {
-      return `${v.substring(0, 2)}/${v.substring(2, 4)}`;
+    // If there's already a slash, handle differently
+    if (v.includes('/')) {
+      const [month, year] = v.split('/');
+      // Return just the first 2 digits of month and year
+      return `${month.substring(0, 2)}/${year.substring(0, 2)}`;
     }
     
-    return v;
+    // No slash - format as MM/YY
+    const digits = v.replace(/\D/g, '');
+    
+    if (digits.length === 0) return '';
+    if (digits.length <= 2) return digits;
+    
+    // Auto-format XX/ if user types a number > 1 for first digit
+    if (digits.length === 2 && parseInt(digits.charAt(0), 10) > 1) {
+      // If month might be invalid (>12), adjust to valid month
+      const month = parseInt(digits.substring(0, 2), 10);
+      if (month > 12) return `0${digits.charAt(0)}/${digits.charAt(1)}`;
+    }
+    
+    return `${digits.substring(0, 2)}/${digits.substring(2, 4)}`;
   };
 
   if (error) {
@@ -284,8 +327,10 @@ export default function PaystackCheckout() {
                               {...field}
                               value={formatExpiryDate(field.value)}
                               onChange={(e) => {
-                                const value = e.target.value.replace(/\//g, '');
-                                field.onChange(value);
+                                // Keep the formatted value for display, but store just the digits
+                                const inputValue = e.target.value;
+                                const digitsOnly = inputValue.replace(/\D/g, '');
+                                field.onChange(digitsOnly);
                               }}
                               maxLength={5}
                               disabled={isProcessing}
