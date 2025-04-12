@@ -98,6 +98,32 @@ export default function AdminPage() {
     queryKey: ['/api/admin/users'],
     enabled: !!user && user.id === 1,
   });
+  
+  // Fetch app settings
+  const { data: appNameSetting } = useQuery<AppSetting>({
+    queryKey: ['/api/app-settings/app_name'],
+    enabled: !!user && user.id === 1,
+  });
+  
+  const { data: companyInfoSetting } = useQuery<AppSetting>({
+    queryKey: ['/api/app-settings/company_info'],
+    enabled: !!user && user.id === 1,
+  });
+  
+  const { data: contactEmailSetting } = useQuery<AppSetting>({
+    queryKey: ['/api/app-settings/contact_email'],
+    enabled: !!user && user.id === 1,
+  });
+  
+  const { data: socialLinksSetting } = useQuery<AppSetting>({
+    queryKey: ['/api/app-settings/social_links'],
+    enabled: !!user && user.id === 1,
+  });
+  
+  const { data: logoSetting } = useQuery<AppSetting>({
+    queryKey: ['/api/app-settings/app_logo'],
+    enabled: !!user && user.id === 1,
+  });
 
   // Initialize stripePriceIds and paystackPlanCodes state when plans are loaded
   useEffect(() => {
@@ -119,6 +145,22 @@ export default function AdminPage() {
       setAdsenseId(adsenseSetting.value || '');
     }
   }, [adsenseSetting]);
+  
+  // Initialize app settings states when settings are loaded
+  useEffect(() => {
+    if (appNameSetting) {
+      setAppName(appNameSetting.value || 'SecureVPN');
+    }
+    if (companyInfoSetting) {
+      setCompanyInfo(companyInfoSetting.value || 'Military-grade VPN service providing secure, private internet access worldwide.');
+    }
+    if (contactEmailSetting) {
+      setContactEmail(contactEmailSetting.value || '');
+    }
+    if (logoSetting) {
+      setLogoData(logoSetting.value || '');
+    }
+  }, [appNameSetting, companyInfoSetting, contactEmailSetting, logoSetting]);
 
   const handlePriceIdChange = (planId: number, value: string) => {
     setStripePriceIds(prev => ({
@@ -930,6 +972,315 @@ export default function AdminPage() {
                     </Button>
                   </div>
                 )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="app" className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium">App Settings</h3>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center gap-1"
+                    onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ['/api/app-settings/app_name'] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/app-settings/company_info'] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/app-settings/contact_email'] });
+                      queryClient.invalidateQueries({ queryKey: ['/api/app-settings/social_links'] });
+                    }}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Refresh
+                  </Button>
+                  
+                  <Button 
+                    variant={isEditingAppSettings ? "secondary" : "default"}
+                    className="flex items-center gap-1"
+                    onClick={() => setIsEditingAppSettings(!isEditingAppSettings)}
+                  >
+                    {isEditingAppSettings ? (
+                      <>
+                        <XCircle className="h-4 w-4" />
+                        Cancel
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="h-4 w-4" />
+                        Edit Settings
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* App Identity Settings */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">App Identity</CardTitle>
+                    <CardDescription>
+                      Basic information about your VPN service
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="app-name">App Name</Label>
+                      <Input
+                        id="app-name"
+                        value={appName}
+                        onChange={(e) => setAppName(e.target.value)}
+                        disabled={!isEditingAppSettings}
+                        placeholder="Enter app name"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="company-info">Company Information</Label>
+                      <Input
+                        id="company-info"
+                        value={companyInfo}
+                        onChange={(e) => setCompanyInfo(e.target.value)}
+                        disabled={!isEditingAppSettings}
+                        placeholder="Brief description of your VPN service"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="contact-email">Contact Email</Label>
+                      <Input
+                        id="contact-email"
+                        type="email"
+                        value={contactEmail}
+                        onChange={(e) => setContactEmail(e.target.value)}
+                        disabled={!isEditingAppSettings}
+                        placeholder="support@example.com"
+                      />
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    {isEditingAppSettings && (
+                      <Button 
+                        className="w-full"
+                        onClick={async () => {
+                          setIsSaving(true);
+                          try {
+                            // Batch update app settings
+                            const response = await apiRequest('POST', '/api/admin/app-settings/batch', {
+                              settings: [
+                                {
+                                  key: 'app_name',
+                                  value: appName,
+                                  description: 'Application name displayed throughout the UI'
+                                },
+                                {
+                                  key: 'company_info',
+                                  value: companyInfo,
+                                  description: 'Brief company description for the footer'
+                                },
+                                {
+                                  key: 'contact_email',
+                                  value: contactEmail,
+                                  description: 'Primary contact email for support'
+                                }
+                              ]
+                            });
+                            
+                            if (!response.ok) {
+                              throw new Error('Failed to update app settings');
+                            }
+                            
+                            toast({
+                              title: 'Success',
+                              description: 'App settings have been updated',
+                            });
+                            
+                            // Invalidate queries to refresh the data
+                            queryClient.invalidateQueries({ queryKey: ['/api/app-settings/app_name'] });
+                            queryClient.invalidateQueries({ queryKey: ['/api/app-settings/company_info'] });
+                            queryClient.invalidateQueries({ queryKey: ['/api/app-settings/contact_email'] });
+                            
+                            setIsEditingAppSettings(false);
+                          } catch (err: any) {
+                            toast({
+                              title: 'Error',
+                              description: err.message || 'Failed to update app settings',
+                              variant: 'destructive',
+                            });
+                          } finally {
+                            setIsSaving(false);
+                          }
+                        }}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4 mr-2" />
+                            Save Changes
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </CardFooter>
+                </Card>
+                
+                {/* Logo Upload & Social Links */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Logo & Social Media</CardTitle>
+                    <CardDescription>
+                      Upload your app logo and add social media links
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="logo-upload">App Logo</Label>
+                      <div className="flex flex-col items-center gap-4 p-4 border-2 border-dashed rounded-md">
+                        {logoData ? (
+                          <div className="relative">
+                            <img 
+                              src={logoData} 
+                              alt="App Logo" 
+                              className="max-h-24 rounded-md" 
+                            />
+                            {isEditingAppSettings && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                                onClick={() => setLogoData('')}
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Shield className="h-8 w-8 text-primary" />
+                          </div>
+                        )}
+                        
+                        {isEditingAppSettings && (
+                          <div className="w-full">
+                            <Input
+                              id="logo-input"
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (event) => {
+                                    if (event.target?.result) {
+                                      setLogoData(event.target.result as string);
+                                    }
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                            <Button
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => document.getElementById('logo-input')?.click()}
+                              disabled={isUploading}
+                            >
+                              {isUploading ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  Uploading...
+                                </>
+                              ) : (
+                                <>
+                                  Select Image
+                                </>
+                              )}
+                            </Button>
+                            {logoData && (
+                              <Button
+                                variant="default"
+                                className="w-full mt-2"
+                                onClick={async () => {
+                                  setIsUploading(true);
+                                  try {
+                                    const response = await apiRequest('POST', '/api/admin/app-logo', {
+                                      logoData
+                                    });
+                                    
+                                    if (!response.ok) {
+                                      throw new Error('Failed to upload logo');
+                                    }
+                                    
+                                    toast({
+                                      title: 'Success',
+                                      description: 'Logo has been uploaded successfully',
+                                    });
+                                  } catch (err: any) {
+                                    toast({
+                                      title: 'Error',
+                                      description: err.message || 'Failed to upload logo',
+                                      variant: 'destructive',
+                                    });
+                                  } finally {
+                                    setIsUploading(false);
+                                  }
+                                }}
+                                disabled={isUploading}
+                              >
+                                {isUploading ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Uploading...
+                                  </>
+                                ) : (
+                                  <>
+                                    Upload Logo
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="social-links">Social Media Links</Label>
+                      {isEditingAppSettings ? (
+                        <div className="space-y-2">
+                          <Input
+                            placeholder="Facebook URL"
+                            className="mb-2"
+                          />
+                          <Input
+                            placeholder="Twitter URL"
+                            className="mb-2"
+                          />
+                          <Input
+                            placeholder="Instagram URL"
+                            className="mb-2"
+                          />
+                          <Input
+                            placeholder="LinkedIn URL"
+                            className="mb-2"
+                          />
+                          <Input
+                            placeholder="GitHub URL"
+                          />
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground p-2 border rounded-md">
+                          No social media links configured yet.
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
           </Tabs>
