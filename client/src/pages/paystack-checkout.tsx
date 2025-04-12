@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ArrowLeft, CheckCircle, CreditCard, Lock, AlertCircle } from 'lucide-react';
@@ -360,7 +360,15 @@ export default function PaystackCheckout() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmitBilling)} className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium mb-4">Card Information</h3>
+                <h3 className="text-lg font-medium mb-2">Card Information</h3>
+                
+                <Alert className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    For testing, the form is pre-filled with Paystack test card details.
+                  </AlertDescription>
+                </Alert>
+                
                 <div className="space-y-4">
                   <FormField
                     control={form.control}
@@ -383,76 +391,171 @@ export default function PaystackCheckout() {
                   <FormField
                     control={form.control}
                     name="cardNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Card Number</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="4111 1111 1111 1111"
-                            {...field}
-                            value={formatCardNumber(field.value)}
-                            onChange={(e) => {
-                              const value = e.target.value.replace(/\s/g, '');
-                              field.onChange(value);
-                            }}
-                            maxLength={19}
-                            disabled={isProcessing}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      // Detect card type on field value change
+                      const cardType = getCardType(field.value);
+                      const validation = validateCard(field.value);
+                      
+                      // Update the detected card type state
+                      useEffect(() => {
+                        setDetectedCardType(cardType);
+                      }, [cardType]);
+                      
+                      return (
+                        <FormItem>
+                          <FormLabel className="flex justify-between">
+                            <span>Card Number</span>
+                            {cardType && (
+                              <span className="text-sm font-normal text-muted-foreground">
+                                {cardType.name}
+                              </span>
+                            )}
+                          </FormLabel>
+                          <div className="relative">
+                            <FormControl>
+                              <Input
+                                placeholder="4111 1111 1111 1111"
+                                {...field}
+                                value={formatCardNumber(field.value)}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/\s/g, '');
+                                  field.onChange(value);
+                                }}
+                                className={field.value.length > 0 ? 
+                                  (validation.valid ? "border-green-500 focus-visible:ring-green-500" : "") : ""}
+                                maxLength={19}
+                                disabled={isProcessing}
+                              />
+                            </FormControl>
+                            {field.value.length > 0 && validation.valid && (
+                              <div className="absolute top-1/2 right-3 transform -translate-y-1/2 text-green-500">
+                                <CheckCircle className="h-4 w-4" />
+                              </div>
+                            )}
+                          </div>
+                          <FormMessage />
+                          {field.value.length > 0 && cardType && (
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {cardType.name} • {cardType.length.join('/')} digits
+                            </div>
+                          )}
+                        </FormItem>
+                      );
+                    }}
                   />
 
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="expiryDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Expiry Date</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="MM/YY"
-                              {...field}
-                              value={formatExpiryDate(field.value)}
-                              onChange={(e) => {
-                                // Keep the formatted value for display, but store just the digits
-                                const inputValue = e.target.value;
-                                const digitsOnly = inputValue.replace(/\D/g, '');
-                                field.onChange(digitsOnly);
-                              }}
-                              maxLength={5}
-                              disabled={isProcessing}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        // Check if the expiry date is valid
+                        const expiryValid = field.value.length >= 4 && (() => {
+                          // Extract month and year
+                          const month = parseInt(field.value.substring(0, 2), 10);
+                          const year = parseInt(field.value.substring(2, 4), 10);
+                          
+                          // Current date
+                          const currentDate = new Date();
+                          const currentYear = currentDate.getFullYear() % 100;
+                          
+                          // Check validity
+                          if (month < 1 || month > 12) return false;
+                          if (year < currentYear) return false;
+                          if (year === currentYear && month < (currentDate.getMonth() + 1)) return false;
+                          
+                          return true;
+                        })();
+                        
+                        return (
+                          <FormItem>
+                            <FormLabel>Expiry Date</FormLabel>
+                            <div className="relative">
+                              <FormControl>
+                                <Input
+                                  placeholder="MM/YY"
+                                  {...field}
+                                  value={formatExpiryDate(field.value)}
+                                  onChange={(e) => {
+                                    // Keep the formatted value for display, but store just the digits
+                                    const inputValue = e.target.value;
+                                    const digitsOnly = inputValue.replace(/\D/g, '');
+                                    field.onChange(digitsOnly);
+                                  }}
+                                  className={field.value.length === 4 ? 
+                                    (expiryValid ? "border-green-500 focus-visible:ring-green-500" : "") : ""}
+                                  maxLength={5}
+                                  disabled={isProcessing}
+                                />
+                              </FormControl>
+                              {field.value.length === 4 && expiryValid && (
+                                <div className="absolute top-1/2 right-3 transform -translate-y-1/2 text-green-500">
+                                  <CheckCircle className="h-4 w-4" />
+                                </div>
+                              )}
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
                     
                     <FormField
                       control={form.control}
                       name="cvv"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>CVV</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="123"
-                              type="password"
-                              {...field}
-                              onChange={(e) => {
-                                const value = e.target.value.replace(/[^0-9]/g, '');
-                                field.onChange(value);
-                              }}
-                              maxLength={4}
-                              disabled={isProcessing}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        // Check if CVV is valid based on detected card type
+                        const isValidCvv = field.value.length > 0 && (() => {
+                          if (field.value.length < 3) return false;
+                          if (field.value.length > 4) return false;
+                          
+                          // Check if CVV matches expected length for card type
+                          if (detectedCardType) {
+                            return detectedCardType.cvvLength.includes(field.value.length);
+                          }
+                          
+                          // Default check for common CVV lengths
+                          return field.value.length >= 3 && field.value.length <= 4;
+                        })();
+                        
+                        return (
+                          <FormItem>
+                            <FormLabel className="flex justify-between">
+                              <span>CVV</span>
+                              {detectedCardType && (
+                                <span className="text-xs text-muted-foreground">
+                                  {detectedCardType.cvvLength.length === 1 ? 
+                                    `${detectedCardType.cvvLength[0]} digits` : 
+                                    `${detectedCardType.cvvLength.join(' or ')} digits`}
+                                </span>
+                              )}
+                            </FormLabel>
+                            <div className="relative">
+                              <FormControl>
+                                <Input
+                                  placeholder="123"
+                                  type="password"
+                                  {...field}
+                                  onChange={(e) => {
+                                    const value = e.target.value.replace(/[^0-9]/g, '');
+                                    field.onChange(value);
+                                  }}
+                                  className={field.value.length > 0 ? 
+                                    (isValidCvv ? "border-green-500 focus-visible:ring-green-500" : "") : ""}
+                                  maxLength={4}
+                                  disabled={isProcessing}
+                                />
+                              </FormControl>
+                              {isValidCvv && (
+                                <div className="absolute top-1/2 right-3 transform -translate-y-1/2 text-green-500">
+                                  <CheckCircle className="h-4 w-4" />
+                                </div>
+                              )}
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
                   </div>
                 </div>
@@ -544,13 +647,24 @@ export default function PaystackCheckout() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Country</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="United States"
-                              {...field}
-                              disabled={isProcessing}
-                            />
-                          </FormControl>
+                          <Select
+                            disabled={isProcessing}
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your country" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {countries.map((country) => (
+                                <SelectItem key={country.code} value={country.code}>
+                                  {country.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
