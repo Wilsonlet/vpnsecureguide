@@ -277,13 +277,17 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       // Get kill switch service
       const killSwitchService = VpnKillSwitchService.getInstance();
       
-      // Set disconnected state first for immediate feedback
+      // Set disconnected state first for immediate feedback to improve UX responsiveness
       setState(currentState => ({
         ...currentState,
         connected: false,
         connectTime: null,
         virtualIp: '', // Clear virtual IP
       }));
+      
+      // Set disconnect flags immediately
+      sessionStorage.setItem('vpn_disconnected', 'true');
+      localStorage.setItem('vpn_force_disconnected', 'true');
       
       // If kill switch is enabled, handle disconnection differently
       if (state.killSwitch) {
@@ -297,69 +301,68 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         killSwitchService.stopConnectionMonitoring();
       }
       
+      // PART 1: Execute multiple parallel disconnect attempts using different techniques
+      console.log("Starting multi-path disconnect process");
+      
       // Track if we're successfully disconnected at the server level
       let serverDisconnectSuccess = false;
       
-      // Make multiple attempts to disconnect
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        console.log(`Disconnect attempt ${attempt} of 3...`);
-        
+      // Function to make a single disconnect attempt
+      const makeDisconnectAttempt = async (attempt: number, options: any = {}) => {
         try {
-          // Send the disconnection request to the server with abrupt flag
-          // This tells the server if it's a controlled disconnect vs unexpected
+          console.log(`Executing disconnect attempt ${attempt} with options:`, options);
+          
           const res = await fetch('/api/sessions/end', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
             },
             body: JSON.stringify({
-              abrupt: false // This is a controlled disconnect
+              abrupt: false, // Always a controlled disconnect
+              force: true,   // Force flag for server-side priority
+              ...options,    // Add any additional options
+              attempt,       // Track attempt number
+              source: `vpn_service_disconnect_${attempt}`
             })
           });
           
-          // Check for common network error responses
           if (res.status >= 200 && res.status < 300) {
-            // Success case
-            try {
-              const data = await res.json();
-              console.log("VPN session ended successfully:", data);
-            } catch (e) {
-              // It's ok if there's no JSON response
-              console.log("VPN session ended successfully");
-            }
-            serverDisconnectSuccess = true;
-            break; // Exit the loop if successful
-          } else if (res.status === 401) {
-            // Authentication issue - treat as successful disconnect
-            console.log("Server reported user not authenticated - treating as successful disconnect");
-            serverDisconnectSuccess = true;
-            break;
-          } else if (res.status === 404) {
-            // No active session - treat as successful disconnect
-            console.log("Server reported no active session - treating as successful disconnect");
-            serverDisconnectSuccess = true;
-            break;
+            console.log(`Disconnect attempt ${attempt} succeeded with status ${res.status}`);
+            return true;
+          } else if (res.status === 401 || res.status === 404) {
+            // These are successful disconnects too (no session or not authenticated)
+            console.log(`Disconnect attempt ${attempt} succeeded with status ${res.status} (no session/not authenticated)`);
+            return true;
           } else {
-            try {
-              const errorText = await res.text();
-              console.warn(`Disconnect attempt ${attempt} failed:`, errorText);
-            } catch (e) {
-              console.warn(`Disconnect attempt ${attempt} failed with status: ${res.status}`);
-            }
+            const errorText = await res.text();
+            console.warn(`Disconnect attempt ${attempt} failed with status ${res.status}:`, errorText);
+            return false;
           }
         } catch (attemptError) {
           console.warn(`Error during disconnect attempt ${attempt}:`, attemptError);
+          return false;
         }
-        
-        // Wait before retrying
-        if (attempt < 3) {
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-      }
+      };
       
-      if (!serverDisconnectSuccess) {
-        console.log("All server disconnect attempts failed, forcing client-side disconnect");
-      }
+      // Execute multiple disconnect attempts in parallel with staggered timing
+      // This increases the chances of at least one request succeeding
+      const disconnectResults = await Promise.allSettled([
+        makeDisconnectAttempt(1, { clearSessionCache: true }),
+        new Promise(r => setTimeout(r, 100)).then(() => makeDisconnectAttempt(2, { flushConnections: true })),
+        new Promise(r => setTimeout(r, 200)).then(() => makeDisconnectAttempt(3, { systemCleanup: true }))
+      ]);
+      
+      // Check if any attempts succeeded
+      serverDisconnectSuccess = disconnectResults.some(
+        result => result.status === 'fulfilled' && result.value === true
+      );
+      
+      console.log(`Parallel disconnect attempts ${serverDisconnectSuccess ? 'succeeded' : 'failed'}`);
+      
+      // PART 2: Clear all state regardless of server response
       
       // Clear all VPN state
       setState(currentState => ({
@@ -369,35 +372,55 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         virtualIp: '',
       }));
       
-      // Set a special flag to prevent auto-reconnection
-      sessionStorage.setItem('vpn_disconnected', 'true');
-      
-      // Call the function again after a delay to ensure disconnection sticks
-      setTimeout(async () => {
+      // PART 3: Final cleanup phase - ensure everything is properly terminated
+      if (!serverDisconnectSuccess) {
+        console.log("First round of disconnect attempts failed, trying final cleanup");
+        
+        // Try one last time with all flags enabled
         try {
-          // Make one final disconnect request
-          await fetch('/api/sessions/end', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              abrupt: false,
-              final: true  // Mark as final disconnect attempt
-            })
+          const finalResult = await makeDisconnectAttempt(999, {
+            final: true,
+            clearAll: true,
+            force: true,
+            flushConnections: true,
+            systemCleanup: true,
+            clearSessionCache: true
           });
           
-          // Force disconnected state again
+          if (finalResult) {
+            serverDisconnectSuccess = true;
+          }
+        } catch (finalError) {
+          console.warn("Final disconnect attempt failed:", finalError);
+        }
+      }
+      
+      // PART 4: Delay additional cleanup to ensure it happens after animations and UI updates
+      setTimeout(async () => {
+        try {
+          // One final attempt in case previous ones missed
+          const delayedResult = await makeDisconnectAttempt(1000, {
+            final: true,
+            delayed: true,
+            force: true
+          });
+          
+          // Force disconnected state again to be absolutely certain
           setState(currentState => ({
             ...currentState,
             connected: false,
             connectTime: null,
             virtualIp: '',
           }));
-        } catch (finalError) {
-          console.warn("Error in final disconnect attempt:", finalError);
+          
+          // Update flags again
+          sessionStorage.setItem('vpn_disconnected', 'true');
+          localStorage.setItem('vpn_force_disconnected', 'true');
+          
+        } catch (delayedError) {
+          console.warn("Delayed disconnect attempt error (non-critical):", delayedError);
         }
-      }, 1000);
+      }, 1500);
       
       console.log("Disconnect process completed");
       return true;
@@ -412,8 +435,9 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         virtualIp: '',
       }));
       
-      // Set disconnect flag in session storage
+      // Set disconnect flags in session and local storage
       sessionStorage.setItem('vpn_disconnected', 'true');
+      localStorage.setItem('vpn_force_disconnected', 'true');
       
       // Don't throw the error, just log it and return true
       // This ensures the disconnect action appears successful to the user

@@ -416,51 +416,101 @@ export default function ConnectionStatusCard() {
           virtualIp: ''
         });
         
-        // Disconnect using the VPN state service first, which has better error handling
-        try {
-          console.log("Calling VPN disconnect service...");
-          await vpnState.disconnect();
-          console.log("VPN disconnect service completed");
-        } catch (vpnError) {
-          console.warn("Error using VPN service disconnect, falling back to direct API calls", vpnError);
-          
-          // Fallback mechanisms - first try apiRequest
+        // Use the DisconnectButton component's more reliable disconnect method
+        // We'll defer to the force disconnect implementation for a more effective disconnect
+        
+        // First set session disconnect flags
+        sessionStorage.setItem('vpn_disconnected', 'true');
+        localStorage.setItem('vpn_force_disconnected', 'true');
+        
+        // Run multiple parallel disconnect attempts for increased reliability
+        let disconnectSuccess = false;
+        
+        console.log("Starting parallel disconnect attempts");
+        
+        // Create a function for a single disconnect attempt
+        const disconnectAttempt = async (method: string, attempt: number) => {
           try {
-            await apiRequest('POST', '/api/sessions/end');
-            console.log("Successfully ended session with apiRequest");
-          } catch (e) {
-            console.warn("Failed to end session with apiRequest, trying fetch directly", e);
+            console.log(`[${method}] Disconnect attempt ${attempt}`);
             
-            // Try with direct fetch as fallback
-            try {
-              await fetch('/api/sessions/end', {
+            if (method === 'service') {
+              await vpnState.disconnect();
+              return true;
+            } else if (method === 'api') {
+              const res = await apiRequest('POST', '/api/sessions/end', {
+                force: true,
+                abrupt: false,
+                source: `connection_toggle_${method}_${attempt}`
+              });
+              return res.ok;
+            } else if (method === 'fetch') {
+              const res = await fetch('/api/sessions/end', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
                 },
-                body: JSON.stringify({ abrupt: false }), // explicitly mark as controlled disconnect
+                body: JSON.stringify({
+                  force: true,
+                  abrupt: false,
+                  source: `connection_toggle_${method}_${attempt}`
+                })
               });
-              console.log("Successfully ended session with direct fetch");
-            } catch (fetchError) {
-              console.warn("Failed to end session with direct fetch", fetchError);
+              return res.ok;
             }
+            return false;
+          } catch (error) {
+            console.warn(`[${method}] Disconnect attempt ${attempt} failed:`, error);
+            return false;
           }
-          
-          // Add redundant call after a short delay
-          setTimeout(async () => {
-            try {
-              await fetch('/api/sessions/end', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ abrupt: false }),
-              });
-              console.log("Successfully ended session in delayed call");
-            } catch (e) {
-              console.warn("Failed to end session in delayed call", e);
-            }
-          }, 1000);
+        };
+        
+        // Try multiple disconnect methods in parallel
+        const results = await Promise.allSettled([
+          disconnectAttempt('service', 1),
+          disconnectAttempt('api', 1),
+          disconnectAttempt('fetch', 1),
+          // Add small delay between attempts
+          new Promise(r => setTimeout(r, 200)).then(() => disconnectAttempt('api', 2)),
+          new Promise(r => setTimeout(r, 400)).then(() => disconnectAttempt('fetch', 2))
+        ]);
+        
+        // Check if any attempt succeeded
+        disconnectSuccess = results.some(r => r.status === 'fulfilled' && r.value === true);
+        
+        console.log(`Parallel disconnect attempts ${disconnectSuccess ? 'succeeded' : 'failed'}`);
+        
+        // One final attempt as fallback
+        if (!disconnectSuccess) {
+          try {
+            await fetch('/api/sessions/end', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ abrupt: false }), // explicitly mark as controlled disconnect
+            });
+            console.log("Successfully ended session with direct fetch");
+          } catch (fetchError) {
+            console.warn("Failed to end session with direct fetch", fetchError);
+          }
+        }
+        
+        // Add redundant call after a short delay
+        setTimeout(async () => {
+          try {
+            await fetch('/api/sessions/end', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ abrupt: false }),
+            });
+            console.log("Successfully ended session in delayed call");
+          } catch (e) {
+            console.warn("Failed to end session in delayed call", e);
+          }
+        }, 1000);
         }
         
         // Force UI updates with redundant calls to ensure state is consistent
