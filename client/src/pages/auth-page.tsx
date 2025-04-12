@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useFirebaseAuth } from "@/hooks/use-firebase-auth";
 import { useLocation } from "wouter";
 import { Shield, ShieldCheck, Lock, Globe, Zap, Mail, LucideGithub } from "lucide-react";
+import { SeoHead } from "@/components/seo";
 
 // Extended schema with validation rules
 const authSchema = insertUserSchema.extend({
@@ -108,6 +109,15 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center p-4">
+      {/* SEO Head */}
+      <SeoHead 
+        title="SecureVPN Login - Access Your Secure Connection"
+        description="Login or sign up for SecureVPN to access military-grade encryption and secure browsing. Protect your online privacy with our global VPN network."
+        keywords="VPN login, secure VPN, VPN sign up, online privacy, internet security, encryption"
+        canonicalUrl="https://securevpn.replit.app/auth"
+        ogType="website"
+      />
+      
       <div className="w-full max-w-6xl grid md:grid-cols-2 gap-8 items-center">
         <div className="order-2 md:order-1">
           <Card className="shadow-xl border-gray-800">
