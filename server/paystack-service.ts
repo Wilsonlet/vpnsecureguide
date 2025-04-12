@@ -1,4 +1,5 @@
 import axios from 'axios';
+import crypto from 'crypto';
 
 /**
  * Paystack Payment Service
@@ -9,14 +10,14 @@ import axios from 'axios';
 class PaystackService {
   private readonly baseUrl = 'https://api.paystack.co';
   private readonly secretKey: string;
-  
+
   constructor() {
     if (!process.env.PAYSTACK_SECRET_KEY) {
-      throw new Error('PAYSTACK_SECRET_KEY is not defined in environment variables');
+      throw new Error('PAYSTACK_SECRET_KEY environment variable must be set');
     }
     this.secretKey = process.env.PAYSTACK_SECRET_KEY;
   }
-  
+
   /**
    * Create a Paystack payment request for a one-time payment
    * 
@@ -30,27 +31,26 @@ class PaystackService {
   async initializeTransaction(
     email: string,
     amount: number,
-    reference: string,
+    reference?: string,
     callbackUrl?: string,
     metadata?: Record<string, any>
   ) {
     try {
-      const response = await axios.post(
-        `${this.baseUrl}/transaction/initialize`,
-        {
+      const response = await axios({
+        method: 'post',
+        url: `${this.baseUrl}/transaction/initialize`,
+        headers: {
+          'Authorization': `Bearer ${this.secretKey}`,
+          'Content-Type': 'application/json'
+        },
+        data: {
           email,
-          amount: Math.round(amount * 100), // Convert to kobo/cents
-          reference,
+          amount,
+          reference: reference || this.generateReference(),
           callback_url: callbackUrl,
           metadata
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.secretKey}`,
-            'Content-Type': 'application/json'
-          }
         }
-      );
+      });
       
       return response.data;
     } catch (error: any) {
@@ -58,7 +58,7 @@ class PaystackService {
       throw error;
     }
   }
-  
+
   /**
    * Create a direct charge transaction using card details
    * 
@@ -72,19 +72,24 @@ class PaystackService {
     email: string,
     amount: number,
     cardDetails: {
-      number: string;
-      cvv: string;
-      expiryMonth: string;
-      expiryYear: string;
+      number: string,
+      cvv: string,
+      expiryMonth: string,
+      expiryYear: string
     },
     metadata?: Record<string, any>
   ) {
     try {
-      const response = await axios.post(
-        `${this.baseUrl}/charge`,
-        {
+      const response = await axios({
+        method: 'post',
+        url: `${this.baseUrl}/charge`,
+        headers: {
+          'Authorization': `Bearer ${this.secretKey}`,
+          'Content-Type': 'application/json'
+        },
+        data: {
           email,
-          amount: Math.round(amount * 100), // Convert to kobo/cents
+          amount,
           card: {
             number: cardDetails.number,
             cvv: cardDetails.cvv,
@@ -92,14 +97,8 @@ class PaystackService {
             expiry_year: cardDetails.expiryYear
           },
           metadata
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.secretKey}`,
-            'Content-Type': 'application/json'
-          }
         }
-      );
+      });
       
       return response.data;
     } catch (error: any) {
@@ -107,7 +106,7 @@ class PaystackService {
       throw error;
     }
   }
-  
+
   /**
    * Verify a transaction by reference
    * 
@@ -116,23 +115,22 @@ class PaystackService {
    */
   async verifyTransaction(reference: string) {
     try {
-      const response = await axios.get(
-        `${this.baseUrl}/transaction/verify/${reference}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.secretKey}`,
-            'Content-Type': 'application/json'
-          }
+      const response = await axios({
+        method: 'get',
+        url: `${this.baseUrl}/transaction/verify/${reference}`,
+        headers: {
+          'Authorization': `Bearer ${this.secretKey}`,
+          'Content-Type': 'application/json'
         }
-      );
+      });
       
       return response.data;
     } catch (error: any) {
-      console.error('Paystack verification error:', error.response?.data || error.message);
+      console.error('Paystack transaction verification error:', error.response?.data || error.message);
       throw error;
     }
   }
-  
+
   /**
    * Create a customer in Paystack
    * 
@@ -149,21 +147,20 @@ class PaystackService {
     phone?: string
   ) {
     try {
-      const response = await axios.post(
-        `${this.baseUrl}/customer`,
-        {
+      const response = await axios({
+        method: 'post',
+        url: `${this.baseUrl}/customer`,
+        headers: {
+          'Authorization': `Bearer ${this.secretKey}`,
+          'Content-Type': 'application/json'
+        },
+        data: {
           email,
           first_name: firstName,
           last_name: lastName,
           phone
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.secretKey}`,
-            'Content-Type': 'application/json'
-          }
         }
-      );
+      });
       
       return response.data;
     } catch (error: any) {
@@ -171,7 +168,7 @@ class PaystackService {
       throw error;
     }
   }
-  
+
   /**
    * Create a subscription plan in Paystack
    * 
@@ -188,21 +185,20 @@ class PaystackService {
     description?: string
   ) {
     try {
-      const response = await axios.post(
-        `${this.baseUrl}/plan`,
-        {
+      const response = await axios({
+        method: 'post',
+        url: `${this.baseUrl}/plan`,
+        headers: {
+          'Authorization': `Bearer ${this.secretKey}`,
+          'Content-Type': 'application/json'
+        },
+        data: {
           name,
-          amount: Math.round(amount * 100), // Convert to kobo/cents
+          amount,
           interval,
           description
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.secretKey}`,
-            'Content-Type': 'application/json'
-          }
         }
-      );
+      });
       
       return response.data;
     } catch (error: any) {
@@ -210,7 +206,7 @@ class PaystackService {
       throw error;
     }
   }
-  
+
   /**
    * Create a subscription for a customer
    * 
@@ -227,21 +223,20 @@ class PaystackService {
     startDate?: string
   ) {
     try {
-      const response = await axios.post(
-        `${this.baseUrl}/subscription`,
-        {
+      const response = await axios({
+        method: 'post',
+        url: `${this.baseUrl}/subscription`,
+        headers: {
+          'Authorization': `Bearer ${this.secretKey}`,
+          'Content-Type': 'application/json'
+        },
+        data: {
           customer: customerEmail,
           plan: planCode,
           authorization,
           start_date: startDate
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.secretKey}`,
-            'Content-Type': 'application/json'
-          }
         }
-      );
+      });
       
       return response.data;
     } catch (error: any) {
@@ -249,7 +244,7 @@ class PaystackService {
       throw error;
     }
   }
-  
+
   /**
    * Cancel a subscription
    * 
@@ -259,19 +254,18 @@ class PaystackService {
    */
   async cancelSubscription(subscriptionCode: string, emailToken?: string) {
     try {
-      const response = await axios.post(
-        `${this.baseUrl}/subscription/disable`,
-        {
+      const response = await axios({
+        method: 'post',
+        url: `${this.baseUrl}/subscription/disable`,
+        headers: {
+          'Authorization': `Bearer ${this.secretKey}`,
+          'Content-Type': 'application/json'
+        },
+        data: {
           code: subscriptionCode,
           token: emailToken
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.secretKey}`,
-            'Content-Type': 'application/json'
-          }
         }
-      );
+      });
       
       return response.data;
     } catch (error: any) {
@@ -279,17 +273,14 @@ class PaystackService {
       throw error;
     }
   }
-  
+
   /**
    * Generate a unique transaction reference
    * @returns A unique transaction reference string
    */
   generateReference(): string {
-    const timestamp = Date.now().toString();
-    const random = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
-    return `vpn_${timestamp}_${random}`;
+    return `VPN_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
   }
 }
 
-// Export a singleton instance
 export const paystackService = new PaystackService();

@@ -12,6 +12,7 @@ import { verifyFirebaseToken } from "./firebase-auth";
 import { setupKillSwitchRoutes, killSwitchManager } from "./kill-switch";
 import { updateSubscriptionPlans } from "./update-subscription-plans";
 import { migrate } from "./migrate";
+import { paystackService } from "./paystack-service";
 
 // Initialize Stripe if the secret key is available
 let stripe: Stripe | undefined;
@@ -561,8 +562,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               },
             ],
             mode: 'subscription',
-            success_url: `${req.headers.origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${req.headers.origin}/subscription`,
+            success_url: `${req.headers.origin || ''}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${req.headers.origin || ''}/subscription`,
             customer: customerId,
             client_reference_id: req.user.id.toString(),
             subscription_data: {
@@ -851,8 +852,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Subscription plan not found" });
       }
       
-      // Import Paystack service
-      const { paystackService } = await import('./paystack-service');
+      // Use the imported Paystack service
       
       // Make sure we have user email - needed for Paystack
       if (!req.user.email) {
