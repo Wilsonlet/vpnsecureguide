@@ -39,6 +39,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up kill switch routes for VPN protection
   setupKillSwitchRoutes(app);
   
+  // Tunnel status verification endpoint
+  app.get("/api/tunnel/status", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      
+      // Get the current active session for the user
+      const activeSession = await storage.getCurrentVpnSession(req.user.id);
+      
+      if (!activeSession) {
+        return res.json({
+          sessionActive: false,
+          tunnelActive: false,
+          message: "No active VPN session found",
+          dataTransferred: {
+            upload: 0,
+            download: 0
+          }
+        });
+      }
+      
+      // Check the tunnel status
+      const tunnelStatus = vpnTunnelService.getTunnelStatus(activeSession.id);
+      const tunnelActive = tunnelStatus.active;
+      
+      // If tunnel is not active but session is, there's an issue
+      if (!tunnelActive) {
+        console.warn(`User ${req.user.id} has active session ${activeSession.id} but no active tunnel`);
+      }
+      
+      res.json({
+        sessionActive: true,
+        tunnelActive,
+        sessionId: activeSession.id,
+        uptime: tunnelStatus.uptime,
+        dataTransferred: tunnelStatus.dataTransferred,
+        message: tunnelActive 
+          ? "VPN tunnel is active and functioning correctly" 
+          : "VPN session exists but tunnel is not active"
+      });
+    } catch (error) {
+      console.error("Error checking tunnel status:", error);
+      next(error);
+    }
+  });
+  
   // Run migrations and update subscription plans on startup
   try {
     // Run database migrations first
