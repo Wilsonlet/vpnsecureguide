@@ -910,14 +910,32 @@ export default function ConnectionStatusCard() {
                         // Call the verify tunnel function
                         const tunnelActive = await vpnState.verifyTunnelStatus();
                         
-                        // Display result
-                        toast({
-                          title: tunnelActive ? "Tunnel Verified" : "Security Issue",
-                          description: tunnelActive 
-                            ? "Your VPN connection is secure and working properly"
-                            : "Your connection appears active but the tunnel is not working. Your traffic may not be secure!",
-                          variant: tunnelActive ? "default" : "destructive",
-                        });
+                        // Display detailed result with server information
+                        if (tunnelActive && vpnState.selectedServer) {
+                          const serverInfo = vpnState.selectedServer;
+                          toast({
+                            title: "Security Verified",
+                            description: (
+                              <div className="space-y-1 mt-1">
+                                <div>Connection secured through <span className="font-semibold">{serverInfo.name}</span></div>
+                                <div className="text-xs text-gray-300">
+                                  Location: {serverInfo.country}, {serverInfo.region}
+                                </div>
+                                <div className="text-xs text-gray-300 flex items-center">
+                                  <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                                  Server ID: {serverInfo.id} • Validated
+                                </div>
+                              </div>
+                            ),
+                            variant: "default",
+                          });
+                        } else {
+                          toast({
+                            title: "Security Issue",
+                            description: "Your connection appears active but the tunnel is not working. Your traffic may not be secure!",
+                            variant: "destructive",
+                          });
+                        }
                       } catch (error) {
                         console.error("Error verifying tunnel:", error);
                         toast({

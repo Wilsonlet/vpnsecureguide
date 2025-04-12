@@ -141,7 +141,9 @@ export const insertAppSettingSchema = createInsertSchema(appSettings).omit({
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type User = typeof users.$inferSelect & {
+  isAdmin?: boolean; // Computed property based on role
+};
 export type VpnServer = typeof vpnServers.$inferSelect;
 export type VpnSession = typeof vpnSessions.$inferSelect;
 export type VpnUserSettings = typeof vpnUserSettings.$inferSelect;

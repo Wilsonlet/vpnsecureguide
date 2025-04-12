@@ -84,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: server.name,
           country: server.country,
           region: server.region
-        } : null,
+        } : undefined,
         uptime: tunnelStatus.uptime,
         dataTransferred: tunnelStatus.dataTransferred,
         message: tunnelActive 
