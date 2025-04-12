@@ -49,6 +49,7 @@ export type VpnStateContextType = VpnConnectionState & {
   updateSettings: (settings: Partial<VpnConnectionState>) => void;
   selectServer: (server: VpnServer | null) => void;
   setAvailableServers: (servers: VpnServer[]) => void;
+  verifyTunnelStatus: () => Promise<boolean>;
 };
 
 // Generate a random IP for the virtual IP - this is for UI display only
