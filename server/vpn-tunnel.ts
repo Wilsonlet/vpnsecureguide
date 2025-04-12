@@ -10,7 +10,7 @@
  * 4. Providing diagnostics and metrics on tunnel performance
  */
 
-import { SelectVpnSession } from '@shared/schema';
+import { VpnSession } from '@shared/schema';
 import { db } from './db';
 import { eq } from 'drizzle-orm';
 import { storage } from './storage';
@@ -65,7 +65,7 @@ class VpnTunnelService {
    * @param sourceIp The user's source IP address
    * @returns The tunnel creation result with connection details
    */
-  async createTunnel(session: SelectVpnSession, sourceIp: string): Promise<TunnelCreationResult> {
+  async createTunnel(session: VpnSession, sourceIp: string): Promise<TunnelCreationResult> {
     try {
       console.log(`Creating VPN tunnel for user ${session.userId}, session ${session.id}`);
       
@@ -133,7 +133,7 @@ class VpnTunnelService {
         tunnelIp,
         config: tunnelConfig,
         connectionDetails: {
-          server: server.host,
+          server: server.ip, // Use IP address instead of host
           port: this.getPortForProtocol(session.protocol),
           protocol: session.protocol,
           encryption: session.encryption,
@@ -332,7 +332,7 @@ class VpnTunnelService {
   private generateTunnelConfig(protocol: string, encryption: string, server: any, tunnelIp: string): any {
     // Base configuration
     const baseConfig = {
-      server: server.host,
+      server: server.ip,
       port: this.getPortForProtocol(protocol),
       tunnelIp,
       serverVirtualIp: `10.0.0.${server.id}`,

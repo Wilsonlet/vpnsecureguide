@@ -138,7 +138,10 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     dataTransferred: {
       upload: 0,
       download: 0
-    }
+    },
+    // Recovery properties
+    recoveryAttemptCount: 0,
+    recoveryInProgress: false
   });
   
   // Fetch user data and settings on mount
