@@ -33,14 +33,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Set up kill switch routes for VPN protection
   setupKillSwitchRoutes(app);
+  
+  // Server and settings cache with TTL
+  const cache = new Map<string, { data: any, timestamp: number }>();
+  const CACHE_TTL = 30000; // 30 seconds in milliseconds
 
-  // VPN Server endpoints
+  // VPN Server endpoints with caching for better performance
   app.get("/api/servers", async (req, res, next) => {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
       
       const { region, obfuscated, doubleHop } = req.query;
       
+      // Create a cache key based on user ID and query parameters
+      const cacheKey = `servers:${req.user.id}:${region || ''}:${obfuscated || ''}:${doubleHop || ''}`;
+      
+      // Check if we have a valid cache entry
+      const cacheEntry = cache.get(cacheKey);
+      const now = Date.now();
+      
+      if (cacheEntry && (now - cacheEntry.timestamp < CACHE_TTL)) {
+        // Return cached data if valid
+        console.log(`Using cached servers data for key: ${cacheKey}`);
+        return res.json(cacheEntry.data);
+      }
+      
+      // Fetch fresh data if no cache or expired
       let servers;
       if (region || obfuscated || doubleHop) {
         // Use the new filtered server query
@@ -55,16 +73,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         servers = await storage.getAllServers();
       }
       
+      // Cache the result
+      cache.set(cacheKey, { data: servers, timestamp: now });
+      
       res.json(servers);
     } catch (error) {
       next(error);
     }
   });
   
-  // Get servers by region endpoint
+  // Get servers by region endpoint with caching
   app.get("/api/servers/regions", async (req, res, next) => {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // Create a cache key for regions
+      const cacheKey = `servers:regions:${req.user.id}`;
+      
+      // Check if we have a valid cache entry
+      const cacheEntry = cache.get(cacheKey);
+      const now = Date.now();
+      
+      if (cacheEntry && (now - cacheEntry.timestamp < CACHE_TTL)) {
+        // Return cached data if valid
+        console.log(`Using cached regions data for user ${req.user.id}`);
+        return res.json(cacheEntry.data);
+      }
       
       // Get all servers
       const servers = await storage.getAllServers();
@@ -85,16 +119,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         servers
       }));
       
+      // Cache the result
+      cache.set(cacheKey, { data: result, timestamp: now });
+      
       res.json(result);
     } catch (error) {
       next(error);
     }
   });
 
-  // VPN Settings endpoints
+  // VPN Settings endpoints with caching
   app.get("/api/settings", async (req, res, next) => {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // Create a cache key for user settings
+      const cacheKey = `user:settings:${req.user.id}`;
+      
+      // Check if we have a valid cache entry
+      const cacheEntry = cache.get(cacheKey);
+      const now = Date.now();
+      
+      if (cacheEntry && (now - cacheEntry.timestamp < CACHE_TTL)) {
+        // Return cached data if valid
+        console.log(`Using cached settings for user ${req.user.id}`);
+        return res.json(cacheEntry.data);
+      }
       
       let settings = await storage.getUserSettings(req.user.id);
       
@@ -113,6 +163,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         settings = await storage.createUserSettings(defaultSettings);
         console.log("Created default settings for user:", req.user.id);
       }
+      
+      // Cache the result
+      cache.set(cacheKey, { data: settings, timestamp: now });
       
       res.json(settings);
     } catch (error) {
