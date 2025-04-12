@@ -423,6 +423,9 @@ export class DatabaseStorage implements IStorage {
         return !!plan.doubleVpnAccess;
       case 'obfuscation':
         return !!plan.obfuscationAccess;
+      case 'anti-censorship':
+        // Anti-censorship is available for premium and ultimate plans
+        return user.subscription === 'premium' || user.subscription === 'ultimate';
       case 'shadowsocks':
         return !!plan.shadowsocksAccess;
       case 'premium-encryption':

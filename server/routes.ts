@@ -1850,6 +1850,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const countryCode = req.query.country as string | undefined;
       
+      // First check if user has access to anti-censorship feature
+      const hasAccess = await storage.checkUserFeatureAccess(req.user.id, 'anti-censorship');
+      if (!hasAccess) {
+        return res.status(403).json({ 
+          message: "Premium feature access required",
+          feature: "anti-censorship"
+        });
+      }
+      
       // Get anti-censorship configuration
       const config = await obfuscationService.getAntiCensorshipConfig(
         req.user.id,
@@ -1857,9 +1866,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       if (!config) {
-        return res.status(403).json({ 
-          message: "Premium feature access required",
-          feature: "anti-censorship"
+        return res.status(500).json({ 
+          message: "Error generating anti-censorship configuration"
         });
       }
       

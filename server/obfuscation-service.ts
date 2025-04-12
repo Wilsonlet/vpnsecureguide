@@ -182,10 +182,9 @@ class ObfuscationService {
   ): Promise<any | null> {
     try {
       // Check if user has access to anti-censorship features
-      const user = await storage.getUser(userId);
-      
-      if (!user || user.subscription === subscriptionTiers.FREE) {
-        return null; // Free users don't get anti-censorship features
+      const hasAccess = await storage.checkUserFeatureAccess(userId, 'anti-censorship');
+      if (!hasAccess) {
+        return null; // User doesn't have access to anti-censorship features
       }
       
       // Create region-specific configurations
