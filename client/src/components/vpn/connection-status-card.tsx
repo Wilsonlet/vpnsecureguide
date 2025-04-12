@@ -511,7 +511,6 @@ export default function ConnectionStatusCard() {
             console.warn("Failed to end session in delayed call", e);
           }
         }, 1000);
-        }
         
         // Force UI updates with redundant calls to ensure state is consistent
         vpnState.updateSettings({
