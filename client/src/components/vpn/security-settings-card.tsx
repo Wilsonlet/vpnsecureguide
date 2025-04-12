@@ -32,6 +32,52 @@ export default function SecuritySettingsCard() {
     initialData: { hasAccess: false }
   });
   
+  // Check if user has access to premium encryption features
+  const { data: premiumEncryptionAccess } = useQuery({
+    queryKey: ['/api/feature-access/premium-encryption'],
+    queryFn: async () => {
+      const res = await fetch('/api/feature-access/premium-encryption');
+      if (!res.ok) throw new Error('Failed to check premium encryption access');
+      return res.json();
+    },
+    staleTime: 60000, // Cache for 1 minute
+    // Default to no access if there's an error
+    initialData: { hasAccess: false }
+  });
+  
+  // Load user settings on component mount
+  useEffect(() => {
+    const fetchUserSettings = async () => {
+      try {
+        const res = await fetch('/api/settings');
+        
+        if (res.ok) {
+          const settings = await res.json();
+          // Update local state with fetched settings
+          if (settings.preferredProtocol) {
+            setProtocol(settings.preferredProtocol);
+            // Also update the VPN state context
+            vpnState.updateSettings({
+              protocol: settings.preferredProtocol
+            });
+          }
+          
+          if (settings.preferredEncryption) {
+            setEncryption(settings.preferredEncryption);
+            // Also update the VPN state context
+            vpnState.updateSettings({
+              encryption: settings.preferredEncryption
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load user settings:', error);
+      }
+    };
+    
+    fetchUserSettings();
+  }, []);
+  
   // Update local state when vpnState changes
   useEffect(() => {
     setProtocol(vpnState.protocol);
@@ -67,6 +113,16 @@ export default function SecuritySettingsCard() {
 
   // Handle encryption change
   const handleEncryptionChange = (value: string) => {
+    // Check if user is trying to select premium encryption without access
+    if (value === 'chacha20_poly1305' && !premiumEncryptionAccess?.hasAccess) {
+      toast({
+        title: 'Premium Feature',
+        description: 'ChaCha20-Poly1305 encryption is only available with Premium or Ultimate plans',
+        variant: 'destructive',
+      });
+      return; // Don't allow the change
+    }
+    
     setEncryption(value);
     updateSettings({ preferredEncryption: value });
   };
@@ -95,20 +151,41 @@ export default function SecuritySettingsCard() {
   // Update settings on the server and in local state
   const updateSettings = async (settings: any) => {
     try {
+      // Handle protocol and encryption separately
+      if (settings.preferredProtocol) {
+        vpnState.updateSettings({
+          protocol: settings.preferredProtocol
+        });
+      }
+      
+      if (settings.preferredEncryption) {
+        vpnState.updateSettings({
+          encryption: settings.preferredEncryption
+        });
+      }
+      
+      // Send the request to save on the server
       const res = await apiRequest('POST', '/api/settings', {
         ...settings
       });
       
       if (res.ok) {
-        // Update local VPN state
+        // Update other settings in local VPN state
         vpnState.updateSettings({
-          protocol: settings.preferredProtocol || vpnState.protocol,
-          encryption: settings.preferredEncryption || vpnState.encryption,
           killSwitch: settings.killSwitch !== undefined ? settings.killSwitch : vpnState.killSwitch,
           dnsLeakProtection: settings.dnsLeakProtection !== undefined ? settings.dnsLeakProtection : vpnState.dnsLeakProtection,
           doubleVpn: settings.doubleVpn !== undefined ? settings.doubleVpn : vpnState.doubleVpn,
           obfuscation: settings.obfuscation !== undefined ? settings.obfuscation : vpnState.obfuscation
         });
+        
+        // Show success toast for better feedback
+        if (settings.preferredProtocol || settings.preferredEncryption) {
+          toast({
+            title: 'Settings Updated',
+            description: 'Your security settings have been updated',
+            variant: 'default'
+          });
+        }
       }
     } catch (error) {
       toast({
@@ -162,7 +239,21 @@ export default function SecuritySettingsCard() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="aes_256_gcm">AES-256-GCM</SelectItem>
-              <SelectItem value="chacha20_poly1305">ChaCha20-Poly1305</SelectItem>
+              <SelectItem 
+                value="chacha20_poly1305"
+                disabled={!premiumEncryptionAccess?.hasAccess}
+                className="relative"
+              >
+                <div className="flex items-center">
+                  ChaCha20-Poly1305
+                  {!premiumEncryptionAccess?.hasAccess && (
+                    <span className="ml-2 px-1.5 py-0.5 text-xs font-semibold bg-gradient-to-r from-amber-500 to-yellow-500 text-black rounded">
+                      Premium
+                    </span>
+                  )}
+                </div>
+              </SelectItem>
+              <SelectItem value="aes_128_gcm">AES-128-GCM</SelectItem>
             </SelectContent>
           </Select>
         </div>

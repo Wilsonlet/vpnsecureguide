@@ -423,6 +423,9 @@ export class DatabaseStorage implements IStorage {
         return !!plan.obfuscationAccess;
       case 'shadowsocks':
         return !!plan.shadowsocksAccess;
+      case 'premium-encryption':
+        // Premium encryption is only available for premium and ultimate plans
+        return user.subscription === 'premium' || user.subscription === 'ultimate';
       case 'ad_free':
         return !!plan.adFree;
       default:
