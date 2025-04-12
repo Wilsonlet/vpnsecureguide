@@ -394,9 +394,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update security settings - allowing toggle during active connection
   app.post("/api/settings", async (req, res, next) => {
     try {
       if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      // Check for feature access requirements
+      
+      // Check for obfuscation access
+      if (req.body.obfuscation === true) {
+        const hasAccess = await storage.checkUserFeatureAccess(req.user.id, 'obfuscation');
+        if (!hasAccess) {
+          return res.status(403).json({ 
+            message: "Premium feature access required",
+            feature: "obfuscation"
+          });
+        }
+      }
+      
+      // Check for double VPN access
+      if (req.body.doubleVpn === true) {
+        const hasAccess = await storage.checkUserFeatureAccess(req.user.id, 'double-vpn');
+        if (!hasAccess) {
+          return res.status(403).json({ 
+            message: "Premium feature access required",
+            feature: "double-vpn"
+          });
+        }
+      }
+      
+      // Check for anti-censorship access 
+      if (req.body.antiCensorship === true) {
+        // First check if obfuscation is enabled or will be enabled
+        const currentSettings = await storage.getUserSettings(req.user.id);
+        const willHaveObfuscation = req.body.obfuscation !== undefined ? req.body.obfuscation : currentSettings?.obfuscation;
+        
+        if (!willHaveObfuscation) {
+          return res.status(400).json({
+            message: "Anti-censorship requires obfuscation to be enabled",
+            feature: "anti-censorship"
+          });
+        }
+        
+        const hasAccess = await storage.checkUserFeatureAccess(req.user.id, 'anti-censorship');
+        if (!hasAccess) {
+          return res.status(403).json({ 
+            message: "Premium feature access required", 
+            feature: "anti-censorship"
+          });
+        }
+      }
       
       // Check if premium encryption is being set
       if (req.body.preferredEncryption === 'chacha20_poly1305') {
@@ -420,12 +467,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // If obfuscation is being disabled but anti-censorship is currently enabled,
+      // we need to disable anti-censorship as well (it requires obfuscation)
+      if (req.body.obfuscation === false) {
+        const currentSettings = await storage.getUserSettings(req.user.id);
+        if (currentSettings?.antiCensorship) {
+          console.log(`Auto-disabling anti-censorship for user ${req.user.id} because obfuscation is being disabled`);
+          req.body.antiCensorship = false;
+        }
+      }
+      
       const parsedData = insertVpnUserSettingsSchema.parse({
         ...req.body,
         userId: req.user.id
       });
       
       const settings = await storage.updateUserSettings(parsedData);
+      
+      // For Double VPN, Obfuscation, and Anti-Censorship, we need to apply the changes
+      // to an active connection if one exists
+      const currentSession = await storage.getCurrentSession(req.user.id);
+      if (currentSession) {
+        try {
+          console.log(`Applying updated security settings to active connection for user ${req.user.id}`);
+          // Here's where we'd call the functions to apply the security settings
+          // This would interact with the VPN server to modify the active connection
+          // For now, we'll just log that the settings would be applied
+          
+          if ('doubleVpn' in req.body) {
+            console.log(`Applying Double VPN setting (${req.body.doubleVpn}) to active connection`);
+            // Actual implementation would update the tunnel configuration
+          }
+          
+          if ('obfuscation' in req.body) {
+            console.log(`Applying Obfuscation setting (${req.body.obfuscation}) to active connection`);
+            // Actual implementation would update traffic obfuscation
+          }
+          
+          if ('antiCensorship' in req.body) {
+            console.log(`Applying Anti-Censorship setting (${req.body.antiCensorship}) to active connection`);
+            // Actual implementation would update censorship circumvention techniques
+          }
+        } catch (applyError) {
+          console.error(`Error applying security settings to active connection: ${applyError}`);
+          // Continue - we'll still return the updated settings even if applying them failed
+        }
+      }
       
       // Clear the cache for this user's settings by setting entry to undefined
       const cacheKey = `user:settings:${req.user.id}`;
