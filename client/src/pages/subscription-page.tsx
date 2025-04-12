@@ -3,9 +3,10 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, AlertCircle, CheckCircle, Shield } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, Shield, Home } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
+import { Link } from 'wouter';
 import PlanCard from '@/components/subscription/plan-card';
 import { PaymentMethodSelector, PaymentMethod } from '@/components/subscription/payment-method-selector';
 import { SubscriptionPlan } from '@shared/schema';
@@ -145,6 +146,15 @@ export default function SubscriptionPage() {
   return (
     <div className="container py-8">
       <div className="space-y-6">
+        <div className="flex justify-between items-center mb-4">
+          <Link href="/">
+            <Button variant="outline" size="sm" className="flex gap-1 items-center">
+              <Home className="h-4 w-4" />
+              <span>Return to Home</span>
+            </Button>
+          </Link>
+        </div>
+        
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
             Select Your VPN Plan
