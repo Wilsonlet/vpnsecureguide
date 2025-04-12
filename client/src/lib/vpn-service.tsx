@@ -14,6 +14,9 @@ export type VpnConnectionState = {
   obfuscation: boolean;
   // Anti-censorship state for obfuscation
   antiCensorship?: boolean;
+  // Tunnel recovery properties
+  recoveryAttemptCount?: number;
+  recoveryInProgress?: boolean;
   selectedServer: VpnServer | null;
   availableServers: VpnServer[];
   virtualIp: string;
@@ -50,6 +53,7 @@ export type VpnStateContextType = VpnConnectionState & {
   selectServer: (server: VpnServer | null) => void;
   setAvailableServers: (servers: VpnServer[]) => void;
   verifyTunnelStatus: () => Promise<boolean>;
+  attemptConnectionRecovery: (serverId: number) => Promise<void>;
 };
 
 // Generate a random IP for the virtual IP - this is for UI display only
@@ -88,6 +92,9 @@ export const VpnStateContext = createContext<VpnStateContextType>({
     upload: 0,
     download: 0
   },
+  // Recovery properties
+  recoveryAttemptCount: 0,
+  recoveryInProgress: false,
   // Functions
   connect: async () => Promise.resolve({}),
   disconnect: async () => Promise.resolve(true),
@@ -96,6 +103,7 @@ export const VpnStateContext = createContext<VpnStateContextType>({
   selectServer: () => {},
   setAvailableServers: () => {},
   verifyTunnelStatus: async () => Promise.resolve(false),
+  attemptConnectionRecovery: async () => {},
 });
 
 // Create a provider component to manage VPN state
@@ -576,6 +584,115 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       setTimeout(() => {
         isConnectingRef.current = false;
       }, 500);
+    }
+  };
+
+  /**
+   * Attempt to automatically recover a broken VPN connection
+   * This will first disconnect and then reconnect using the same server
+   * @param serverId The server ID to reconnect to
+   */
+  const attemptConnectionRecovery = async (serverId: number) => {
+    try {
+      console.log(`Attempting automatic connection recovery for server ${serverId}...`);
+      
+      // First try to get current session details including protocol and encryption
+      let protocol = state.protocol || 'wireguard';
+      let encryption = state.encryption || 'chacha20_poly1305';
+      let server: VpnServer | null = null;
+
+      // Get server details
+      try {
+        const serversResponse = await fetch('/api/servers');
+        if (serversResponse.ok) {
+          const servers = await serversResponse.json();
+          server = servers.find((s: VpnServer) => s.id === serverId);
+        }
+      } catch (error) {
+        console.error("Error fetching server details for recovery:", error);
+        // Continue with reconnection attempt regardless
+      }
+
+      if (!server) {
+        console.error(`Could not find server ${serverId} for recovery`);
+        toast({
+          title: "Recovery Failed",
+          description: "Could not find VPN server details for automatic recovery.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Step 1: Force disconnect (multiple attempts to ensure it works)
+      console.log("Recovery step 1: Force disconnect");
+      try {
+        // First call the normal disconnect
+        await disconnect();
+        
+        // Then directly call the API as a backup
+        await fetch('/api/sessions/end', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            force: true,
+            recovery: true
+          })
+        });
+
+        // Short delay to ensure disconnection is complete
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+      } catch (error) {
+        console.error("Error during recovery disconnect:", error);
+        // Continue anyway to try reconnection
+      }
+
+      // Step 2: Reconnect
+      console.log("Recovery step 2: Reconnect to server", server);
+      
+      setState(currentState => ({
+        ...currentState,
+        recoveryInProgress: true
+      }));
+
+      // Reconnect using saved server details
+      await connect({
+        serverId,
+        protocol,
+        encryption,
+        server
+      });
+
+      console.log("VPN connection recovery completed");
+      
+      // Update state to clear recovery status
+      setState(currentState => ({
+        ...currentState,
+        recoveryInProgress: false,
+        recoveryAttemptCount: 0 // Reset counter on successful recovery
+      }));
+
+      toast({
+        title: "Connection Recovered",
+        description: "VPN connection has been automatically restored.",
+        variant: "default"
+      });
+      
+    } catch (error) {
+      console.error("VPN recovery error:", error);
+      
+      setState(currentState => ({
+        ...currentState,
+        recoveryInProgress: false
+      }));
+      
+      toast({
+        title: "Recovery Failed",
+        description: "Automatic VPN connection recovery failed. Please try reconnecting manually.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -1539,6 +1656,7 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         selectServer,
         setAvailableServers,
         verifyTunnelStatus,
+        attemptConnectionRecovery,
       }}
     >
       {children}
