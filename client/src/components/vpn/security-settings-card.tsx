@@ -1,453 +1,105 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ToggleSwitch from '@/components/common/toggle-switch';
 import { useVpnState } from '@/lib/vpn-service.tsx';
-import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
+import SettingsForm from './settings-form';
 
 export default function SecuritySettingsCard() {
   const vpnState = useVpnState();
   const { toast } = useToast();
   
-  // Local state for settings
-  const [protocol, setProtocol] = useState(vpnState.protocol);
-  const [encryption, setEncryption] = useState(vpnState.encryption);
-  const [killSwitch, setKillSwitch] = useState(vpnState.killSwitch);
-  const [dnsLeakProtection, setDnsLeakProtection] = useState(vpnState.dnsLeakProtection);
-  const [doubleVpn, setDoubleVpn] = useState(vpnState.doubleVpn);
-  const [obfuscation, setObfuscation] = useState(vpnState.obfuscation);
-  
-  // Check if user has access to Shadowsocks protocol
-  const { data: shadowsocksAccess } = useQuery({
-    queryKey: ['/api/feature-access/shadowsocks'],
-    queryFn: async () => {
-      const res = await fetch('/api/feature-access/shadowsocks');
-      if (!res.ok) throw new Error('Failed to check Shadowsocks access');
-      return res.json();
-    },
-    staleTime: 60000, // Cache for 1 minute
-    // Default to no access if there's an error
-    initialData: { hasAccess: false }
-  });
-  
-  // Check if user has access to premium encryption features
-  const { data: premiumEncryptionAccess } = useQuery({
-    queryKey: ['/api/feature-access/premium-encryption'],
-    queryFn: async () => {
-      const res = await fetch('/api/feature-access/premium-encryption');
-      if (!res.ok) throw new Error('Failed to check premium encryption access');
-      return res.json();
-    },
-    staleTime: 60000, // Cache for 1 minute
-    // Default to no access if there's an error
-    initialData: { hasAccess: false }
-  });
-  
-  // Flag to track if we're currently fetching settings to prevent infinite loops
-  const isFetchingRef = useRef(false);
-
-  // Define a settings fetching function that can be used both on mount and after updates
-  const fetchSettings = async () => {
-    // Prevent concurrent fetches or infinite loops
-    if (isFetchingRef.current) return;
-    
-    try {
-      isFetchingRef.current = true;
-      const res = await fetch('/api/settings');
-      
-      if (res.ok) {
-        const settings = await res.json();
-        console.log('Settings refreshed from server:', settings);
-        
-        // Create a single update object for VPN state
-        const vpnStateUpdates: any = {};
-        
-        // Update local state with fetched settings
-        if (settings.preferredProtocol) {
-          // Update UI state
-          setProtocol(settings.preferredProtocol);
-          vpnStateUpdates.protocol = settings.preferredProtocol;
-        }
-        
-        if (settings.preferredEncryption) {
-          // Update UI state
-          setEncryption(settings.preferredEncryption);
-          vpnStateUpdates.encryption = settings.preferredEncryption;
-        }
-        
-        // Update other settings
-        if (settings.killSwitch !== undefined) {
-          setKillSwitch(settings.killSwitch);
-          vpnStateUpdates.killSwitch = settings.killSwitch;
-        }
-        
-        if (settings.dnsLeakProtection !== undefined) {
-          setDnsLeakProtection(settings.dnsLeakProtection);
-          vpnStateUpdates.dnsLeakProtection = settings.dnsLeakProtection;
-        }
-        
-        if (settings.doubleVpn !== undefined) {
-          setDoubleVpn(settings.doubleVpn);
-          vpnStateUpdates.doubleVpn = settings.doubleVpn;
-        }
-        
-        if (settings.obfuscation !== undefined) {
-          setObfuscation(settings.obfuscation);
-          vpnStateUpdates.obfuscation = settings.obfuscation;
-        }
-        
-        // Apply all VPN state updates in a single operation
-        // to reduce the number of renders and prevent maximum update depth errors
-        if (Object.keys(vpnStateUpdates).length > 0) {
-          vpnState.updateSettings(vpnStateUpdates);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to refresh user settings:', error);
-    } finally {
-      // Always reset the fetching flag when done
-      isFetchingRef.current = false;
-    }
-  };
-  
-  // Fetch settings on component mount - using a ref to prevent over-rendering
-  const didFetchRef = useRef(false);
-  useEffect(() => {
-    if (!didFetchRef.current) {
-      fetchSettings();
-      didFetchRef.current = true;
-    }
-  }, []);
+  // Local state for toggle settings
+  const [killSwitch, setKillSwitch] = useState(vpnState.killSwitch || false);
+  const [dnsLeakProtection, setDnsLeakProtection] = useState(vpnState.dnsLeakProtection || false);
+  const [doubleVpn, setDoubleVpn] = useState(vpnState.doubleVpn || false);
+  const [obfuscation, setObfuscation] = useState(vpnState.obfuscation || false);
   
   // Update local state when vpnState changes
   useEffect(() => {
-    setProtocol(vpnState.protocol || 'openvpn_tcp');
-    setEncryption(vpnState.encryption || 'aes_256_gcm');
     setKillSwitch(vpnState.killSwitch || false);
     setDnsLeakProtection(vpnState.dnsLeakProtection || false);
     setDoubleVpn(vpnState.doubleVpn || false);
     setObfuscation(vpnState.obfuscation || false);
   }, [
-    vpnState.protocol,
-    vpnState.encryption,
     vpnState.killSwitch,
     vpnState.dnsLeakProtection,
     vpnState.doubleVpn,
     vpnState.obfuscation
   ]);
 
-  // Handle protocol change - simpler implementation with direct DOM access
-  const handleProtocolChange = async (value: string) => {
-    console.log("Protocol selection changed to:", value);
-    
-    // Check if user is trying to select Shadowsocks without premium access
-    if (value === 'shadowsocks' && !shadowsocksAccess?.hasAccess) {
-      toast({
-        title: 'Premium Feature',
-        description: 'Shadowsocks protocol is only available with Premium or Ultimate plans',
-        variant: 'destructive',
-      });
-      return; // Don't allow the change
-    }
-    
-    try {
-      // Show loading state and temporarily set UI state
-      setProtocol(value);
-      
-      // Use a simplified payload with both names to ensure compatibility
-      const payload = { 
-        preferredProtocol: value 
-      };
-      
-      console.log("Sending protocol update request:", payload);
-      
-      // Send update to server - use /api/settings endpoint directly
-      const response = await fetch('/api/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        // Check if it's a feature access error
-        if (response.status === 403) {
-          toast({
-            title: 'Premium Feature Required',
-            description: 'This protocol requires a premium subscription plan',
-            variant: 'destructive',
-          });
-          // Revert to previous value
-          setProtocol(vpnState.protocol || 'openvpn_tcp');
-          return;
-        }
-        
-        throw new Error('Failed to update protocol setting');
-      }
-      
-      // Get the response data
-      const result = await response.json();
-      console.log("Protocol update success:", result);
-      
-      // Update local state permanently with the protocol value
-      vpnState.updateSettings({ 
-        protocol: value
-      });
-      
-      // Show success toast
-      toast({
-        title: 'Protocol Updated',
-        description: `Protocol updated to ${value.replace('_', ' ').toUpperCase()}`,
-        variant: 'default',
-      });
-      
-    } catch (error) {
-      console.error('Error updating protocol:', error);
-      // Revert to previous value
-      setProtocol(vpnState.protocol || 'openvpn_tcp');
-      toast({
-        title: 'Update Failed',
-        description: 'Failed to update protocol setting',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  // Handle encryption change - simpler implementation with direct DOM access
-  const handleEncryptionChange = async (value: string) => {
-    console.log("Encryption selection changed to:", value);
-    
-    // Check if user is trying to select premium encryption without access
-    if (value === 'chacha20_poly1305' && !premiumEncryptionAccess?.hasAccess) {
-      toast({
-        title: 'Premium Feature',
-        description: 'ChaCha20-Poly1305 encryption is only available with Premium or Ultimate plans',
-        variant: 'destructive',
-      });
-      return; // Don't allow the change
-    }
-    
-    try {
-      // Show loading state
-      setEncryption(value);
-      
-      // Use a simplified payload with just one name to avoid confusion
-      const payload = { 
-        preferredEncryption: value 
-      };
-      
-      console.log("Sending encryption update request:", payload);
-      
-      // Send update to server - use /api/settings endpoint directly
-      const response = await fetch('/api/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        // Check if it's a feature access error
-        if (response.status === 403) {
-          toast({
-            title: 'Premium Feature Required',
-            description: 'This encryption method requires a premium subscription plan',
-            variant: 'destructive',
-          });
-          // Revert to previous value
-          setEncryption(vpnState.encryption || 'aes_256_gcm');
-          return;
-        }
-        
-        throw new Error('Failed to update encryption setting');
-      }
-      
-      // Get the response data
-      const result = await response.json();
-      console.log("Encryption update success:", result);
-      
-      // Update local state permanently with the encryption value
-      vpnState.updateSettings({ 
-        encryption: value
-      });
-      
-      // Show success toast
-      toast({
-        title: 'Encryption Updated',
-        description: `Encryption updated to ${value.replace('_', '-').toUpperCase()}`,
-        variant: 'default',
-      });
-      
-    } catch (error) {
-      console.error('Error updating encryption:', error);
-      // Revert to previous value
-      setEncryption(vpnState.encryption || 'aes_256_gcm');
-      toast({
-        title: 'Update Failed',
-        description: 'Failed to update encryption setting',
-        variant: 'destructive',
-      });
-    }
-  };
-
   // Handle toggle changes
-  const handleKillSwitchChange = (checked: boolean) => {
+  const handleKillSwitchChange = async (checked: boolean) => {
     setKillSwitch(checked);
-    updateSettings({ killSwitch: checked });
+    await updateSetting({ killSwitch: checked });
   };
 
-  const handleDnsLeakProtectionChange = (checked: boolean) => {
+  const handleDnsLeakProtectionChange = async (checked: boolean) => {
     setDnsLeakProtection(checked);
-    updateSettings({ dnsLeakProtection: checked });
+    await updateSetting({ dnsLeakProtection: checked });
   };
 
-  const handleDoubleVpnChange = (checked: boolean) => {
+  const handleDoubleVpnChange = async (checked: boolean) => {
     setDoubleVpn(checked);
-    updateSettings({ doubleVpn: checked });
+    await updateSetting({ doubleVpn: checked });
   };
 
-  const handleObfuscationChange = (checked: boolean) => {
+  const handleObfuscationChange = async (checked: boolean) => {
     setObfuscation(checked);
-    updateSettings({ obfuscation: checked });
+    await updateSetting({ obfuscation: checked });
   };
 
-  // Update settings on the server and in local state
-  const updateSettings = async (settings: any) => {
+  // Update a single setting on the server
+  const updateSetting = async (setting: any) => {
     try {
-      console.log("Updating settings:", settings);
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(setting),
+        credentials: 'include'
+      });
       
-      // Handle protocol - convert from client property name to server property name
-      if (settings.protocol) {
-        // Use the protocol endpoint
-        try {
-          const protocolRes = await apiRequest('POST', '/api/protocol', { 
-            protocol: settings.protocol,
-            preferredProtocol: settings.protocol // Send both for compatibility
-          });
-          
-          if (protocolRes.ok) {
-            vpnState.updateSettings({
-              protocol: settings.protocol
-            });
-          }
-        } catch (protocolErr) {
-          console.error('Error updating protocol:', protocolErr);
-        }
-      }
-      
-      // Handle encryption - convert from client property name to server property name
-      if (settings.encryption) {
-        try {
-          const encryptionRes = await apiRequest('POST', '/api/encryption', { 
-            encryption: settings.encryption,
-            preferredEncryption: settings.encryption // Send both for compatibility
-          });
-          
-          if (encryptionRes.ok) {
-            vpnState.updateSettings({
-              encryption: settings.encryption
-            });
-          }
-        } catch (encryptionErr) {
-          console.error('Error updating encryption:', encryptionErr);
-        }
-      }
-      
-      // For other settings, use the general settings endpoint
-      const otherSettings = { ...settings };
-      delete otherSettings.protocol;
-      delete otherSettings.encryption;
-      
-      if (Object.keys(otherSettings).length > 0) {
-        // Send the request to save other settings on the server
-        const res = await apiRequest('POST', '/api/settings', otherSettings);
+      if (response.ok) {
+        // Update global VPN state
+        vpnState.updateSettings(setting);
         
-        if (res.ok) {
-          // Update other settings in local VPN state
-          vpnState.updateSettings({
-            killSwitch: settings.killSwitch !== undefined ? settings.killSwitch : vpnState.killSwitch,
-            dnsLeakProtection: settings.dnsLeakProtection !== undefined ? settings.dnsLeakProtection : vpnState.dnsLeakProtection,
-            doubleVpn: settings.doubleVpn !== undefined ? settings.doubleVpn : vpnState.doubleVpn,
-            obfuscation: settings.obfuscation !== undefined ? settings.obfuscation : vpnState.obfuscation
-          });
-          
-        }
+        toast({
+          title: 'Setting Updated',
+          description: 'Your security setting has been updated',
+          variant: 'default',
+        });
+      } else {
+        throw new Error('Failed to update setting');
       }
     } catch (error) {
-      console.error('General settings update error:', error);
+      console.error('Setting update error:', error);
       toast({
-        title: 'Settings Error',
-        description: 'Failed to update security settings',
+        title: 'Update Error',
+        description: 'Failed to update security setting',
         variant: 'destructive'
       });
+      
+      // Revert UI state on error
+      if ('killSwitch' in setting) setKillSwitch(!setting.killSwitch);
+      if ('dnsLeakProtection' in setting) setDnsLeakProtection(!setting.dnsLeakProtection);
+      if ('doubleVpn' in setting) setDoubleVpn(!setting.doubleVpn);
+      if ('obfuscation' in setting) setObfuscation(!setting.obfuscation);
     }
   };
 
   return (
-    <Card className="border border-gray-800 shadow-lg bg-gray-950">
-      <CardHeader className="border-b border-gray-800 p-5">
-        <div className="flex justify-between items-center">
-          <h3 className="font-medium">Protocol & Security</h3>
-          <button 
-            onClick={() => fetchSettings()} 
-            className="text-xs text-gray-400 hover:text-white"
-          >
-            Refresh Settings
-          </button>
-        </div>
-      </CardHeader>
-      <CardContent className="p-5 space-y-5">
-        <div>
-          <label className="text-sm text-gray-400 block mb-2">
-            VPN Protocol (Current: {protocol || 'None'})
-          </label>
-          <select 
-            className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white"
-            value={protocol} 
-            onChange={(e) => handleProtocolChange(e.target.value)}
-            disabled={vpnState.connected}
-          >
-            <option value="openvpn_tcp">OpenVPN (TCP)</option>
-            <option value="openvpn_udp">OpenVPN (UDP)</option>
-            <option value="wireguard">WireGuard</option>
-            <option 
-              value="shadowsocks" 
-              disabled={!shadowsocksAccess?.hasAccess}
-            >
-              Shadowsocks {!shadowsocksAccess?.hasAccess ? '(Premium)' : ''}
-            </option>
-            <option value="ikev2">IKEv2/IPSec</option>
-          </select>
-        </div>
-        
-        <div>
-          <label className="text-sm text-gray-400 block mb-2">
-            Encryption Level (Current: {encryption || 'None'})
-          </label>
-          <select 
-            className="w-full bg-gray-800 border border-gray-700 rounded p-2 text-white"
-            value={encryption} 
-            onChange={(e) => handleEncryptionChange(e.target.value)}
-            disabled={vpnState.connected}
-          >
-            <option value="aes_256_gcm">AES-256-GCM</option>
-            <option 
-              value="chacha20_poly1305"
-              disabled={!premiumEncryptionAccess?.hasAccess}
-            >
-              ChaCha20-Poly1305 {!premiumEncryptionAccess?.hasAccess ? '(Premium)' : ''}
-            </option>
-            <option value="aes_128_gcm">AES-128-GCM</option>
-          </select>
-        </div>
-        
-        <div>
+    <div className="space-y-5">
+      {/* Protocol and Encryption Settings */}
+      <SettingsForm />
+    
+      {/* Security Toggles */}
+      <Card className="border border-gray-800 shadow-lg bg-gray-950">
+        <CardHeader className="border-b border-gray-800 p-5">
+          <h3 className="font-medium">Security Features</h3>
+        </CardHeader>
+        <CardContent className="p-5 space-y-4">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h4 className="font-medium">Kill Switch</h4>
@@ -479,8 +131,8 @@ export default function SecuritySettingsCard() {
             </div>
             <ToggleSwitch checked={obfuscation} onChange={handleObfuscationChange} disabled={vpnState.connected} />
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
