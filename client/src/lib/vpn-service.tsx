@@ -92,6 +92,7 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
     dnsLeakProtection: true,
     doubleVpn: false,
     obfuscation: false,
+    antiCensorship: false,
     selectedServer: null,
     availableServers: [],
     virtualIp: generateRandomIp(),
@@ -140,6 +141,7 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
               dnsLeakProtection: settings.dnsLeakProtection || currentState.dnsLeakProtection,
               doubleVpn: settings.doubleVpn || currentState.doubleVpn,
               obfuscation: settings.obfuscation || currentState.obfuscation,
+              antiCensorship: settings.antiCensorship || currentState.antiCensorship,
             }));
             console.log('VPN settings loaded from server');
           }
