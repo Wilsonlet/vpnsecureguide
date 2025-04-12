@@ -289,7 +289,7 @@ export default function SecuritySettingsCard() {
             <ToggleSwitch 
               checked={antiCensorship} 
               onChange={handleAntiCensorshipChange} 
-              disabled={vpnState.connected || !obfuscation} 
+              disabled={vpnState.connected || !obfuscation || pendingUpdates['antiCensorship'] || activeRequests.current['antiCensorship']} 
             />
           </div>
         </CardContent>
