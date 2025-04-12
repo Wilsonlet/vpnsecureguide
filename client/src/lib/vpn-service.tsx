@@ -624,33 +624,36 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
       
       // Enhanced safety wrapper for fetch calls with timeout and proper error handling
       const safeFetch = async (url: string, options: RequestInit = {}): Promise<Response | null> => {
-        // Use a more structured try/catch with additional timeout protection
-        return new Promise((resolve) => {
-          // Create a timeout to prevent hanging requests
-          const timeoutId = setTimeout(() => {
-            console.warn(`Request to ${url} timed out after 5000ms`);
-            resolve(null);
-          }, 5000);
+        // Set a timeout for the request
+        const timeout = 5000;
+        
+        try {
+          // Create a promise that resolves after timeout
+          const timeoutPromise = new Promise<null>((resolve) => {
+            setTimeout(() => {
+              console.warn(`Request to ${url} timed out after ${timeout}ms`);
+              resolve(null);
+            }, timeout);
+          });
           
-          // Wrap the fetch in try/catch and handle all promise states
-          try {
-            fetch(url, options)
-              .then(response => {
-                clearTimeout(timeoutId);
-                resolve(response);
-              })
-              .catch(error => {
-                clearTimeout(timeoutId);
-                console.error(`Network error fetching ${url}:`, error);
-                resolve(null); // Never reject, always resolve with null for errors
-              });
-          } catch (syncError) {
-            // Handle any synchronous errors in the fetch call itself
-            clearTimeout(timeoutId);
-            console.error(`Synchronous error in fetch for ${url}:`, syncError);
-            resolve(null); // Never reject, always resolve with null for errors
-          }
-        });
+          // Create the fetch promise wrapped in try/catch
+          const fetchPromise = (async () => {
+            try {
+              const response = await fetch(url, options);
+              return response;
+            } catch (error) {
+              console.log(`Network error during fetch to ${url}`);
+              return null;
+            }
+          })();
+          
+          // Race the fetch against the timeout - whichever completes first wins
+          return await Promise.race([fetchPromise, timeoutPromise]);
+        } catch (error) {
+          // Final safety net - should never execute, but just in case
+          console.log(`Unexpected error in safeFetch for ${url}`);
+          return null;
+        }
       };
       
       // Safe function to sync protocol
