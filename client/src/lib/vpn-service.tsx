@@ -333,18 +333,33 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         if (tunnelData.sessionActive && !tunnelData.tunnelActive) {
           console.error('VPN session is active but tunnel is not working!');
           
+          // Keep track of consecutive failures for auto-recovery
+          const recoveryAttemptCount = (state.recoveryAttemptCount || 0) + 1;
+          
           setState((currentState) => ({
             ...currentState,
             tunnelActive: false,
             tunnelVerified: true,
-            lastTunnelCheck: new Date()
+            lastTunnelCheck: new Date(),
+            recoveryAttemptCount
           }));
-          
-          toast({
-            title: "VPN Connection Error",
-            description: "Your connection appears active but your traffic is not protected! Please disconnect and try again.",
-            variant: "destructive"
-          });
+
+          // Show alerts based on recovery attempt count
+          if (recoveryAttemptCount <= 1) {
+            toast({
+              title: "VPN Connection Issue Detected",
+              description: "Your connection appears active but your traffic might not be protected. Attempting automatic recovery...",
+              variant: "destructive"
+            });
+            // Initiate auto-recovery on first detection
+            attemptConnectionRecovery(tunnelData.serverId);
+          } else if (recoveryAttemptCount === 3) {
+            toast({
+              title: "VPN Connection Error",
+              description: "Automatic recovery failed. Your traffic is not protected! Please disconnect and try again manually.",
+              variant: "destructive"
+            });
+          }
           return;
         }
         

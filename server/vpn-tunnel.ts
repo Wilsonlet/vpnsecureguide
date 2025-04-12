@@ -73,7 +73,7 @@ class VpnTunnelService {
       this.closeTunnel(session.userId);
       
       // Get server information
-      const server = await storage.getServer(session.serverId);
+      const server = await storage.getServerById(session.serverId);
       if (!server) {
         throw new Error(`Server ${session.serverId} not found`);
       }
