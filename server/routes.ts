@@ -316,6 +316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dnsLeakProtection: true,
           doubleVpn: false,
           obfuscation: false,
+          antiCensorship: false,
           preferredProtocol: "openvpn_tcp",
           preferredEncryption: "aes_256_gcm"
         };
