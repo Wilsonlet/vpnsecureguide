@@ -704,26 +704,9 @@ export const VpnStateProvider = ({ children }: { children: React.ReactNode }) =>
         }
       };
       
-      // Main execution wrapped in try/catch with window.onerror backup
+      // Main execution wrapped in try/catch 
       try {
-        // Global unhandled promise rejection handler - only add once
-        if (!window._vpnServiceErrorHandlerAdded) {
-          window.addEventListener('unhandledrejection', (event) => {
-            // Suppress unhandled rejections from our service
-            if (
-              event.reason && 
-              (event.reason.message?.includes?.('api/protocol') || 
-               event.reason.message?.includes?.('api/encryption') ||
-               event.reason.message?.includes?.('api/user') ||
-               event.reason.message?.includes?.('api/settings'))
-            ) {
-              console.warn('Suppressed unhandled rejection:', event.reason);
-              event.preventDefault();
-              event.stopPropagation();
-            }
-          });
-          window._vpnServiceErrorHandlerAdded = true;
-        }
+        // We no longer need this here as we have a dedicated NetworkErrorHandler component
         
         // Create a synchronous Promise handler for safety
         Promise.resolve().then(async () => {

@@ -9,6 +9,7 @@ import { FirebaseAuthProvider } from "./hooks/use-firebase-auth";
 import { VpnStateProvider } from "./lib/vpn-service";
 import { AdSenseScript } from "./components/ads/adsense-script";
 import { ThirdPartyErrorHandler, UrlErrorHandler } from "./components/analytics/error-handlers";
+import { NetworkErrorHandler } from "./components/analytics/network-error-handler";
 import { SeoHead } from "@/components/seo";
 import Layout from "@/components/layout/layout";
 
@@ -92,6 +93,7 @@ function App() {
       {/* Error handlers - must be at the top level */}
       <ThirdPartyErrorHandler />
       <UrlErrorHandler />
+      <NetworkErrorHandler />
       
       {/* We're changing the provider order to improve error isolation */}
       <Suspense fallback={<LoadingSkeleton />}>
