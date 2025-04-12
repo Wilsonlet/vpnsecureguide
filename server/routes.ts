@@ -1620,6 +1620,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Obfuscation and anti-censorship endpoints
+  app.get("/api/obfuscation/methods/:protocol", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      const protocol = req.params.protocol;
+      if (!protocol) {
+        return res.status(400).json({ message: "Protocol is required" });
+      }
+      
+      const methods = obfuscationService.getAvailableObfuscationMethods(protocol);
+      
+      // Check if user has access to obfuscation feature
+      const hasAccess = await storage.checkUserFeatureAccess(req.user.id, 'obfuscation');
+      
+      res.json({
+        protocol,
+        methods,
+        hasAccess
+      });
+    } catch (error) {
+      console.error("Error getting obfuscation methods:", error);
+      next(error);
+    }
+  });
+  
+  app.get("/api/obfuscation/config/:protocol/:serverId", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      const { protocol, serverId } = req.params;
+      if (!protocol || !serverId) {
+        return res.status(400).json({ message: "Protocol and server ID are required" });
+      }
+      
+      // Check if user has access to obfuscation feature
+      const hasAccess = await storage.checkUserFeatureAccess(req.user.id, 'obfuscation');
+      if (!hasAccess) {
+        return res.status(403).json({ 
+          message: "Premium feature access required",
+          feature: "obfuscation"
+        });
+      }
+      
+      const config = await obfuscationService.getObfuscationConfig(
+        req.user.id,
+        protocol,
+        parseInt(serverId)
+      );
+      
+      if (!config) {
+        return res.status(404).json({ 
+          message: "Obfuscation not available for this configuration",
+          reason: "Either server doesn't support obfuscation, or it's not enabled in user settings"
+        });
+      }
+      
+      res.json(config);
+    } catch (error) {
+      console.error("Error getting obfuscation config:", error);
+      next(error);
+    }
+  });
+  
+  app.post("/api/obfuscation/connect", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      const { serverId, protocol, method } = req.body;
+      
+      if (!serverId || !protocol) {
+        return res.status(400).json({ message: "Server ID and protocol are required" });
+      }
+      
+      // Check if user has access to obfuscation feature
+      const hasAccess = await storage.checkUserFeatureAccess(req.user.id, 'obfuscation');
+      if (!hasAccess) {
+        return res.status(403).json({ 
+          message: "Premium feature access required",
+          feature: "obfuscation"
+        });
+      }
+      
+      // Generate obfuscated connection parameters
+      const connectionParams = await obfuscationService.generateObfuscatedConnectionParams(
+        req.user.id,
+        parseInt(serverId),
+        protocol,
+        method
+      );
+      
+      // Return the parameters needed for connection
+      res.json({
+        success: true,
+        connectionParams
+      });
+    } catch (error) {
+      console.error("Error generating obfuscated connection:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        next(error);
+      }
+    }
+  });
+  
+  app.get("/api/anti-censorship/config", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ message: "Not authenticated" });
+      
+      const countryCode = req.query.country as string | undefined;
+      
+      // Get anti-censorship configuration
+      const config = await obfuscationService.getAntiCensorshipConfig(
+        req.user.id,
+        countryCode
+      );
+      
+      if (!config) {
+        return res.status(403).json({ 
+          message: "Premium feature access required",
+          feature: "anti-censorship"
+        });
+      }
+      
+      res.json(config);
+    } catch (error) {
+      console.error("Error getting anti-censorship config:", error);
+      next(error);
+    }
+  });
+
   // App Settings endpoints - these are already defined above
   // The duplicate routes have been removed to fix the app startup issue
 

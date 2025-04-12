@@ -58,7 +58,7 @@ const PROTOCOL_OBFUSCATION_COMPATIBILITY = {
  */
 class ObfuscationService {
   // Default obfuscation configuration by protocol
-  private defaultObfuscationConfig = {
+  private readonly defaultObfuscationConfig: Record<string, any> = {
     openvpn_tcp: {
       method: OBFUSCATION_METHODS.STUNNEL,
       port: 443,
@@ -147,7 +147,7 @@ class ObfuscationService {
       }
       
       // Get the default config for this protocol
-      const protocolKey = protocol as keyof typeof this.defaultObfuscationConfig;
+      const protocolKey = protocol as string;
       const defaultConfig = this.defaultObfuscationConfig[protocolKey];
       
       if (!defaultConfig) {
