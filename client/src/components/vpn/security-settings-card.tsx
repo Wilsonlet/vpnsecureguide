@@ -52,38 +52,59 @@ export default function SecuritySettingsCard() {
       
       if (res.ok) {
         const settings = await res.json();
+        console.log('Settings refreshed from server:', settings);
+        
         // Update local state with fetched settings
         if (settings.preferredProtocol) {
+          // Update UI state
           setProtocol(settings.preferredProtocol);
-          // Also update the VPN state context
+          
+          // Update VPN context with both naming conventions to ensure compatibility
           vpnState.updateSettings({
-            protocol: settings.preferredProtocol
+            protocol: settings.preferredProtocol,
+            // Don't include preferredProtocol in the context as it causes TypeScript errors
           });
         }
         
         if (settings.preferredEncryption) {
+          // Update UI state
           setEncryption(settings.preferredEncryption);
-          // Also update the VPN state context
+          
+          // Update VPN context with both naming conventions to ensure compatibility
           vpnState.updateSettings({
-            encryption: settings.preferredEncryption
+            encryption: settings.preferredEncryption,
+            // Don't include preferredEncryption in the context as it causes TypeScript errors
           });
         }
         
         // Update other settings
-        setKillSwitch(settings.killSwitch);
-        setDnsLeakProtection(settings.dnsLeakProtection);
-        setDoubleVpn(settings.doubleVpn);
-        setObfuscation(settings.obfuscation);
+        if (settings.killSwitch !== undefined) {
+          setKillSwitch(settings.killSwitch);
+          vpnState.updateSettings({
+            killSwitch: settings.killSwitch
+          });
+        }
         
-        // Also update the VPN state context with all settings
-        vpnState.updateSettings({
-          killSwitch: settings.killSwitch,
-          dnsLeakProtection: settings.dnsLeakProtection,
-          doubleVpn: settings.doubleVpn,
-          obfuscation: settings.obfuscation
-        });
+        if (settings.dnsLeakProtection !== undefined) {
+          setDnsLeakProtection(settings.dnsLeakProtection);
+          vpnState.updateSettings({
+            dnsLeakProtection: settings.dnsLeakProtection
+          });
+        }
         
-        console.log('Settings refreshed from server:', settings);
+        if (settings.doubleVpn !== undefined) {
+          setDoubleVpn(settings.doubleVpn);
+          vpnState.updateSettings({
+            doubleVpn: settings.doubleVpn
+          });
+        }
+        
+        if (settings.obfuscation !== undefined) {
+          setObfuscation(settings.obfuscation);
+          vpnState.updateSettings({
+            obfuscation: settings.obfuscation
+          });
+        }
       }
     } catch (error) {
       console.error('Failed to refresh user settings:', error);
@@ -128,8 +149,11 @@ export default function SecuritySettingsCard() {
       // Show loading state and temporarily set UI state
       setProtocol(value);
       
-      // Use dedicated protocol-specific API endpoint
-      const response = await apiRequest('POST', '/api/protocol', { protocol: value });
+      // Use dedicated protocol-specific API endpoint with the correct parameter name
+      const response = await apiRequest('POST', '/api/protocol', { 
+        protocol: value,
+        preferredProtocol: value // Include both names to ensure compatibility
+      });
       
       if (!response.ok) {
         // Check if it's a feature access error
@@ -140,7 +164,7 @@ export default function SecuritySettingsCard() {
             variant: 'destructive',
           });
           // Revert to previous value
-          setProtocol(vpnState.protocol);
+          setProtocol(vpnState.protocol || 'openvpn_tcp');
           return;
         }
         
@@ -150,8 +174,10 @@ export default function SecuritySettingsCard() {
       // Get the response data
       const result = await response.json();
       
-      // Update local state permanently
-      vpnState.updateSettings({ protocol: value });
+      // Update local state permanently with the protocol value
+      vpnState.updateSettings({ 
+        protocol: value
+      });
       
       // Show success toast
       toast({
@@ -168,7 +194,7 @@ export default function SecuritySettingsCard() {
     } catch (error) {
       console.error('Error updating protocol:', error);
       // Revert to previous value
-      setProtocol(vpnState.protocol);
+      setProtocol(vpnState.protocol || 'openvpn_tcp');
       toast({
         title: 'Update Failed',
         description: 'Failed to update protocol setting',
@@ -193,8 +219,11 @@ export default function SecuritySettingsCard() {
       // Show loading state
       setEncryption(value);
       
-      // Use dedicated encryption-specific API endpoint
-      const response = await apiRequest('POST', '/api/encryption', { encryption: value });
+      // Use dedicated encryption-specific API endpoint with the correct parameter name
+      const response = await apiRequest('POST', '/api/encryption', { 
+        encryption: value,
+        preferredEncryption: value // Include both names to ensure compatibility
+      });
       
       if (!response.ok) {
         // Check if it's a feature access error
@@ -205,7 +234,7 @@ export default function SecuritySettingsCard() {
             variant: 'destructive',
           });
           // Revert to previous value
-          setEncryption(vpnState.encryption);
+          setEncryption(vpnState.encryption || 'aes_256_gcm');
           return;
         }
         
@@ -215,8 +244,10 @@ export default function SecuritySettingsCard() {
       // Get the response data
       const result = await response.json();
       
-      // Update local state permanently
-      vpnState.updateSettings({ encryption: value });
+      // Update local state permanently with the encryption value
+      vpnState.updateSettings({ 
+        encryption: value
+      });
       
       // Show success toast
       toast({
@@ -233,7 +264,7 @@ export default function SecuritySettingsCard() {
     } catch (error) {
       console.error('Error updating encryption:', error);
       // Revert to previous value
-      setEncryption(vpnState.encryption);
+      setEncryption(vpnState.encryption || 'aes_256_gcm');
       toast({
         title: 'Update Failed',
         description: 'Failed to update encryption setting',
